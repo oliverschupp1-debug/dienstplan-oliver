@@ -1,0 +1,66 @@
+/* -------------------------------------------------------------
+   GLOBAL RESET + APPLE-STYLE BASE
+------------------------------------------------------------- */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Smooth rendering */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base font */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-y: scroll;
+}
+
+/* Links */
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Buttons reset */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Inputs reset */
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* Remove blue highlight on mobile Safari */
+input,
+textarea,
+button,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text selection on draggable items */
+[draggable="true"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
