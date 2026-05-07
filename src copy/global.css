@@ -1,0 +1,515 @@
+:root {
+  --bg: #f5f5f7;
+  --panel-bg: #ffffff;
+  --border: #d0d0d4;
+  --text: #1c1c1e;
+  --text-light: #6e6e73;
+  --blue: #007aff;
+  --red: #ff3b30;
+  --green: #34c759;
+  --yellow: #ffcc00;
+  --radius: 10px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --transition: 0.15s ease;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+}
+
+/* ROOT LAYOUT */
+
+.calendar-root {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  padding: 20px;
+}
+
+.calendar-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+
+.calendar-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.calendar-controls select {
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.calendar-title {
+  font-size: 24px;
+  font-weight: 600;
+  text-align: right;
+  padding-right: 10px;
+}
+
+/* ACTIONS */
+
+.calendar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* GRID */
+
+.calendar-grid {
+  background: var(--panel-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 8px;
+}
+
+.calendar-weekday-row {
+  display: grid;
+  font-weight: 600;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-weekday {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 13px;
+}
+
+.calendar-weekday-kw {
+  background: #e5e5ea;
+  border-radius: 6px;
+  margin-right: 4px;
+}
+
+.calendar-week-row {
+  display: grid;
+}
+
+/* KW CELL */
+
+.calendar-weeknumber-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  background: #f0f0f5;
+  border-right: 1px solid var(--border);
+}
+
+/* DAY CELL */
+
+.calendar-day {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  min-height: 100px;
+  padding: 4px;
+  position: relative;
+  background: #fff;
+  transition: var(--transition);
+}
+
+.calendar-day:hover {
+  background: #fafafa;
+}
+
+.calendar-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calendar-day-number {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.calendar-day-holiday {
+  font-size: 11px;
+  color: var(--red);
+  margin-left: 4px;
+  font-weight: 600;
+}
+
+/* Outside month */
+.outside-month {
+  background: #f0f0f0 !important;
+  color: #b0b0b0;
+}
+
+/* Saturday */
+.saturday {
+  background: #f7f7f7;
+}
+
+/* Sunday */
+.sunday {
+  background: #ececec;
+}
+
+/* Holiday */
+.holiday {
+  background: #ffecec;
+}
+
+/* Today */
+.today {
+  outline: 2px solid rgba(0,122,255,0.5);
+  outline-offset: -2px;
+}
+
+/* SHIFTS */
+
+.calendar-day-shifts {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.calendar-shift-slot {
+  background: #f8f8fa;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  min-height: 32px;
+}
+
+.calendar-shift-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.calendar-shift-employees {
+  margin-top: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+/* EMPLOYEE DISPLAY — NEUTRAL TEXT */
+
+.calendar-employee-pill {
+  background: transparent;
+  color: var(--text);
+  padding: 0;
+  border-radius: 0;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill-remove {
+  background: var(--red);
+  color: white;
+  font-weight: bold;
+  padding: 0 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+/* SIDEBAR */
+
+.calendar-sidebar {
+  width: 260px;
+  background: var(--panel-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  height: fit-content;
+}
+
+.employee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.employee-pill {
+  background: #e5e5ea;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  cursor: grab;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.employee-pill:active {
+  cursor: grabbing;
+}
+
+.employee-hours {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+/* HOURS SUMMARY */
+
+.hours-summary {
+  margin-top: 12px;
+  background: var(--panel-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 10px;
+}
+
+.hours-summary h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.hours-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.hours-table th,
+.hours-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hours-table th {
+  text-align: left;
+  color: var(--text-light);
+}
+
+/* OVERRIDE PANEL */
+
+.override-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.override-panel {
+  width: 420px;
+  background: var(--panel-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.override-title {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.override-label {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.override-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.override-input.small {
+  width: 90px;
+}
+
+.override-shift-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.override-shift-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.override-delete {
+  background: var(--red);
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.override-add {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.override-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.override-cancel {
+  background: #e5e5ea;
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.override-remove {
+  background: var(--red);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.override-save {
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+/* SAFARI DRAG & DROP FIX */
+
+[draggable="true"] {
+  -webkit-user-drag: element;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+/* PRINT — BLOCK 3 FIX (vollständig) */
+
+@media print {
+
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .calendar-root {
+    padding: 0;
+  }
+
+  .calendar-sidebar,
+  .calendar-actions,
+  .panel,
+  .hours-summary {
+    display: none !important;
+  }
+
+  .calendar-main {
+    width: 100%;
+  }
+
+  .calendar-grid {
+    width: 100%;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .calendar-weekday-row,
+  .calendar-week-row {
+    display: grid !important;
+    grid-template-columns: 40px repeat(7, 1fr) !important;
+    width: 100% !important;
+  }
+
+  .calendar-day,
+  .calendar-weeknumber-cell {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    overflow: hidden;
+  }
+
+  .calendar-shift-slot {
+    padding: 1px 2px !important;
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+  }
+
+  .calendar-employee-pill {
+  font-size: 10px !important;
+}
+
+/* ============================================
+   PRINT – A4 LANDSCAPE (stabil, minimal)
+   ============================================ */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  /* Alles ausblenden, was nicht auf den Plan gehört */
+  button,
+  .btn,
+  .calendar-sidebar,
+  .slide-panel,
+  .slide-panel-overlay,
+  .hours-summary {
+    display: none !important;
+  }
+
+  /* Hauptbereich auf volle Breite */
+  .calendar-main {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Kalender skalieren, damit er auf 1 Seite passt */
+  .calendar-root {
+    transform: scale(0.78);
+    transform-origin: top left;
+    width: 128%;
+  }
+}
