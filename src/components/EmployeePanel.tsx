@@ -1,5 +1,4 @@
 // src/components/EmployeePanel.tsx
-import React, { useState } from "react";
 import { useEmployees } from "../useEmployees";
 
 type Props = {

@@ -1,5 +1,4 @@
 // EmployeeManager.tsx
-import React, { useState } from "react";
 import { Employee } from "../useEmployees";
 
 type Props = {
