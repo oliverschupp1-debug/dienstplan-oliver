@@ -6,7 +6,7 @@ type Props = {
   employees: Employee[];
   loading: boolean;
   addEmployee: (name: string, maxHours: number | null) => void;
-  updateEmployee: (id: string, name: string, maxHours: number | null) => void;
+  // updateEmployee entfernt
   deleteEmployee: (id: string) => void;
   reload: () => void;
 };
@@ -15,10 +15,10 @@ export default function EmployeeManager({
   employees,
   loading,
   addEmployee,
-  updateEmployee,
   deleteEmployee,
   reload
 }: Props) {
+
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [maxHours, setMaxHours] = useState<number | null>(100);
