@@ -1,7 +1,7 @@
 // hoursUtils.ts
 // Berechnet Arbeitsstunden pro Mitarbeiter basierend auf Assignments + Schichtzeiten
 
-import { StationShiftModel } from "./shiftModelsDefault";
+import type { StationShiftModel } from "./shiftModelsDefault";
 
 export type Assignment = {
   id: string;

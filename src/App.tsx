@@ -12,7 +12,6 @@ const STATIONS = [
   { label: "Bell Oil Station Siegen‑Seelbach", id: "seelbach" }
 ];
 
-// Titel-Mapping für die Anzeige oben rechts
 const STATION_TITLES: Record<string, string> = {
   lindenberg: "Dienstplan Aral Lindenberg",
   wilnsdorf: "Dienstplan Bell Oil Station Wilnsdorf",
@@ -27,14 +26,12 @@ export default function App() {
     employees,
     loading,
     addEmployee,
-    updateEmployee,
     deleteEmployee,
     reload
   } = useEmployees(station);
 
   return (
     <div className="app-container" style={{ padding: "20px" }}>
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -43,7 +40,6 @@ export default function App() {
           alignItems: "center"
         }}
       >
-        {/* Station Auswahl */}
         <div>
           <h2>Station auswählen</h2>
           <select
@@ -59,12 +55,10 @@ export default function App() {
           </select>
         </div>
 
-        {/* Titel rechtsbündig */}
         <h1 style={{ textAlign: "right", margin: 0 }}>
           {STATION_TITLES[station]}
         </h1>
 
-        {/* Mitarbeiter-Button */}
         <button
           className="btn btn-primary"
           onClick={() => setPanelOpen(true)}
@@ -74,7 +68,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* Kalender */}
       <MonthCalendar
         stationName={station}
         employees={employees}
@@ -82,13 +75,11 @@ export default function App() {
         initialOverrides={[]}
       />
 
-      {/* Slide‑In Panel */}
       <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)}>
         <EmployeeManager
           employees={employees}
           loading={loading}
           addEmployee={addEmployee}
-          updateEmployee={updateEmployee}
           deleteEmployee={deleteEmployee}
           reload={reload}
         />
