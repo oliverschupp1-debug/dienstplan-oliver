@@ -81,7 +81,7 @@ export function generateCalendar(year: number, month: number): CalendarWeek[] {
         isSaturday: weekday === 5,
         isSunday: weekday === 6,
         isHoliday: holiday,
-        holidayName: name
+        holidayName: name ?? undefined
       });
 
       current.setDate(current.getDate() + 1);

@@ -1,5 +1,6 @@
 // EmployeeManager.tsx
-import { Employee } from "../useEmployees";
+import { useState } from "react";
+import type { Employee } from "../useEmployees";
 
 type Props = {
   employees: Employee[];
