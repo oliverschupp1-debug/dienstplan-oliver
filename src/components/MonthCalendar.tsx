@@ -5,7 +5,7 @@ import { getShiftModelForStation } from "../shiftModelsDefault";
 import { calculateHours } from "../hoursUtils";
 import type { Assignment } from "../hoursUtils";
 import OverridePanel from "./OverridePanel";
-import EmployeePanel from "./EmployeePanel"; // ⭐ NEU
+import EmployeePanel from "./EmployeePanel";
 
 type Employee = {
   id: string;
@@ -62,7 +62,7 @@ export default function MonthCalendar({
   const [dragEmployeeId, setDragEmployeeId] = useState<string | null>(null);
   const [overrideDate, setOverrideDate] = useState<string | null>(null);
 
-  // ⭐ NEU: Mitarbeiter-Panel öffnen/schließen
+  // Mitarbeiter-Panel öffnen/schließen
   const [employeePanelOpen, setEmployeePanelOpen] = useState(false);
 
   const shiftModel = useMemo(
@@ -160,9 +160,10 @@ export default function MonthCalendar({
     });
   };
 
-  onClose={() => setOverrideDate(null)}
+  // ❌ Fehlerhafte Zeile entfernt
+  // onClose={() => setOverrideDate(null)}
 
-  // ⭐ KORREKT: Wochentag ohne UTC-Shift
+  // Wochentag ohne UTC-Shift
   const getShiftsForDay = (day: { date: Date; iso: string }) => {
     const d = day.date;
     const weekday = (d.getDay() + 6) % 7;
@@ -194,7 +195,6 @@ export default function MonthCalendar({
                 </option>
               ))}
             </select>
-
             <select value={year} onChange={handleYearChange}>
               {yearsRange.map((y) => (
                 <option key={y} value={y}>
@@ -215,7 +215,6 @@ export default function MonthCalendar({
             PDF exportieren
           </button>
 
-          {/* ⭐ NEU: Mitarbeiterverwaltung öffnen */}
           <button
             className="btn btn-primary"
             onClick={() => setEmployeePanelOpen(true)}
@@ -294,33 +293,35 @@ export default function MonthCalendar({
                             </div>
 
                             <div className="calendar-shift-employees">
-  {getAssignmentsForDayAndShift(
-    day.iso,
-    shift.name
-  ).map((a) => {
-    const emp = employees.find(
-      (e) => e.id === a.employeeId
-    );
-    if (!emp) return null;
+                              {getAssignmentsForDayAndShift(
+                                day.iso,
+                                shift.name
+                              ).map((a) => {
+                                const emp = employees.find(
+                                  (e) => e.id === a.employeeId
+                                );
+                                if (!emp) return null;
 
-    return (
-      <div
-        key={a.id}
-        className="calendar-employee-pill"
-        style={{ fontWeight: 700, fontSize: "1.1em" }}
-      >
-        {emp.name}
-        <span
-          className="pill-remove"
-          onClick={() => removeAssignment(a.id)}
-        >
-          ×
-        </span>
-      </div>
-    );
-  })}
-</div>
-
+                                return (
+                                  <div
+                                    key={a.id}
+                                    className="calendar-employee-pill"
+                                    style={{
+                                      fontWeight: 700,
+                                      fontSize: "1.1em"
+                                    }}
+                                  >
+                                    {emp.name}
+                                    <span
+                                      className="pill-remove"
+                                      onClick={() => removeAssignment(a.id)}
+                                    >
+                                      ×
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -372,7 +373,6 @@ export default function MonthCalendar({
         </div>
       </div>
 
-      {/* ⭐ NEU: Mitarbeiter-Panel */}
       <EmployeePanel
         stationId={stationName.toLowerCase()}
         isOpen={employeePanelOpen}

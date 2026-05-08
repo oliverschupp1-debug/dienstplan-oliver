@@ -34,7 +34,6 @@ export default function App() {
 
   return (
     <div className="app-container" style={{ padding: "20px" }}>
-      
       {/* Header */}
       <div
         style={{
