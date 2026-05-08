@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { StationShiftModel } from "../../shiftModelsDefault";
+import { useState, useEffect } from "react";
+import type { StationShiftModel } from "../shiftModelsDefault";
 
 type Shift = {
   name: string;

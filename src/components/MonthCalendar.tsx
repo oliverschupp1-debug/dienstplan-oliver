@@ -1,7 +1,9 @@
-import React, { useMemo, useState } from "react";
-import { generateCalendar, CalendarWeek } from "../calendarUtils";
+import { useMemo, useState } from "react";
+import { generateCalendar } from "../calendarUtils";
+import type { CalendarWeek } from "../calendarUtils";
 import { getShiftModelForStation } from "../shiftModelsDefault";
-import { calculateHours, Assignment } from "../hoursUtils";
+import { calculateHours } from "../hoursUtils";
+import type { Assignment } from "../hoursUtils";
 import OverridePanel from "./OverridePanel";
 import EmployeePanel from "./EmployeePanel"; // ⭐ NEU
 
@@ -158,9 +160,7 @@ export default function MonthCalendar({
     });
   };
 
-  const closeOverride = () => {
-    setOverrideDate(null);
-  };
+  onClose={() => setOverrideDate(null)}
 
   // ⭐ KORREKT: Wochentag ohne UTC-Shift
   const getShiftsForDay = (day: { date: Date; iso: string }) => {
