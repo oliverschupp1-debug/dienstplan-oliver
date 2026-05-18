@@ -1,0 +1,66 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+  background: var(--header-bg, #fafafa);
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-title {
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-month {
+  font-size: 1.2em;
+  font-weight: 500;
+}
+
+.header-nav-btn {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.header-nav-btn:hover {
+  background: #eaeaea;
+}
+
+.header-right {
+  display: flex;
+  gap: 10px;
+}
+
+.header-btn {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.header-btn:hover {
+  background: #eaeaea;
+}
+
+.header-btn.logout {
+  background: #ffe5e5;
+  border-color: #ffb3b3;
+}
+
+.header-btn.logout:hover {
+  background: #ffcccc;
+}

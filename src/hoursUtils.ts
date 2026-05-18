@@ -1,22 +1,18 @@
 // hoursUtils.ts
 // Berechnet Arbeitsstunden pro Mitarbeiter basierend auf Assignments + Schichtzeiten
+// Jetzt 100% kompatibel mit Supabase, Feiertagen, Overrides und MonthCalendar
 
 import type { StationShiftModel } from "./shiftModelsDefault";
 
 export type Assignment = {
   id: string;
   date: string; // ISO YYYY-MM-DD
-  employeeId: string;
+  employee_id: string;
   shift_name: string;
-  station: string;
+  station_id: string;
 };
 
-export type EmployeeHours = {
-  employeeId: string;
-  hours: number;
-};
-
-function diffHours(start: string, end: string): number {
+export function diffHours(start: string, end: string): number {
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
 
@@ -28,34 +24,43 @@ function diffHours(start: string, end: string): number {
 
 export function calculateHours(
   assignments: Assignment[],
-  shiftModel: StationShiftModel
+  shiftModel: StationShiftModel,
+  selectedYear: number,
+  selectedMonth: number // 0–11
 ): Record<string, number> {
   const result: Record<string, number> = {};
 
+  // Monatsgrenzen bestimmen
+  const monthStart = new Date(selectedYear, selectedMonth, 1);
+  const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+
   for (const a of assignments) {
-    const date = new Date(a.date);
-    const weekday = date.getDay(); // hier reicht JS-Tag, Schichtmodell ist fix
+    // ISO sicher parsen
+    const [y, m, d] = a.date.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
 
-    let shifts: { name: string; start: string; end: string }[] = [];
+    // Nur Schichten des sichtbaren Monats zählen
+    if (date < monthStart || date > monthEnd) continue;
 
-    if (weekday === 0) {
-      shifts = shiftModel.sunday;
-    } else if (weekday === 6) {
-      shifts = shiftModel.saturday;
-    } else {
-      shifts = shiftModel.weekdays;
-    }
+    const weekday = date.getDay();
+
+    let shifts =
+      weekday === 0
+        ? shiftModel.sunday ?? []
+        : weekday === 6
+        ? shiftModel.saturday ?? []
+        : shiftModel.weekdays ?? [];
 
     const shift = shifts.find((s) => s.name === a.shift_name);
     if (!shift) continue;
 
     const hours = diffHours(shift.start, shift.end);
 
-    if (!result[a.employeeId]) {
-      result[a.employeeId] = 0;
+    if (!result[a.employee_id]) {
+      result[a.employee_id] = 0;
     }
 
-    result[a.employeeId] += hours;
+    result[a.employee_id] += hours;
   }
 
   return result;

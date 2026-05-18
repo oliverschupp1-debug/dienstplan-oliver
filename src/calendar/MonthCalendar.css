@@ -1,0 +1,266 @@
+/* ROOT CONTAINER */
+.month-root-dark {
+  background: var(--bg);
+  color: var(--text);
+  padding: 10px;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+/* HEADER – Variante B */
+.calendar-header-dark {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  color: var(--text);
+}
+
+.calendar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.calendar-header-left button {
+  background: var(--panel-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.calendar-header-left button:hover {
+  background: var(--panel);
+}
+
+.calendar-header-right {
+  font-size: 18px;
+  font-weight: bold;
+  opacity: 0.9;
+}
+
+/* WEEKDAY ROW */
+.calendar-weekdays-dark {
+  display: grid;
+  grid-template-columns: 50px repeat(7, 1fr);
+  background: var(--panel);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* GRID */
+.calendar-grid-dark {
+  display: grid;
+  grid-template-columns: 50px repeat(7, 1fr);
+  gap: 1px;
+  background: var(--border);
+}
+
+/* WEEK NUMBER */
+.calendar-weeknumber-dark {
+  background: var(--panel);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* DAY CELL */
+.calendar-cell-dark {
+  background: var(--panel);
+  color: var(--text);
+  padding: 6px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.outside-month-dark {
+  opacity: 0.4;
+}
+
+/* DATE ROW */
+.calendar-date-row-dark {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calendar-date-dark {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.holiday-badge-dark {
+  background: var(--accent);
+  color: black;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* SHIFT LIST */
+.shift-list-dark {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* SHIFT ROW */
+.shift-row-dark {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.override-dark {
+  border-color: var(--accent);
+}
+
+/* SHIFT HEADER */
+.shift-header-dark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shift-name-dark {
+  font-weight: bold;
+  color: var(--text);
+}
+
+.shift-time-dark {
+  color: var(--text);
+  opacity: 0.8;
+}
+
+/* DELETE BUTTON */
+.shift-delete-btn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #ff4d4d;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.shift-delete-btn:hover {
+  color: #ff1a1a;
+}
+
+/* EMPLOYEES */
+.shift-employees-dark {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shift-employee-item-dark {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shift-employee-avatar-dark {
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  color: black;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.shift-employee-name-dark {
+  flex: 1;
+  color: var(--text);
+}
+
+.shift-employee-remove-dark {
+  background: transparent;
+  border: none;
+  color: #ff4d4d;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.shift-employee-remove-dark:hover {
+  color: #ff1a1a;
+}
+
+/* ----------------------------- */
+/* ⭐ PRINT MODE (PDF / DRUCKEN) */
+/* ----------------------------- */
+
+@media print {
+
+  /* Hintergrund weiß */
+  html, body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Keine Scrollbars */
+  body {
+    overflow: visible !important;
+  }
+
+  /* A4 Querformat */
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  /* Buttons entfernen */
+  .shift-delete-btn,
+  .shift-employee-remove-dark {
+    display: none !important;
+  }
+
+  /* Keine dunklen Hintergründe */
+  .month-root-dark,
+  .calendar-cell-dark,
+  .shift-row-dark,
+  .shift-employee-item-dark {
+    background: white !important;
+    color: black !important;
+    border-color: #000 !important;
+  }
+
+  .calendar-weekdays-dark,
+  .calendar-weeknumber-dark {
+    background: #f0f0f0 !important;
+    color: black !important;
+  }
+
+  /* Feiertags-Badge druckfreundlich */
+  .holiday-badge-dark {
+    background: #ffd966 !important;
+    color: black !important;
+  }
+
+  /* Keine Schatten, keine Rundungen */
+  .shift-row-dark,
+  .shift-employee-item-dark {
+    border-radius: 0 !important;
+  }
+}

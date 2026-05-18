@@ -1,0 +1,30 @@
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #1e1e1e;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid #333;
+  z-index: 1000;
+}
+
+.mobile-nav-item {
+  color: #bbb;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 8px 12px;
+}
+
+.mobile-nav-item.active {
+  color: #fff;
+  font-weight: bold;
+  border-bottom: 2px solid #007bff;
+}
+
+.admin-link {
+  color: #ffcc00;
+}

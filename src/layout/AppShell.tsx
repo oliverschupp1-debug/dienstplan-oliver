@@ -1,0 +1,90 @@
+import React, { useState, useEffect, useContext } from "react";
+import { useAuth } from "../hooks/useAuth";
+import Sidebar from "../components/Sidebar/Sidebar";
+import MonthCalendar from "../calendar/MonthCalendar";
+import LoginScreen from "../auth/LoginScreen";
+import { useStations } from "../hooks/useStations";
+import { ThemeContext } from "../theme/ThemeProvider";
+import "./AppShell.css";
+
+export default function AppShell() {
+  const { user, logout } = useAuth();
+  const u = user ?? null;
+
+  const { stations, loading: stationsLoading } = useStations();
+  const [stationName, setStationName] = useState("");
+
+  const { theme, setTheme } = useContext(ThemeContext);
+
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+
+  useEffect(() => {
+    if (!stationsLoading && u?.station) {
+      setStationName(u.station.trim().toLowerCase());
+    }
+  }, [u, stationsLoading]);
+
+  if (!u) return <LoginScreen />;
+
+  const displayStation =
+    (stations.find((s) => s.id === stationName)?.name ?? stationName) ||
+    "Keine Station";
+
+  function handlePrint() {
+    window.print();
+  }
+
+  return (
+    <div style={{ display: "flex", height: "100vh", flexDirection: "column" }}>
+      <div className="topbar no-print">
+        <div className="topbar-left">
+          <div className="topbar-title">DIENSTPLAN</div>
+          <div className="topbar-subtitle">
+            {displayStation} · {u.email}
+          </div>
+        </div>
+
+        <div className="topbar-actions">
+          <button className="print-btn" onClick={handlePrint}>
+            Drucken / PDF
+          </button>
+
+          <select
+            className="theme-select"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+          >
+            <option value="light">Hell</option>
+            <option value="dark">Dunkel</option>
+            <option value="system">System</option>
+          </select>
+
+          <button className="logout-btn" onClick={logout}>
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flex: 1 }}>
+        <Sidebar
+          stationId={stationName}
+          stations={stationsLoading ? [] : stations}
+          onStationChange={(s) => setStationName(s)}
+          year={currentYear}
+          month={currentMonth}
+        />
+
+        <div style={{ flex: 1, overflow: "auto" }}>
+          <MonthCalendar
+            stationName={stationName}
+            onMonthChange={(y, m) => {
+              setCurrentYear(y);
+              setCurrentMonth(m);
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

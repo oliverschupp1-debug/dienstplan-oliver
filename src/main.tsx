@@ -1,15 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "./theme/theme.css";
 
-/* Wichtig: Apple‑Style UI laden */
-import "./global.css";
 
-/* Deine bestehenden Styles */
-import "./index.css";
-import "./styles.css";
+// Supabase
+import { supabase } from "./lib/supabaseClient";
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+declare global {
+  interface Window {
+    supabase: typeof supabase;
+  }
+}
+window.supabase = supabase;
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>

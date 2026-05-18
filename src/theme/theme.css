@@ -1,0 +1,17 @@
+:root {
+  --bg: #ffffff;
+  --text: #000000;
+  --panel: #f2f2f2;
+  --panel-alt: #e6e6e6;
+  --border: #cccccc;
+  --accent: #4da3ff;
+}
+
+[data-theme="dark"] {
+  --bg: #121212;
+  --text: #ffffff;
+  --panel: #1e1e1e;
+  --panel-alt: #2a2a2a;
+  --border: #333333;
+  --accent: #6bb6ff;
+}

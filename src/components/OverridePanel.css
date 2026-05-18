@@ -1,0 +1,147 @@
+/* --- BACKDROP --- */
+.override-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* --- PANEL --- */
+.override-panel {
+  background: #ffffff;
+  width: 420px;
+  max-width: 90%;
+  padding: 22px;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.15s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- TITLE --- */
+.override-title {
+  margin: 0;
+  font-size: 1.4em;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* --- LABELS --- */
+.override-label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 0.9em;
+}
+
+/* --- INPUTS --- */
+.override-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95em;
+  background: #fafafa;
+  transition: 0.15s ease;
+}
+
+.override-input:focus {
+  outline: none;
+  border-color: #007bff;
+  background: #fff;
+}
+
+.override-input.small {
+  width: 100px;
+  text-align: center;
+}
+
+/* --- SHIFT ROW --- */
+.override-shift-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- DELETE BUTTON --- */
+.override-delete {
+  background: #d9534f;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.override-delete:hover {
+  background: #c9302c;
+}
+
+/* --- ADD BUTTON --- */
+.override-add {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: 0.15s ease;
+}
+
+.override-add:hover {
+  background: #e6e6e6;
+}
+
+/* --- ACTIONS --- */
+.override-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* --- CANCEL BUTTON --- */
+.override-cancel {
+  background: #e0e0e0;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.override-cancel:hover {
+  background: #d5d5d5;
+}
+
+/* --- SAVE BUTTON --- */
+.override-save {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.15s ease;
+  font-weight: 600;
+}
+
+.override-save:hover {
+  background: #0069d9;
+}

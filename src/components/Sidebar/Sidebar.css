@@ -1,0 +1,152 @@
+/* SIDEBAR ROOT */
+.sidebar-dark {
+  width: 260px;
+  background: var(--panel);
+  color: var(--text);
+  border-right: 1px solid var(--border);
+  padding: 15px;
+  box-sizing: border-box;
+
+  /* ⭐ Sidebar bleibt stehen */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* TITLE */
+.sidebar-title-dark {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* STATION SELECT */
+.station-select-dark {
+  width: 100%;
+  padding: 8px;
+  background: var(--panel-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+/* EMPLOYEE LIST */
+.employee-list-dark {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* EMPLOYEE CARD */
+.employee-item-dark {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.employee-item-dark:hover {
+  background: var(--panel);
+}
+
+/* AVATAR */
+.employee-avatar-dark {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  color: black;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* NAME + HOURS */
+.employee-info-dark {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-name-dark {
+  font-weight: bold;
+  color: var(--text);
+}
+
+.employee-hours-dark {
+  font-size: 12px;
+  opacity: 0.8;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* HOURS COLORS */
+.hours-over {
+  color: #ff4d4d;
+}
+
+.hours-under {
+  color: #4da3ff;
+}
+
+.hours-neutral {
+  color: var(--text);
+}
+
+/* DELETE BUTTON */
+.employee-delete-btn {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  background: transparent;
+  border: none;
+  color: #ff4d4d;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.employee-delete-btn:hover {
+  color: #ff1a1a;
+}
+
+/* ADD EMPLOYEE FORM */
+.add-employee-form-dark {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-employee-input-dark {
+  padding: 8px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.add-employee-btn-dark {
+  padding: 8px;
+  background: var(--accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.add-employee-btn-dark:hover {
+  opacity: 0.9;
+}
+
+/* PRINT MODE */
+@media print {
+  .sidebar-dark {
+    display: none !important;
+  }
+}

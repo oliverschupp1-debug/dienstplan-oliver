@@ -1,5 +1,6 @@
 // holidays.ts
 // Feiertage NRW – komplett UTC-sicher, ohne Date-Verschiebungen
+// Optimiert mit Jahres-Cache für maximale Performance
 
 export type HolidayInfo = {
   name: string | null;
@@ -13,7 +14,7 @@ function iso(y: number, m: number, d: number): string {
 }
 
 // -------------------------------------------------------------
-// Ostersonntag berechnen (Algorithmus nach Meeus/Jones/Butcher)
+// Ostersonntag berechnen (Meeus/Jones/Butcher)
 // -------------------------------------------------------------
 function getEasterSundayISO(year: number): string {
   const f = Math.floor;
@@ -35,21 +36,27 @@ function getEasterSundayISO(year: number): string {
 }
 
 // -------------------------------------------------------------
-// ISO-Datum + Tage addieren (ohne Date-Objekte!)
+// ISO-Datum + Tage addieren (UTC-sicher)
 // -------------------------------------------------------------
 function addDaysISO(isoDate: string, days: number): string {
   const [y, m, d] = isoDate.split("-").map(Number);
-  const base = new Date(y, m - 1, d);
-  base.setDate(base.getDate() + days);
-  return iso(base.getFullYear(), base.getMonth() + 1, base.getDate());
+  const base = new Date(Date.UTC(y, m - 1, d));
+  base.setUTCDate(base.getUTCDate() + days);
+  return iso(base.getUTCFullYear(), base.getUTCMonth() + 1, base.getUTCDate());
 }
+
+// -------------------------------------------------------------
+// Jahres-Cache (massive Performance-Verbesserung!)
+// -------------------------------------------------------------
+const holidayCache: Record<number, Record<string, string>> = {};
 
 // -------------------------------------------------------------
 // Feiertage NRW für ein bestimmtes Jahr berechnen
 // -------------------------------------------------------------
 export function getHolidaysForYear(year: number): Record<string, string> {
-  const easter = getEasterSundayISO(year);
+  if (holidayCache[year]) return holidayCache[year];
 
+  const easter = getEasterSundayISO(year);
   const holidays: Record<string, string> = {};
 
   function add(dateISO: string, name: string) {
@@ -70,6 +77,7 @@ export function getHolidaysForYear(year: number): Record<string, string> {
   add(addDaysISO(easter, 50), "Pfingstmontag");
   add(addDaysISO(easter, 60), "Fronleichnam");
 
+  holidayCache[year] = holidays;
   return holidays;
 }
 
@@ -93,9 +101,12 @@ export function getHoliday(date: Date): HolidayInfo {
 // -------------------------------------------------------------
 // Wrapper: Prüfen, ob ein ISO-Datum ein Feiertag ist
 // -------------------------------------------------------------
-export function isHoliday(isoDate: string): { holiday: boolean; name: string | null } {
+export function isHoliday(isoDate: string): {
+  holiday: boolean;
+  name: string | null;
+} {
   const [y, m, d] = isoDate.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
+  const date = new Date(Date.UTC(y, m - 1, d));
 
   const info = getHoliday(date);
 
@@ -103,4 +114,13 @@ export function isHoliday(isoDate: string): { holiday: boolean; name: string | n
     holiday: info.name !== null,
     name: info.name
   };
+}
+
+// -------------------------------------------------------------
+// Mobile-Hilfsfunktion: Feiertag direkt per ISO abrufen
+// -------------------------------------------------------------
+export function getHolidayInfo(isoDate: string): { name: string | null } {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return getHoliday(date);
 }
