@@ -5,6 +5,21 @@ import { getHolidayInfo } from "../calendar/calendarUtils";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { useTouchNavigation } from "../useTouchNavigation";
 
+interface Employee {
+  id: string;
+  name: string;
+}
+
+interface Props {
+  stationName: string;
+  employees: Employee[];
+  onOpenAdminSettings: () => void;
+  onOpenShiftModels: () => void;
+  onOpenEmployeePanel: () => void;
+  onChangeStation: () => void;
+  onOpenMonth: () => void;
+}
+
 export default function MobileTodayViewAdmin({
   stationName,
   employees,
@@ -13,7 +28,7 @@ export default function MobileTodayViewAdmin({
   onOpenEmployeePanel,
   onChangeStation,
   onOpenMonth
-}) {
+}: Props) {
   const today = new Date();
   const iso = today.toISOString().split("T")[0];
 
@@ -53,7 +68,7 @@ export default function MobileTodayViewAdmin({
     );
   }, [safeEmployees, search]);
 
-  // Touch-Gesten
+  // Touch-Gesten (richtige Nutzung!)
   useTouchNavigation({
     onSwipeLeft: onOpenMonth,
     onSwipeRight: onOpenMonth

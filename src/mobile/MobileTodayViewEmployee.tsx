@@ -32,19 +32,26 @@ export default function MobileTodayViewEmployee({
   const shiftList = useMemo(() => {
     if (!model) return [];
 
-    if (holiday.name) return model.holiday;
+    if (holiday?.name) return model.holiday;
     if (weekdayIndex === 5) return model.saturday;
     if (weekdayIndex === 6) return model.sunday;
 
     return model.weekdays;
   }, [holiday, weekdayIndex, model]);
 
+  // Touch-Gesten (richtige Nutzung!)
   useTouchNavigation({
     onSwipeUp: onOpenMonth
   });
 
   const weekdayNames = [
-    "Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"
+    "Montag",
+    "Dienstag",
+    "Mittwoch",
+    "Donnerstag",
+    "Freitag",
+    "Samstag",
+    "Sonntag"
   ];
 
   return (
@@ -52,11 +59,12 @@ export default function MobileTodayViewEmployee({
 
       {/* HEADER */}
       <h2 className="mobile-today-title">
-        {weekdayNames[weekdayIndex]}, {today.getDate()}.{today.getMonth() + 1}.{today.getFullYear()}
+        {weekdayNames[weekdayIndex]}, {today.getDate()}.{today.getMonth() + 1}.
+        {today.getFullYear()}
       </h2>
 
       {/* FEIERTAG */}
-      {holiday.name && (
+      {holiday?.name && (
         <div className="mobile-today-holiday">
           🎉 {holiday.name}
         </div>

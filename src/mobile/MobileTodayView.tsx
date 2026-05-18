@@ -5,13 +5,22 @@ import { shiftModelsDefault } from "../shiftModelsDefault";
 import { getHolidayInfo } from "../calendar/calendarUtils";
 import { useTouchNavigation } from "../useTouchNavigation";
 
+type Employee = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   stationName: string;
-  employees: { id: string; name: string }[];
+  employees: Employee[];
   onOpenMonth: () => void;
 };
 
-export default function MobileTodayView({ stationName, employees, onOpenMonth }: Props) {
+export default function MobileTodayView({
+  stationName,
+  employees,
+  onOpenMonth
+}: Props) {
   const today = new Date();
   const iso = today.toISOString().split("T")[0];
 
@@ -29,23 +38,30 @@ export default function MobileTodayView({ stationName, employees, onOpenMonth }:
   const shiftList = useMemo(() => {
     if (!model) return [];
 
-    if (holiday.name) return model.holiday;
+    if (holiday?.name) return model.holiday;
     if (weekdayIndex === 5) return model.saturday;
     if (weekdayIndex === 6) return model.sunday;
 
     return model.weekdays;
   }, [holiday, weekdayIndex, model]);
 
-  // Touch-Gesten
+  // Touch-Gesten (TS-sicher)
   useTouchNavigation({
     onSwipeUp: onOpenMonth,
-    onSwipeLeft: () => {},
-    onSwipeRight: () => {},
-    onSwipeDown: () => window.scrollBy({ top: -300, behavior: "smooth" })
+    onSwipeLeft: undefined,
+    onSwipeRight: undefined,
+    onSwipeDown: () =>
+      window.scrollBy({ top: -300, behavior: "smooth" })
   });
 
   const weekdayNames = [
-    "Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"
+    "Montag",
+    "Dienstag",
+    "Mittwoch",
+    "Donnerstag",
+    "Freitag",
+    "Samstag",
+    "Sonntag"
   ];
 
   return (
@@ -53,11 +69,12 @@ export default function MobileTodayView({ stationName, employees, onOpenMonth }:
 
       {/* HEADER */}
       <h2 className="mobile-today-title">
-        {weekdayNames[weekdayIndex]}, {today.getDate()}.{today.getMonth() + 1}.{today.getFullYear()}
+        {weekdayNames[weekdayIndex]}, {today.getDate()}.{today.getMonth() + 1}.
+        {today.getFullYear()}
       </h2>
 
       {/* FEIERTAG */}
-      {holiday.name && (
+      {holiday?.name && (
         <div className="mobile-today-holiday">
           🎉 {holiday.name}
         </div>
