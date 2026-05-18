@@ -1,8 +1,11 @@
-import React from "react";
 import { NavLink } from "react-router-dom";
 import "./MobileNavBar.css";
 
-export default function MobileNavBar({ role }) {
+type Props = {
+  role: "admin" | "planner" | "employee";
+};
+
+export default function MobileNavBar({ role }: Props) {
   const isAdmin = role === "admin";
   const isPlanner = role === "planner";
   const isEmployee = role === "employee";
