@@ -6,10 +6,15 @@ import { shiftModelsDefault } from "../shiftModelsDefault";
 import { getHolidayInfo } from "../calendar/calendarUtils";
 import { useTouchNavigation } from "../useTouchNavigation";
 
+type Employee = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   stationName: string;
-  employees: { id: string; name: string }[];
-  onOpenToday: () => void;
+  employees: Employee[];
+  onOpenToday?: () => void; // optional, damit Router nicht knallt
 };
 
 export default function MobileMonthViewEmployee({
@@ -81,9 +86,9 @@ export default function MobileMonthViewEmployee({
 
             const weekdayIndex = (day.date.getDay() + 6) % 7;
 
-            let shiftList = [];
+            let shiftList: any[] = [];
             if (model) {
-              if (holiday.name) shiftList = model.holiday;
+              if (holiday?.name) shiftList = model.holiday;
               else if (weekdayIndex === 5) shiftList = model.saturday;
               else if (weekdayIndex === 6) shiftList = model.sunday;
               else shiftList = model.weekdays;
@@ -95,14 +100,14 @@ export default function MobileMonthViewEmployee({
                 className={`
                   mobile-month-cell
                   ${day.outside ? "mobile-month-outside" : ""}
-                  ${holiday.name ? "mobile-month-holiday-bg" : ""}
+                  ${holiday?.name ? "mobile-month-holiday-bg" : ""}
                 `}
               >
                 {/* TAG */}
                 <div className="mobile-month-day">{day.day}</div>
 
                 {/* FEIERTAG */}
-                {holiday.name && (
+                {holiday?.name && (
                   <div className="mobile-month-holiday">{holiday.name}</div>
                 )}
 
