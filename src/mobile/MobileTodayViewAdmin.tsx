@@ -68,7 +68,7 @@ export default function MobileTodayViewAdmin({
     );
   }, [safeEmployees, search]);
 
-  // Touch-Gesten (richtige Nutzung!)
+  // Touch-Gesten
   useTouchNavigation({
     onSwipeLeft: onOpenMonth,
     onSwipeRight: onOpenMonth
@@ -120,7 +120,7 @@ export default function MobileTodayViewAdmin({
 
     const newShifts = list
       .map((n) => base.find((s) => s.name === n))
-      .filter(Boolean);
+      .filter(Boolean) as any[];
 
     saveOverride({ date: iso, shifts: newShifts });
   }
