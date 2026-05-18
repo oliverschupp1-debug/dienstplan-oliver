@@ -11,7 +11,27 @@ import MobileMonthViewEmployee from "./MobileMonthViewEmployee";
 
 import MobileNavBar from "./MobileNavBar";
 
-export default function MobileRouter({ role, stationName, employees }) {
+type Props = {
+  role: "admin" | "planner" | "employee";
+  stationName: string;
+  employees: { id: string; name: string }[];
+  onOpenMonth: () => void;
+  onOpenAdminSettings?: () => void;
+  onOpenShiftModels?: () => void;
+  onOpenEmployeePanel?: () => void;
+  onChangeStation?: () => void;
+};
+
+export default function MobileRouter({
+  role,
+  stationName,
+  employees,
+  onOpenMonth,
+  onOpenAdminSettings,
+  onOpenShiftModels,
+  onOpenEmployeePanel,
+  onChangeStation
+}: Props) {
   const isAdmin = role === "admin";
   const isPlanner = role === "planner";
   const isEmployee = role === "employee";
@@ -19,7 +39,6 @@ export default function MobileRouter({ role, stationName, employees }) {
   return (
     <div className="mobile-root">
 
-      {/* ⭐ Mobile Navigation unten */}
       <MobileNavBar role={role} />
 
       <Routes>
@@ -32,6 +51,11 @@ export default function MobileRouter({ role, stationName, employees }) {
               <MobileTodayViewAdmin
                 stationName={stationName}
                 employees={employees}
+                onOpenAdminSettings={onOpenAdminSettings!}
+                onOpenShiftModels={onOpenShiftModels!}
+                onOpenEmployeePanel={onOpenEmployeePanel!}
+                onChangeStation={onChangeStation!}
+                onOpenMonth={onOpenMonth}
               />
             }
           />
@@ -44,6 +68,7 @@ export default function MobileRouter({ role, stationName, employees }) {
               <MobileTodayView
                 stationName={stationName}
                 employees={employees}
+                onOpenMonth={onOpenMonth}
               />
             }
           />
@@ -52,7 +77,13 @@ export default function MobileRouter({ role, stationName, employees }) {
         {isEmployee && (
           <Route
             path="today"
-            element={<MobileTodayViewEmployee />}
+            element={
+              <MobileTodayViewEmployee
+                stationName={stationName}
+                employees={employees}
+                onOpenMonth={onOpenMonth}
+              />
+            }
           />
         )}
 
@@ -84,11 +115,15 @@ export default function MobileRouter({ role, stationName, employees }) {
         {isEmployee && (
           <Route
             path="month"
-            element={<MobileMonthViewEmployee />}
+            element={
+              <MobileMonthViewEmployee
+                stationName={stationName}
+                employees={employees}
+              />
+            }
           />
         )}
 
-        {/* ⭐ Fallback → Heute */}
         <Route path="*" element={<Navigate to="today" replace />} />
 
       </Routes>
