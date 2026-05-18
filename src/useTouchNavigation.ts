@@ -1,12 +1,20 @@
 import { useEffect } from "react";
 
+type TouchNavOptions = {
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  onSwipeUp?: () => void;
+  onSwipeDown?: () => void;
+  threshold?: number;
+};
+
 export function useTouchNavigation({
   onSwipeLeft,
   onSwipeRight,
   onSwipeUp,
   onSwipeDown,
   threshold = 50
-}) {
+}: TouchNavOptions) {
   useEffect(() => {
     let startX = 0;
     let startY = 0;
@@ -29,11 +37,13 @@ export function useTouchNavigation({
       const dx = endX - startX;
       const dy = endY - startY;
 
+      // Horizontal
       if (Math.abs(dx) > Math.abs(dy)) {
         if (dx < -threshold && onSwipeLeft) onSwipeLeft();
         if (dx > threshold && onSwipeRight) onSwipeRight();
       }
 
+      // Vertikal
       if (Math.abs(dy) > Math.abs(dx)) {
         if (dy < -threshold && onSwipeUp) onSwipeUp();
         if (dy > threshold && onSwipeDown) onSwipeDown();
