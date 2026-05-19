@@ -394,8 +394,7 @@ function ShiftEmployees({
 
   useEffect(() => {
     load();
-    const off = onAssignmentsChanged(() => load());
-    return () => off();
+    onAssignmentsChanged(() => load());
   }, [dateIso, shiftName, station]);
 
   return (

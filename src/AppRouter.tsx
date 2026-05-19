@@ -45,7 +45,7 @@ export default function AppRouter() {
             element={
               <MobileRouter
                 role={role}
-                stationName={stationId}
+                stationName={stationId ?? ""}
                 employees={employees}
                 onOpenMonth={() => {}}
               />
@@ -77,7 +77,7 @@ export default function AppRouter() {
               element={
                 <InfoPageWrapper
                   role={role}
-                  stationId={stationId}
+                  stationId={stationId ?? ""}
                   userId={user.id}
                 />
               }
@@ -89,7 +89,7 @@ export default function AppRouter() {
                 role === "admin" || role === "planner"
                   ? (
                       <EmployeePanel
-                        stationId={stationId}
+                        stationId={stationId ?? ""}
                         isOpen={true}
                         onClose={() => {}}
                       />
