@@ -29,15 +29,21 @@ export function useAssignments(stationId: string) {
     setLoading(false);
   }
 
-  async function addAssignment(date: string, shift: string, employeeId: string) {
+  // ⭐ NEUE SIGNATUR — akzeptiert ein Objekt
+  async function addAssignment(a: {
+    date: string;
+    shift_name: string;
+    employee_id: string;
+    station_id: string;
+  }) {
     const { data, error } = await supabase
       .from("assignments")
       .insert([
         {
-          station_id: stationId.toLowerCase(),
-          date,
-          shift_name: shift,
-          employee_id: employeeId
+          station_id: a.station_id.toLowerCase(),
+          date: a.date,
+          shift_name: a.shift_name,
+          employee_id: a.employee_id
         }
       ])
       .select()

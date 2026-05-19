@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "./lib/supabaseClient";
 import { onAssignmentsChanged } from "./events";
 
-export function useOverrides(stationId: string, year: number, month: number) {
+export function useOverrides(stationId: string) {
   const [overrides, setOverrides] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(false);
 
@@ -11,15 +11,10 @@ export function useOverrides(stationId: string, year: number, month: number) {
 
     setLoading(true);
 
-    const from = new Date(year, month, 1).toISOString().slice(0, 10);
-    const to = new Date(year, month + 1, 0).toISOString().slice(0, 10);
-
     const { data: days } = await supabase
       .from("day_overrides")
       .select("*")
-      .eq("station_id", stationId)
-      .gte("date", from)
-      .lte("date", to);
+      .eq("station_id", stationId);
 
     if (!days || days.length === 0) {
       setOverrides({});
@@ -48,18 +43,60 @@ export function useOverrides(stationId: string, year: number, month: number) {
 
     setOverrides(map);
     setLoading(false);
-  }, [stationId, year, month]);
+  }, [stationId]);
 
-  // Laden bei Monatswechsel
+  // Laden beim Start
   useEffect(() => {
     load();
   }, [load]);
 
   // Neu laden, wenn Assignments geändert wurden
   useEffect(() => {
-    const off = onAssignmentsChanged(() => load());
-    return () => off();
+    onAssignmentsChanged(() => load());
   }, [load]);
 
-  return { overrides, loading, reload: load };
+  // -------------------------------------------------------------
+  // Override speichern
+  // -------------------------------------------------------------
+  async function saveOverride(date: string, shifts: any[] | null) {
+    if (!stationId) return;
+
+    const iso = date.split("T")[0];
+
+    if (shifts === null) {
+      // Override löschen
+      await supabase.from("day_overrides").delete().eq("station_id", stationId).eq("date", iso);
+      await supabase.from("override_shifts").delete().eq("date", iso);
+      load();
+      return;
+    }
+
+    // Day override anlegen oder holen
+    const { data: day } = await supabase
+      .from("day_overrides")
+      .upsert({ station_id: stationId, date: iso, note: "" })
+      .select()
+      .single();
+
+    const overrideId = day.id;
+
+    // Alte Shifts löschen
+    await supabase.from("override_shifts").delete().eq("override_id", overrideId);
+
+    // Neue Shifts einfügen
+    const rows = shifts.map((s) => ({
+      override_id: overrideId,
+      name: s.name,
+      start_time: s.start,
+      end_time: s.end
+    }));
+
+    if (rows.length > 0) {
+      await supabase.from("override_shifts").insert(rows);
+    }
+
+    load();
+  }
+
+  return { overrides, loading, reload: load, saveOverride };
 }
