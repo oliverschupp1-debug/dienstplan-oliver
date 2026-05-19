@@ -1,14 +1,26 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNews } from "../../hooks/useNews";
 import InfoPage from "./InfoPage";
 import InfoDetail from "./InfoDetail";
 import InfoEditor from "./InfoEditor";
 
-export default function InfoPageWrapper({ stationId, role, userId }) {
-  // Crash-Schutz
+interface NewsItem {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  visible_for_roles: string[];
+}
+
+interface Props {
+  stationId: string;
+  role: "admin" | "planner" | "employee";
+  userId: string;
+}
+
+export default function InfoPageWrapper({ stationId, role, userId }: Props) {
   const safeStation = (stationId ?? "").toLowerCase();
 
-  // ⭐ useNews korrekt aufrufen
   const {
     news,
     readIds,
@@ -18,7 +30,7 @@ export default function InfoPageWrapper({ stationId, role, userId }) {
     deleteNews
   } = useNews(safeStation, userId);
 
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<NewsItem | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
 
   return (
@@ -39,7 +51,7 @@ export default function InfoPageWrapper({ stationId, role, userId }) {
           <InfoPage
             news={news}
             unreadCount={unreadCount}
-            onOpenDetail={(n) => {
+            onOpenDetail={(n: NewsItem) => {
               setSelected(n);
               markAsRead(n.id);
             }}
@@ -54,8 +66,8 @@ export default function InfoPageWrapper({ stationId, role, userId }) {
           isRead={readIds.includes(selected.id)}
           role={role}
           onClose={() => setSelected(null)}
-          onMarkRead={(id) => markAsRead(id)}
-          onDelete={(id) => {
+          onMarkRead={(id: string) => markAsRead(id)}
+          onDelete={(id: string) => {
             deleteNews(id);
             setSelected(null);
           }}
@@ -66,7 +78,7 @@ export default function InfoPageWrapper({ stationId, role, userId }) {
       {editorOpen && (
         <InfoEditor
           stationId={safeStation}
-          onSave={(data) => {
+          onSave={(data: Omit<NewsItem, "id" | "created_at">) => {
             createNews(data);
             setEditorOpen(false);
           }}

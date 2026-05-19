@@ -1,7 +1,23 @@
-import React from "react";
 import InfoCard from "./InfoCard";
 
-export default function InfoPage({ news = [], unreadCount = 0, onOpenDetail }) {
+interface NewsItem {
+  id: string;
+  title: string;
+  created_at: string;
+  content?: string;
+}
+
+interface Props {
+  news: NewsItem[];
+  unreadCount: number;
+  onOpenDetail: (item: NewsItem) => void;
+}
+
+export default function InfoPage({
+  news = [],
+  unreadCount = 0,
+  onOpenDetail
+}: Props) {
   const safeNews = Array.isArray(news) ? news : [];
 
   return (
@@ -19,7 +35,7 @@ export default function InfoPage({ news = [], unreadCount = 0, onOpenDetail }) {
           <InfoCard
             key={n.id}
             info={n}
-            onClick={() => onOpenDetail && onOpenDetail(n)}
+            onClick={() => onOpenDetail(n)}
           />
         ))}
       </div>
