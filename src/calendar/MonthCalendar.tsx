@@ -40,7 +40,7 @@ export default function MonthCalendar({ stationName, onMonthChange }: Props) {
   );
 
   const model = getShiftModelForStation(safeStation);
-  const calendar = generateCalendar(year, month);
+  generateCalendar({ year, month })
 
   const monthNames = [
     "Januar","Februar","März","April","Mai","Juni",

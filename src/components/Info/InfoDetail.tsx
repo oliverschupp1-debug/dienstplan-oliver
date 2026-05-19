@@ -1,60 +1,53 @@
-import React from "react";
-import "./InfoPage.css";
+interface NewsItem {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+}
+
+interface Props {
+  info: NewsItem;
+  isRead: boolean;
+  role: "admin" | "planner" | "employee";
+  onClose: () => void;
+  onMarkRead: (id: string) => void;
+  onDelete: (id: string) => void;
+}
 
 export default function InfoDetail({
   info,
-  isRead = false,
+  isRead,
+  role,
   onClose,
   onMarkRead,
-  onDelete,
-  role
-}) {
-  if (!info) return null;
-
-  const canDelete = role === "admin" || role === "planner";
-
-  const created = info.created_at
-    ? new Date(info.created_at).toLocaleString("de-DE")
-    : "Unbekannt";
-
+  onDelete
+}: Props) {
   return (
-    <div className="info-detail-root">
-      <div className="info-detail-card">
+    <div style={{ padding: "20px" }}>
+      <h2>{info.title}</h2>
 
-        {/* CLOSE BUTTON */}
-        <button className="info-close" onClick={onClose}>×</button>
+      <p style={{ opacity: 0.7 }}>
+        {new Date(info.created_at).toLocaleString()}
+      </p>
 
-        {/* TITLE */}
-        <h2>{info.title ?? "Ohne Titel"}</h2>
+      <p>{info.content}</p>
 
-        {/* DATE */}
-        <p className="info-date">{created}</p>
+      {!isRead && (
+        <button onClick={() => onMarkRead(info.id)}>Als gelesen markieren</button>
+      )}
 
-        {/* CONTENT */}
-        <div className="info-content">
-          {info.content ?? "Kein Inhalt vorhanden."}
-        </div>
+      {role !== "employee" && (
+        <button
+          style={{ marginLeft: "10px", color: "red" }}
+          onClick={() => onDelete(info.id)}
+        >
+          Löschen
+        </button>
+      )}
 
-        {/* MARK AS READ */}
-        {!isRead && (
-          <button
-            className="info-read-btn"
-            onClick={() => onMarkRead && onMarkRead(info.id)}
-          >
-            Als gelesen markieren
-          </button>
-        )}
-
-        {/* DELETE */}
-        {canDelete && (
-          <button
-            className="info-delete-btn"
-            onClick={() => onDelete && onDelete(info.id)}
-          >
-            Löschen
-          </button>
-        )}
-      </div>
+      <button style={{ marginTop: "20px" }} onClick={onClose}>
+        Zurück
+      </button>
     </div>
   );
 }

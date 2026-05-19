@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNews } from "../../hooks/useNews";
-import InfoPage from "./InfoPage";
+import { NewsItem } from "../../types/NewsItem";
 import InfoDetail from "./InfoDetail";
 import InfoEditor from "./InfoEditor";
 
@@ -9,8 +9,9 @@ interface NewsItem {
   title: string;
   content: string;
   created_at: string;
-  visible_for_roles: string[];
+  visible_for_roles?: string[];
 }
+
 
 interface Props {
   stationId: string;

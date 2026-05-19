@@ -1,30 +1,30 @@
-import React from "react";
+interface NewsItem {
+  id: string;
+  title: string;
+  content?: string;
+  created_at: string;
+}
 
-export default function InfoCard({ info, onClick }) {
-  if (!info) return null;
+interface Props {
+  info: NewsItem;
+  onClick: () => void;
+}
 
-  const created = info.created_at
-    ? new Date(info.created_at).toLocaleString("de-DE")
-    : "Unbekannt";
-
+export default function InfoCard({ info, onClick }: Props) {
   return (
     <div
       onClick={onClick}
       style={{
-        padding: "16px",
+        padding: "12px",
+        border: "1px solid #ccc",
         borderRadius: "8px",
-        background: "var(--panel-bg)",
-        cursor: "pointer",
-        border: "1px solid var(--border)",
-        transition: "0.15s",
-        boxShadow: "var(--shadow)"
+        cursor: "pointer"
       }}
     >
-      <h3 style={{ margin: 0 }}>{info.title ?? "Ohne Titel"}</h3>
-
-      <p style={{ margin: "6px 0 0 0", opacity: 0.7 }}>
-        {created}
-      </p>
+      <strong>{info.title}</strong>
+      <div style={{ opacity: 0.7, fontSize: "0.9em" }}>
+        {new Date(info.created_at).toLocaleDateString()}
+      </div>
     </div>
   );
 }

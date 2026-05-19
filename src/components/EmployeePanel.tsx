@@ -1,6 +1,7 @@
 // src/components/EmployeePanel.tsx
 import { useState } from "react";
 import { useEmployees } from "../hooks/useEmployees";
+import { supabase } from "../lib/supabaseClient";
 import "./EmployeePanel.css";
 
 type Props = {
@@ -10,13 +11,7 @@ type Props = {
 };
 
 export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
-  const {
-    employees,
-    loading,
-    addEmployee,
-    updateEmployee,
-    deleteEmployee
-  } = useEmployees(stationId);
+  const { employees, loading, reload } = useEmployees(stationId);
 
   const [newName, setNewName] = useState("");
   const [newHours, setNewHours] = useState<number | null>(null);
@@ -26,6 +21,47 @@ export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
     if (!el) return;
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
+  }
+
+  async function handleAddEmployee() {
+    if (!newName.trim()) return;
+
+    await supabase.from("employees").insert({
+      name: newName.trim(),
+      station_id: stationId,
+      max_hours: newHours ?? 0,
+      remarks: newRemarks || null,
+      auth_user_id: null,
+      role: null
+    });
+
+    setNewName("");
+    setNewHours(null);
+    setNewRemarks("");
+    reload();
+  }
+
+  async function handleUpdateEmployee(
+    id: string,
+    name: string,
+    max_hours: number | null,
+    remarks: string
+  ) {
+    await supabase
+      .from("employees")
+      .update({
+        name,
+        max_hours,
+        remarks
+      })
+      .eq("id", id);
+
+    reload();
+  }
+
+  async function handleDeleteEmployee(id: string) {
+    await supabase.from("employees").delete().eq("id", id);
+    reload();
   }
 
   return (
@@ -53,7 +89,7 @@ export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
                   type="text"
                   value={emp.name}
                   onChange={(e) =>
-                    updateEmployee(
+                    handleUpdateEmployee(
                       emp.id,
                       e.target.value,
                       emp.max_hours,
@@ -69,7 +105,7 @@ export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
                   value={emp.max_hours ?? ""}
                   placeholder="Max Stunden"
                   onChange={(e) =>
-                    updateEmployee(
+                    handleUpdateEmployee(
                       emp.id,
                       emp.name,
                       e.target.value ? Number(e.target.value) : null,
@@ -84,7 +120,7 @@ export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
                   placeholder="Bemerkungen"
                   value={emp.remarks ?? ""}
                   onChange={(e) => {
-                    updateEmployee(
+                    handleUpdateEmployee(
                       emp.id,
                       emp.name,
                       emp.max_hours,
@@ -99,7 +135,7 @@ export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
                 {/* Entfernen */}
                 <button
                   className="delete-btn"
-                  onClick={() => deleteEmployee(emp.id)}
+                  onClick={() => handleDeleteEmployee(emp.id)}
                 >
                   Entfernen
                 </button>
@@ -141,16 +177,7 @@ export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
             />
 
             {/* Hinzufügen */}
-            <button
-              className="add-btn"
-              onClick={() => {
-                if (newName.trim().length === 0) return;
-                addEmployee(newName, newHours, newRemarks);
-                setNewName("");
-                setNewHours(null);
-                setNewRemarks("");
-              }}
-            >
+            <button className="add-btn" onClick={handleAddEmployee}>
               Hinzufügen
             </button>
           </>

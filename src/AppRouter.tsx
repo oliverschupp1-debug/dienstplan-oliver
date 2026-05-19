@@ -44,7 +44,7 @@ export default function AppRouter() {
             path="/m/*"
             element={
               <MobileRouter
-                role={role}
+                role={role ?? "employee"}
                 stationName={stationId ?? ""}
                 employees={employees}
                 onOpenMonth={() => {}}

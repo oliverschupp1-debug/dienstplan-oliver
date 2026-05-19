@@ -1,4 +1,4 @@
-import InfoCard from "./InfoCard";
+import { NewsItem } from "../../types/NewsItem";
 
 interface NewsItem {
   id: string;

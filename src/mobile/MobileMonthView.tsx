@@ -6,9 +6,21 @@ import { getShiftModelForStation } from "../shiftModelsDefault";
 import { getHolidayInfo } from "../calendar/calendarUtils";
 import { useTouchNavigation } from "../useTouchNavigation";
 
+type Employee = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   stationName: string;
-  employees: { id: string; name: string }[];
+  employees: Employee[];
+};
+
+type CalendarDay = {
+  iso: string;
+  date: Date;
+  day: number;
+  outside: boolean;
 };
 
 export default function MobileMonthView({ stationName, employees }: Props) {
@@ -70,7 +82,7 @@ export default function MobileMonthView({ stationName, employees }: Props) {
         <div className="mobile-month-header">So</div>
 
         {/* DAYS */}
-        {weeks.map((week) =>
+        {weeks.map((week: { days: CalendarDay[] }) =>
           week.days.map((day) => {
             const iso = day.iso;
             const holiday = getHolidayInfo(iso);

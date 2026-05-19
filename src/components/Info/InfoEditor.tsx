@@ -1,88 +1,48 @@
-import React, { useState } from "react";
-import "./InfoPage.css";
+import { useState } from "react";
 
-export default function InfoEditor({ stationId, onSave, onCancel }) {
+interface NewsInput {
+  title: string;
+  content: string;
+}
+
+interface Props {
+  stationId: string;
+  onSave: (data: NewsInput) => void;
+  onCancel: () => void;
+}
+
+export default function InfoEditor({ stationId, onSave, onCancel }: Props) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  // Standard: alle Rollen dürfen es sehen
-  const [visibleRoles, setVisibleRoles] = useState([
-    "employee",
-    "planner",
-    "admin"
-  ]);
-
-  function toggleRole(role: string) {
-    setVisibleRoles((prev) =>
-      prev.includes(role)
-        ? prev.filter((r) => r !== role)
-        : [...prev, role]
-    );
-  }
-
-  function save() {
-    const t = title.trim();
-    const c = content.trim();
-
-    if (!t || !c) return;
-
-    // Übergabe an InfoPageWrapper → dieser ruft createNews() auf
-    onSave({
-      station_id: stationId,
-      title: t,
-      content: c,
-      visible_for_roles: visibleRoles
-    });
-
-    // Felder zurücksetzen
-    setTitle("");
-    setContent("");
+  function handleSave() {
+    if (!title.trim()) return;
+    onSave({ title, content });
   }
 
   return (
-    <div className="info-editor-root">
+    <div style={{ padding: "20px" }}>
       <h2>Neue Info</h2>
 
-      {/* TITEL */}
       <input
-        className="info-input"
+        type="text"
         placeholder="Titel"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        style={{ width: "100%", marginBottom: "10px" }}
       />
 
-      {/* INHALT */}
       <textarea
-        className="info-textarea"
         placeholder="Inhalt"
         value={content}
         onChange={(e) => setContent(e.target.value)}
+        style={{ width: "100%", height: "150px" }}
       />
 
-      {/* SICHTBARKEIT */}
-      <div className="info-role-selector">
-        {["employee", "planner", "admin"].map((role) => (
-          <label key={role} className="info-role-item">
-            <input
-              type="checkbox"
-              checked={visibleRoles.includes(role)}
-              onChange={() => toggleRole(role)}
-            />
-            {role}
-          </label>
-        ))}
-      </div>
-
-      {/* BUTTONS */}
-      <div className="info-editor-buttons">
-        <button className="info-save-btn" onClick={save}>
-          Speichern
-        </button>
-
-        <button className="info-cancel-btn" onClick={onCancel}>
-          Abbrechen
-        </button>
-      </div>
+      <button onClick={handleSave}>Speichern</button>
+      <button onClick={onCancel} style={{ marginLeft: "10px" }}>
+        Abbrechen
+      </button>
     </div>
   );
 }
