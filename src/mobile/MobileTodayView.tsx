@@ -1,7 +1,7 @@
 // src/mobile/MobileTodayView.tsx
 import { useMemo } from "react";
 import { useAssignments } from "../useAssignments";
-import { shiftModelsDefault } from "../shiftModelsDefault";
+import { getShiftModelForStation } from "../shiftModelsDefault";
 import { getHolidayInfo } from "../calendar/calendarUtils";
 import { useTouchNavigation } from "../useTouchNavigation";
 
@@ -29,7 +29,7 @@ export default function MobileTodayView({
 
   const { assignments } = useAssignments(safeStation);
 
-  const model = shiftModelsDefault[safeStation];
+  const model = getShiftModelForStation(safeStation);
   const holiday = getHolidayInfo(iso);
 
   // Mo=0 … So=6

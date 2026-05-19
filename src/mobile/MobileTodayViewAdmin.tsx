@@ -13,20 +13,12 @@ interface Employee {
 interface Props {
   stationName: string;
   employees: Employee[];
-  onOpenAdminSettings: () => void;
-  onOpenShiftModels: () => void;
-  onOpenEmployeePanel: () => void;
-  onChangeStation: () => void;
   onOpenMonth: () => void;
 }
 
 export default function MobileTodayViewAdmin({
   stationName,
   employees,
-  onOpenAdminSettings,
-  onOpenShiftModels,
-  onOpenEmployeePanel,
-  onChangeStation,
   onOpenMonth
 }: Props) {
   const today = new Date();
@@ -46,12 +38,15 @@ export default function MobileTodayViewAdmin({
   const [search, setSearch] = useState("");
 
   const holiday = getHolidayInfo(iso);
-  const override = overrides.find((o) => o.date === iso);
+
+  // overrides ist ein Record<string, any[]>
+  const overrideShifts = overrides[iso] ?? null;
 
   const model = useMemo(() => {
     if (!shiftModel) return [];
 
-    if (override?.shifts) return override.shifts;
+    if (overrideShifts) return overrideShifts;
+
     if (holiday?.name) return shiftModel.holiday;
 
     const weekdayIndex = (today.getDay() + 6) % 7;
@@ -60,7 +55,7 @@ export default function MobileTodayViewAdmin({
     if (weekdayIndex === 5) return shiftModel.saturday;
 
     return shiftModel.weekdays;
-  }, [override, holiday, shiftModel]);
+  }, [overrideShifts, holiday, shiftModel]);
 
   const filteredEmployees = useMemo(() => {
     return safeEmployees.filter((e) =>
@@ -111,7 +106,7 @@ export default function MobileTodayViewAdmin({
     if (names === null) return;
 
     if (names.trim() === "") {
-      saveOverride({ date: iso, shifts: null });
+      saveOverride(iso, null);
       return;
     }
 
@@ -122,23 +117,15 @@ export default function MobileTodayViewAdmin({
       .map((n) => base.find((s) => s.name === n))
       .filter(Boolean) as any[];
 
-    saveOverride({ date: iso, shifts: newShifts });
+    saveOverride(iso, newShifts);
   }
 
   function deleteOverride() {
-    saveOverride({ date: iso, shifts: null });
+    saveOverride(iso, null);
   }
 
   return (
     <div className="mobile-root">
-
-      {/* ADMIN TOOLBAR */}
-      <div className="admin-toolbar">
-        <button onClick={onChangeStation}>Station</button>
-        <button onClick={onOpenEmployeePanel}>Mitarbeiter</button>
-        <button onClick={onOpenShiftModels}>Schichtmodelle</button>
-        <button onClick={onOpenAdminSettings}>Admin</button>
-      </div>
 
       {/* HEADER */}
       <h2 className="mobile-today-title">Heute – {iso}</h2>
@@ -154,7 +141,7 @@ export default function MobileTodayViewAdmin({
           Override setzen
         </button>
 
-        {override && (
+        {overrideShifts && (
           <button className="mobile-button danger" onClick={deleteOverride}>
             Override löschen
           </button>
@@ -187,7 +174,7 @@ export default function MobileTodayViewAdmin({
 
       {/* SCHICHTEN */}
       <div className="mobile-shift-list">
-        {model?.map((shift) => (
+        {model?.map((shift: any) => (
           <div
             key={shift.name}
             className="mobile-shift-card"

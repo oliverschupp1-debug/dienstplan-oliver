@@ -3,17 +3,15 @@ import { useAssignments } from "../useAssignments";
 import { useEmployees } from "../hooks/useEmployees";
 import { useOverrides } from "../useOverrides";
 import { getHolidayInfo } from "../calendar/calendarUtils";
-import { shiftModelsDefault } from "../shiftModelsDefault";
+import { getShiftModelForStation } from "../shiftModelsDefault";
 import { useTouchNavigation } from "../useTouchNavigation";
 
-export default function MobileMonthViewAdmin({
-  stationName,
-  onOpenAdminSettings,
-  onOpenShiftModels,
-  onOpenEmployeePanel,
-  onChangeStation,
-  onOpenToday
-}) {
+interface Props {
+  stationName: string;
+  employees: { id: string; name: string }[];
+}
+
+export default function MobileMonthViewAdmin({ stationName }: Props) {
   const today = new Date();
 
   const [year, setYear] = useState(today.getFullYear());
@@ -22,7 +20,7 @@ export default function MobileMonthViewAdmin({
 
   const safeStation = (stationName ?? "").toLowerCase();
 
-  const shiftModel = shiftModelsDefault[safeStation];
+  const shiftModel = getShiftModelForStation(safeStation);
 
   const { employees } = useEmployees(safeStation);
   const safeEmployees = Array.isArray(employees) ? employees : [];
@@ -32,11 +30,8 @@ export default function MobileMonthViewAdmin({
 
   const { overrides, saveOverride } = useOverrides(safeStation);
 
-  const overridesMap = useMemo(() => {
-    const map: Record<string, any> = {};
-    overrides.forEach((o) => (map[o.date] = o));
-    return map;
-  }, [overrides]);
+  // overrides ist ein Record<string, any[]>
+  const overridesMap = overrides;
 
   const filteredEmployees = useMemo(() => {
     return safeEmployees.filter((e) =>
@@ -136,7 +131,7 @@ export default function MobileMonthViewAdmin({
     if (names === null) return;
 
     if (names.trim() === "") {
-      saveOverride({ date: iso, shifts: null });
+      saveOverride(iso, null);
       return;
     }
 
@@ -145,13 +140,13 @@ export default function MobileMonthViewAdmin({
 
     const newShifts = list
       .map((n) => base.find((s) => s.name === n))
-      .filter(Boolean);
+      .filter(Boolean) as any[];
 
-    saveOverride({ date: iso, shifts: newShifts });
+    saveOverride(iso, newShifts);
   }
 
   function deleteOverride(iso: string) {
-    saveOverride({ date: iso, shifts: null });
+    saveOverride(iso, null);
   }
 
   const monthNames = [
@@ -162,22 +157,10 @@ export default function MobileMonthViewAdmin({
   return (
     <div className="mobile-root">
 
-      {/* ADMIN TOOLBAR */}
-      <div className="admin-toolbar">
-        <button onClick={onChangeStation}>Station</button>
-        <button onClick={onOpenEmployeePanel}>Mitarbeiter</button>
-        <button onClick={onOpenShiftModels}>Schichtmodelle</button>
-        <button onClick={onOpenAdminSettings}>Admin</button>
-      </div>
-
       {/* HEADER */}
       <h2 className="mobile-month-title">
         {monthNames[month]} {year}
       </h2>
-
-      <button className="mobile-button" onClick={onOpenToday}>
-        Zurück zu Heute
-      </button>
 
       {/* SUCHE */}
       <input
@@ -231,11 +214,12 @@ export default function MobileMonthViewAdmin({
                 ? shiftModel.saturday
                 : shiftModel.weekdays;
 
-            const model = override
-              ? override.shifts
-              : holiday?.name
-              ? shiftModel.holiday
-              : baseModel;
+            const model =
+              override
+                ? override
+                : holiday?.name
+                ? shiftModel.holiday
+                : baseModel;
 
             return (
               <div
@@ -263,7 +247,7 @@ export default function MobileMonthViewAdmin({
 
                 {/* SCHICHTEN */}
                 <div className="mobile-month-shifts">
-                  {model?.map((shift) => (
+                  {model?.map((shift: any) => (
                     <div
                       key={shift.name}
                       className="mobile-month-shift"
