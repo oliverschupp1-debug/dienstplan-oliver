@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 
@@ -24,9 +23,9 @@ export default function AppRouter() {
 
   const isLoggedIn = !!user;
 
-  let role = null;
-  let stationId = null;
-  let employees = [];
+  let role: "admin" | "planner" | "employee" | null = null;
+  let stationId: string | null = null;
+  let employees: any[] = [];
 
   if (isLoggedIn) {
     const meta = user.user_metadata ?? {};
@@ -48,6 +47,7 @@ export default function AppRouter() {
                 role={role}
                 stationName={stationId}
                 employees={employees}
+                onOpenMonth={() => {}}
               />
             }
           />
@@ -87,7 +87,13 @@ export default function AppRouter() {
               path="/employees"
               element={
                 role === "admin" || role === "planner"
-                  ? <EmployeePanel stationId={stationId} />
+                  ? (
+                      <EmployeePanel
+                        stationId={stationId}
+                        isOpen={true}
+                        onClose={() => {}}
+                      />
+                    )
                   : <Navigate to="/" replace />
               }
             />

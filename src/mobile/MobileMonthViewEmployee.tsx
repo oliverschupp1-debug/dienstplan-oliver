@@ -1,9 +1,8 @@
 // src/mobile/MobileMonthViewEmployee.tsx
 import { useState, useMemo } from "react";
-import { generateCalendar } from "../calendar/calendarUtils";
+import { generateCalendar, getHolidayInfo } from "../calendar/calendarUtils";
 import { useAssignments } from "../useAssignments";
-import { shiftModelsDefault } from "../shiftModelsDefault";
-import { getHolidayInfo } from "../calendar/calendarUtils";
+import { getShiftModelForStation } from "../shiftModelsDefault";
 import { useTouchNavigation } from "../useTouchNavigation";
 
 type Employee = {
@@ -14,7 +13,7 @@ type Employee = {
 type Props = {
   stationName: string;
   employees: Employee[];
-  onOpenToday?: () => void; // optional, damit Router nicht knallt
+  onOpenToday?: () => void;
 };
 
 export default function MobileMonthViewEmployee({
@@ -34,7 +33,7 @@ export default function MobileMonthViewEmployee({
 
   const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
 
-  const model = shiftModelsDefault[safeStation];
+  const model = getShiftModelForStation(safeStation);
 
   // Touch-Gesten
   useTouchNavigation({
@@ -84,11 +83,11 @@ export default function MobileMonthViewEmployee({
             const iso = day.iso;
             const holiday = getHolidayInfo(iso);
 
-            const weekdayIndex = (day.date.getDay() + 6) % 7;
+            const weekdayIndex = (new Date(iso).getDay() + 6) % 7;
 
             let shiftList: any[] = [];
             if (model) {
-              if (holiday?.name) shiftList = model.holiday;
+              if (holiday.name) shiftList = model.holiday;
               else if (weekdayIndex === 5) shiftList = model.saturday;
               else if (weekdayIndex === 6) shiftList = model.sunday;
               else shiftList = model.weekdays;
@@ -100,14 +99,14 @@ export default function MobileMonthViewEmployee({
                 className={`
                   mobile-month-cell
                   ${day.outside ? "mobile-month-outside" : ""}
-                  ${holiday?.name ? "mobile-month-holiday-bg" : ""}
+                  ${holiday.name ? "mobile-month-holiday-bg" : ""}
                 `}
               >
                 {/* TAG */}
                 <div className="mobile-month-day">{day.day}</div>
 
                 {/* FEIERTAG */}
-                {holiday?.name && (
+                {holiday.name && (
                   <div className="mobile-month-holiday">{holiday.name}</div>
                 )}
 

@@ -130,7 +130,7 @@ export function generateCalendar(year: number, month: number): CalendarWeek[] {
       const { isHoliday, name } = getHoliday(current);
 
       days.push({
-        iso: toIsoLocal(current), // ← FIXED: kein UTC mehr
+        iso: toIsoLocal(current),
         day: current.getDate(),
         weekday: (current.getDay() + 6) % 7,
         outside: !inMonth,
@@ -148,4 +148,13 @@ export function generateCalendar(year: number, month: number): CalendarWeek[] {
   }
 
   return weeks;
+}
+
+// -------------------------------------------------------------
+// Public Helper: Feiertagsinfo zu einem ISO-Datum holen
+// -------------------------------------------------------------
+export function getHolidayInfo(iso: string): { isHoliday: boolean; name: string | null } {
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, (m ?? 1) - 1, d ?? 1);
+  return getHoliday(date);
 }
