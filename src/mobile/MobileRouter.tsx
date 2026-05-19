@@ -1,4 +1,3 @@
-import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import MobileTodayView from "./MobileTodayView";
@@ -16,21 +15,13 @@ type Props = {
   stationName: string;
   employees: { id: string; name: string }[];
   onOpenMonth: () => void;
-  onOpenAdminSettings?: () => void;
-  onOpenShiftModels?: () => void;
-  onOpenEmployeePanel?: () => void;
-  onChangeStation?: () => void;
 };
 
 export default function MobileRouter({
   role,
   stationName,
   employees,
-  onOpenMonth,
-  onOpenAdminSettings,
-  onOpenShiftModels,
-  onOpenEmployeePanel,
-  onChangeStation
+  onOpenMonth
 }: Props) {
   const isAdmin = role === "admin";
   const isPlanner = role === "planner";
@@ -51,10 +42,6 @@ export default function MobileRouter({
               <MobileTodayViewAdmin
                 stationName={stationName}
                 employees={employees}
-                onOpenAdminSettings={onOpenAdminSettings!}
-                onOpenShiftModels={onOpenShiftModels!}
-                onOpenEmployeePanel={onOpenEmployeePanel!}
-                onChangeStation={onChangeStation!}
                 onOpenMonth={onOpenMonth}
               />
             }
