@@ -1,6 +1,6 @@
 console.log("SIDEBAR VERSION DARK + DELETE");
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useEmployees } from "../../hooks/useEmployees";
 import { useAllMonthlyHours } from "../../hooks/useAllMonthlyHours";
 import { supabase } from "../../lib/supabaseClient";
@@ -9,7 +9,7 @@ import "./Sidebar.css";
 
 interface SidebarProps {
   stationId: string | null;
-  stations: any[];
+  stations: { id: string; name: string }[];
   onStationChange: (id: string) => void;
   year: number;
   month: number;
@@ -20,17 +20,17 @@ export default function Sidebar({
   stations,
   onStationChange,
   year,
-  month,
+  month
 }: SidebarProps) {
   const { employees, loading, reload } = useEmployees(stationId);
 
   const [reloadFlag, setReloadFlag] = useState(0);
 
+  // ⭐ FIX: Kein Cleanup, kein boolean-Return
   useEffect(() => {
-    const off = onAssignmentsChanged(() => {
+    onAssignmentsChanged(() => {
       setReloadFlag((x) => x + 1);
     });
-    return () => off();
   }, []);
 
   const { hoursMap, loading: hoursLoading } = useAllMonthlyHours(
@@ -67,7 +67,7 @@ export default function Sidebar({
       max_hours: Number(newMaxHours) || 0,
       remarks: null,
       auth_user_id: null,
-      role: null,
+      role: null
     });
 
     if (error) {
