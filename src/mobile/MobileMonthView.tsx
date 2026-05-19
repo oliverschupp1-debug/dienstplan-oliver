@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { generateCalendar } from "../calendar/calendarUtils";
 import { useAssignments } from "../useAssignments";
-import { shiftModelsDefault } from "../shiftModelsDefault";
+import { getShiftModelForStation } from "../shiftModelsDefault";
 import { getHolidayInfo } from "../calendar/calendarUtils";
 import { useTouchNavigation } from "../useTouchNavigation";
 
@@ -24,7 +24,7 @@ export default function MobileMonthView({ stationName, employees }: Props) {
 
   const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
 
-  const model = shiftModelsDefault[safeStation];
+  const model = getShiftModelForStation(safeStation);
 
   // Touch-Gesten
   useTouchNavigation({
@@ -77,10 +77,11 @@ export default function MobileMonthView({ stationName, employees }: Props) {
 
             const weekdayIndex = (day.date.getDay() + 6) % 7;
 
-            // Shiftmodell bestimmen
-            let shiftList = [];
+            // ⭐ Shiftmodell bestimmen
+            let shiftList: any[] = [];
+
             if (model) {
-              if (holiday.name) shiftList = model.holiday;
+              if (holiday?.name) shiftList = model.holiday;
               else if (weekdayIndex === 5) shiftList = model.saturday;
               else if (weekdayIndex === 6) shiftList = model.sunday;
               else shiftList = model.weekdays;
@@ -91,13 +92,13 @@ export default function MobileMonthView({ stationName, employees }: Props) {
                 key={iso}
                 className={`mobile-month-cell ${
                   day.outside ? "mobile-month-outside" : ""
-                } ${holiday.name ? "mobile-month-holiday-bg" : ""}`}
+                } ${holiday?.name ? "mobile-month-holiday-bg" : ""}`}
               >
                 {/* TAG */}
                 <div className="mobile-month-day">{day.day}</div>
 
                 {/* FEIERTAG */}
-                {holiday.name && (
+                {holiday?.name && (
                   <div className="mobile-month-holiday">
                     {holiday.name}
                   </div>
