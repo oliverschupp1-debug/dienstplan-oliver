@@ -5,11 +5,7 @@ import type { CalendarWeek, CalendarDay } from "../calendar/calendarUtils";
 import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
 
-type Props = {
-  stationName: string;
-};
-
-export default function MobileMonthViewEmployee({}: Props)
+export default function MobileMonthViewEmployee() {
   const today = new Date();
 
   const [year, setYear] = useState(today.getFullYear());
