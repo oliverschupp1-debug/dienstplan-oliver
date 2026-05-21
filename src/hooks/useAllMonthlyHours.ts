@@ -1,5 +1,7 @@
+// src/hooks/useAllMonthlyHours.ts
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { calculateHoursForAssignments } from "../utils/hoursUtils";
 
 export function useAllMonthlyHours(
   stationId: string | null,
@@ -17,12 +19,6 @@ export function useAllMonthlyHours(
     return `${y}-${m}-${d}`;
   }
 
-  // ⭐ NEU: Feiertage korrekt erkennen
-  function getWeekdayIndex(date: Date, isHoliday: boolean) {
-    if (isHoliday) return 7; // Feiertag
-    return (date.getDay() + 6) % 7; // Mo=0 … So=6
-  }
-
   useEffect(() => {
     if (!stationId) {
       setHoursMap({});
@@ -36,51 +32,32 @@ export function useAllMonthlyHours(
       const firstDay = toLocalIso(new Date(year, month, 1));
       const lastDay = toLocalIso(new Date(year, month + 1, 0));
 
-      // ⭐ assignments jetzt MIT override-Zeiten
-      const { data: assignments } = await supabase
+      const { data: assignments, error } = await supabase
         .from("assignments")
         .select("*")
         .eq("station_id", stationId)
         .gte("date", firstDay)
         .lte("date", lastDay);
 
-      const { data: models } = await supabase
-        .from("shift_models")
-        .select("*")
-        .eq("station_id", stationId);
+      if (error) {
+        console.error("Fehler beim Laden der Assignments:", error);
+        setHoursMap({});
+        setLoading(false);
+        return;
+      }
 
-      // ⭐ Modell-Map: weekday + shift_name
-      const modelMap = new Map<string, any>();
-      for (const m of models ?? []) {
-        const key = `${m.weekday}-${m.name}`.toLowerCase();
-        modelMap.set(key, m);
+      const byEmployee: Record<string, any[]> = {};
+      for (const a of assignments ?? []) {
+        if (!byEmployee[a.employee_id]) byEmployee[a.employee_id] = [];
+        byEmployee[a.employee_id].push(a);
       }
 
       const result: Record<string, number> = {};
-
-      for (const a of assignments ?? []) {
-        const date = new Date(a.date);
-
-        // ⭐ Feiertag erkennen (shift_name beginnt mit "Feiertag ")
-        const isHoliday = a.shift_name.toLowerCase().startsWith("feiertag");
-
-        const weekdayIndex = getWeekdayIndex(date, isHoliday);
-
-        const key = `${weekdayIndex}-${a.shift_name}`.toLowerCase();
-        const model = modelMap.get(key);
-
-        if (!model) continue;
-
-        // ⭐ Override-Zeiten verwenden, wenn vorhanden
-        const startTime = a.override_start_time ?? model.start_time;
-        const endTime = a.override_end_time ?? model.end_time;
-
-        const start = new Date(`1970-01-01T${startTime}:00`);
-        const end = new Date(`1970-01-01T${endTime}:00`);
-        const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-
-        if (!result[a.employee_id]) result[a.employee_id] = 0;
-        result[a.employee_id] += diff;
+      for (const [employeeId, list] of Object.entries(byEmployee)) {
+        result[employeeId] = calculateHoursForAssignments(
+          stationId,
+          list as any[]
+        );
       }
 
       setHoursMap(result);

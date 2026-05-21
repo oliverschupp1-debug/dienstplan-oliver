@@ -5,6 +5,7 @@ import { useAssignments } from "../useAssignments";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
+import { useOverrides } from "../useOverrides";
 
 type Employee = {
   id: string;
@@ -14,16 +15,6 @@ type Employee = {
 type Props = {
   stationName: string;
   employees: Employee[];
-};
-
-type CalendarDay = {
-  iso: string;
-  date: Date;
-  day: number;
-  weekday: number;
-  isOutsideMonth: boolean;
-  isHoliday: boolean;
-  holidayName?: string;
 };
 
 export default function MobileMonthView({ stationName, employees }: Props) {
@@ -36,8 +27,9 @@ export default function MobileMonthView({ stationName, employees }: Props) {
   const safeEmployees = Array.isArray(employees) ? employees : [];
 
   const { assignments } = useAssignments(safeStation);
+  const { overrides } = useOverrides(safeStation);
 
-const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
+  const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
 
   const model = getShiftModelForStation(safeStation);
 
@@ -81,20 +73,26 @@ const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
         <div className="mobile-month-header">So</div>
 
         {weeks.map((week) =>
-          week.days.map((day: CalendarDay) => {
+          week.days.map((day) => {
             const iso = day.iso;
             const holiday = isHoliday(iso);
 
             const weekdayIndex = day.weekday;
 
-            let shiftList: any[] = [];
-
+            // ⭐ Standardmodell bestimmen
+            let baseShifts: any[] = [];
             if (model) {
-              if (holiday?.name) shiftList = model.holiday;
-              else if (weekdayIndex === 5) shiftList = model.saturday;
-              else if (weekdayIndex === 6) shiftList = model.sunday;
-              else shiftList = model.weekdays;
+              if (holiday?.name) baseShifts = model.holiday;
+              else if (weekdayIndex === 5) baseShifts = model.saturday;
+              else if (weekdayIndex === 6) baseShifts = model.sunday;
+              else baseShifts = model.weekdays;
             }
+
+            // ⭐ Override anwenden
+            const override = overrides[iso];
+            const shiftList = override && override.length > 0
+              ? override
+              : baseShifts;
 
             return (
               <div
@@ -113,6 +111,7 @@ const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
                   {shiftList.map((shift) => (
                     <div key={shift.name} className="mobile-month-shift">
                       <strong>{shift.name}</strong>
+                      <span> {shift.start}–{shift.end}</span>
 
                       <div className="mobile-month-emp-list">
                         {assignments

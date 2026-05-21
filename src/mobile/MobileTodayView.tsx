@@ -4,6 +4,7 @@ import { useAssignments } from "../useAssignments";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
+import { useOverrides } from "../useOverrides";
 
 type Employee = {
   id: string;
@@ -35,13 +36,15 @@ export default function MobileTodayView({
   const safeEmployees = Array.isArray(employees) ? employees : [];
 
   const { assignments } = useAssignments(safeStation);
+  const { overrides } = useOverrides(safeStation);
 
   const model = getShiftModelForStation(safeStation);
   const holiday = isHoliday(iso);
 
   const weekdayIndex = (today.getDay() + 6) % 7;
 
-  const shiftList = useMemo(() => {
+  // ⭐ 1) Standard-Schichten bestimmen
+  const baseShifts = useMemo(() => {
     if (!model) return [];
 
     if (holiday?.name) return model.holiday;
@@ -50,6 +53,19 @@ export default function MobileTodayView({
 
     return model.weekdays;
   }, [holiday, weekdayIndex, model]);
+
+  // ⭐ 2) Override anwenden
+  const shiftList = useMemo(() => {
+    const override = overrides[iso];
+    if (!override || override.length === 0) return baseShifts;
+
+    // Override ersetzt das komplette Modell für diesen Tag
+    return override.map((s) => ({
+      name: s.name,
+      start: s.start,
+      end: s.end,
+    }));
+  }, [overrides, iso, baseShifts]);
 
   useTouchNavigation({
     onSwipeUp: onOpenMonth,

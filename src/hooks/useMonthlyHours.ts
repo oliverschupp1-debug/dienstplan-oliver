@@ -1,5 +1,7 @@
+// src/hooks/useMonthlyHours.ts
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { calculateHoursForAssignments } from "../utils/hoursUtils";
 
 export function useMonthlyHours(
   stationId: string | null,
@@ -10,23 +12,11 @@ export function useMonthlyHours(
   const [hours, setHours] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  function getWeekdayIndex(date: Date, shiftName: string) {
-    const lower = shiftName.toLowerCase();
-
-    if (lower.startsWith("feiertag")) return 7;
-    if (lower.startsWith("sonntag")) return 6;
-    if (lower.startsWith("samstag")) return 5;
-
-    // Normale Wochentage (Mo=0 … So=6)
-    return (date.getDay() + 6) % 7;
-  }
-
-  function normalizeShiftName(name: string) {
-    return name
-      .replace(/^feiertag\s+/i, "")
-      .replace(/^sonntag\s+/i, "")
-      .replace(/^samstag\s+/i, "")
-      .trim();
+  function toLocalIso(date: Date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   }
 
   useEffect(() => {
@@ -39,11 +29,10 @@ export function useMonthlyHours(
     async function load() {
       setLoading(true);
 
-      const firstDay = new Date(year, month, 1).toISOString().slice(0, 10);
-      const lastDay = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+      const firstDay = toLocalIso(new Date(year, month, 1));
+      const lastDay = toLocalIso(new Date(year, month + 1, 0));
 
-      // 1) Assignments des Monats laden
-      const { data: assignments, error: aErr } = await supabase
+      const { data: assignments, error } = await supabase
         .from("assignments")
         .select("*")
         .eq("station_id", stationId)
@@ -51,52 +40,14 @@ export function useMonthlyHours(
         .gte("date", firstDay)
         .lte("date", lastDay);
 
-      if (aErr) {
-        console.error("Fehler beim Laden der Assignments:", aErr);
+      if (error) {
+        console.error("Fehler beim Laden der Assignments:", error);
         setHours(0);
         setLoading(false);
         return;
       }
 
-      // 2) Shift-Modelle laden
-      const { data: models } = await supabase
-        .from("shift_models")
-        .select("*")
-        .eq("station_id", stationId);
-
-      const modelMap = new Map<string, any>();
-      for (const m of models ?? []) {
-        const key = `${m.weekday}-${m.name}`.toLowerCase();
-        modelMap.set(key, m);
-      }
-
-      let total = 0;
-
-      // 3) Stunden berechnen
-      for (const a of assignments ?? []) {
-        const date = new Date(a.date);
-
-        const weekdayIndex = getWeekdayIndex(date, a.shift_name);
-        const normalizedName = normalizeShiftName(a.shift_name);
-
-        const key = `${weekdayIndex}-${normalizedName}`.toLowerCase();
-        const model = modelMap.get(key);
-
-        if (!model) {
-          console.warn("Kein shift_model gefunden für:", key);
-          continue;
-        }
-
-        const startTime = a.override_start_time ?? model.start_time;
-        const endTime = a.override_end_time ?? model.end_time;
-
-        const start = new Date(`1970-01-01T${startTime}:00`);
-        const end = new Date(`1970-01-01T${endTime}:00`);
-
-        const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-        total += diff;
-      }
-
+      const total = calculateHoursForAssignments(stationId, assignments ?? []);
       setHours(total);
       setLoading(false);
     }

@@ -1,64 +1,77 @@
-// hoursUtils.ts
-// ======================================================
-// Berechnung der Stunden für Schichten + Overrides
-// ======================================================
+// src/utils/hoursUtils.ts
+import { getShiftModelForStation } from "../shiftModelsDefault";
+import { isHoliday } from "../calendar/holidays";
+import { normalizeShiftName } from "./normalizeShiftName";
 
-// Entfernt Präfixe wie "Feiertag", "Samstag", "Sonntag"
-export function normalizeShiftName(name: string): string {
-  return name
-    .replace(/^(Feiertag|Samstag|Sonntag)\s+/i, "")
-    .trim();
-}
-
-// Standard-Schichtmodelle (Fallback)
-const STANDARD_SHIFT_MODELS: Record<string, { start: string; end: string }> = {
-  "Früh": { start: "06:00", end: "14:00" },
-  "Früh 2": { start: "07:00", end: "15:00" },
-  "Mittel": { start: "09:00", end: "17:00" },
-  "Spät": { start: "14:00", end: "22:00" },
+export type AssignmentLike = {
+  date: string;          // "2025-01-15"
+  shift_name: string;    // "Früh", "Früh 2", "Mittel", ...
+  station_id: string;
+  override_start_time?: string | null; // "06:00"
+  override_end_time?: string | null;   // "12:00"
 };
 
-// Hilfsfunktion: Zeit in Minuten
-function toMinutes(time: string): number {
-  const [h, m] = time.split(":").map(Number);
-  return h * 60 + m;
+function getWeekdayIndex(date: Date): number {
+  // Mo=0 … So=6
+  return (date.getDay() + 6) % 7;
 }
 
-// Hilfsfunktion: Stunden aus Start/Ende
-export function calculateHours(start: string, end: string): number {
-  const s = toMinutes(start);
-  const e = toMinutes(end);
-  let diff = e - s;
-  if (diff < 0) diff += 24 * 60; // Über Mitternacht
-  return diff / 60;
+function parseTimeToHours(start: string, end: string): number {
+  const s = new Date(`1970-01-01T${start}:00`);
+  const e = new Date(`1970-01-01T${end}:00`);
+  const diff = (e.getTime() - s.getTime()) / (1000 * 60 * 60);
+  return Number(diff.toFixed(2));
 }
 
-// Hauptfunktion: Stunden für eine Schicht berechnen
-export function getShiftHours(
-  shiftName: string,
-  stationShiftModels: Record<string, { start: string; end: string }> | null,
-  override: { start: string; end: string } | null
+export function calculateHoursForAssignments(
+  stationId: string,
+  assignments: AssignmentLike[]
 ): number {
-  // 1) Override hat höchste Priorität
-  if (override) {
-    return calculateHours(override.start, override.end);
+  if (!stationId || !assignments || assignments.length === 0) return 0;
+
+  const safeStation = (stationId ?? "").toLowerCase();
+  const model = getShiftModelForStation(safeStation);
+
+  let total = 0;
+
+  for (const a of assignments) {
+    const date = new Date(a.date);
+    const iso = a.date;
+    const holiday = isHoliday(iso);
+
+    const weekdayIndex = getWeekdayIndex(date);
+    const normalizedName = normalizeShiftName(a.shift_name);
+
+    // passendes Schichtmodell wählen
+    let shiftList = model.weekdays;
+    if (holiday?.name) {
+      shiftList = model.holiday;
+    } else if (weekdayIndex === 5) {
+      shiftList = model.saturday;
+    } else if (weekdayIndex === 6) {
+      shiftList = model.sunday;
+    }
+
+    const baseShift = shiftList.find(
+      (s) => normalizeShiftName(s.name) === normalizedName
+    );
+
+    if (!baseShift) {
+      console.warn("Kein Modell für Schicht:", stationId, iso, normalizedName);
+      continue;
+    }
+
+    const startTime = a.override_start_time ?? baseShift.start;
+    const endTime = a.override_end_time ?? baseShift.end;
+
+    // Wenn irgendwas kein echtes Zeitformat ist, überspringen
+    if (!/^\d{2}:\d{2}$/.test(startTime) || !/^\d{2}:\d{2}$/.test(endTime)) {
+      console.warn("Ungültige Zeit:", startTime, endTime, a);
+      continue;
+    }
+
+    total += parseTimeToHours(startTime, endTime);
   }
 
-  // 2) Präfix entfernen
-  const cleanName = normalizeShiftName(shiftName);
-
-  // 3) Stations-spezifisches Modell
-  if (stationShiftModels && stationShiftModels[cleanName]) {
-    const model = stationShiftModels[cleanName];
-    return calculateHours(model.start, model.end);
-  }
-
-  // 4) Standardmodell
-  if (STANDARD_SHIFT_MODELS[cleanName]) {
-    const model = STANDARD_SHIFT_MODELS[cleanName];
-    return calculateHours(model.start, model.end);
-  }
-
-  // 5) Unbekannte Schicht → 0 Stunden
-  return 0;
+  return Number(total.toFixed(2));
 }

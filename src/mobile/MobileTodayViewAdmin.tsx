@@ -46,13 +46,11 @@ export default function MobileTodayViewAdmin({
   const [search, setSearch] = useState("");
 
   const holiday = isHoliday(iso);
-
   const overrideShifts = overrides[iso] ?? null;
 
-  const model = useMemo(() => {
+  // ⭐ Standardmodell bestimmen
+  const baseShifts = useMemo(() => {
     if (!shiftModel) return [];
-
-    if (overrideShifts) return overrideShifts;
 
     if (holiday?.name) return shiftModel.holiday;
 
@@ -62,7 +60,19 @@ export default function MobileTodayViewAdmin({
     if (weekdayIndex === 5) return shiftModel.saturday;
 
     return shiftModel.weekdays;
-  }, [overrideShifts, holiday, shiftModel, today]);
+  }, [shiftModel, holiday, today]);
+
+  // ⭐ Override anwenden
+  const model = useMemo(() => {
+    if (overrideShifts && overrideShifts.length > 0) {
+      return overrideShifts.map((s) => ({
+        name: s.name,
+        start: s.start,
+        end: s.end,
+      }));
+    }
+    return baseShifts;
+  }, [overrideShifts, baseShifts]);
 
   const filteredEmployees = useMemo(() => {
     return safeEmployees.filter((e) =>
@@ -104,6 +114,7 @@ export default function MobileTodayViewAdmin({
     });
   }
 
+  // ⭐ Override-Editor (vorerst simpel, später ersetzen wir ihn durch ein UI)
   function openOverrideEditor() {
     const names = prompt(
       "Override setzen: Früh,Mittel,Spät (Komma getrennt) oder leer für Standard"
@@ -117,11 +128,16 @@ export default function MobileTodayViewAdmin({
     }
 
     const list = names.split(",").map((s) => s.trim());
-    const base = shiftModel.weekdays;
 
-    const newShifts = list
-      .map((n) => base.find((s) => s.name === n))
-      .filter(Boolean) as any[];
+    const newShifts = list.map((n) => {
+      const base = baseShifts.find((s) => s.name === n);
+      if (!base) return null;
+      return {
+        name: base.name,
+        start: base.start,
+        end: base.end,
+      };
+    }).filter(Boolean) as any[];
 
     saveOverride(iso, newShifts);
   }
@@ -173,7 +189,7 @@ export default function MobileTodayViewAdmin({
       </div>
 
       <div className="mobile-shift-list">
-        {model?.map((shift: any) => (
+        {model.map((shift) => (
           <div
             key={shift.name}
             className="mobile-shift-card"
