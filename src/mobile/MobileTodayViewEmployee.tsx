@@ -17,12 +17,11 @@ function getLocalISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-export default function MobileTodayViewEmployee({ stationName, onOpenMonth }: Props)
+export default function MobileTodayViewEmployee({ stationName, onOpenMonth }: Props) {
   const today = new Date();
   const iso = getLocalISO(today);
 
   const safeStation = (stationName ?? "").toLowerCase();
-  const safeEmployees = Array.isArray(employees) ? employees : [];
 
   const { assignments } = useAssignments(safeStation);
 
@@ -85,12 +84,9 @@ export default function MobileTodayViewEmployee({ stationName, onOpenMonth }: Pr
                     a.station_id === safeStation
                 )
                 .map((a) => {
-                  const emp = safeEmployees.find((e) => e.id === a.employee_id);
-                  if (!emp) return null;
-
                   return (
                     <div key={a.id} className="mobile-today-emp-pill">
-                      {emp.name}
+                      {a.employee_name}
                     </div>
                   );
                 })}
