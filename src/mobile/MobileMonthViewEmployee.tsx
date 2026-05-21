@@ -1,45 +1,29 @@
 // src/mobile/MobileMonthViewEmployee.tsx
 import { useState, useMemo } from "react";
+import { generateCalendar, CalendarWeek, CalendarDay } from "../calendar/calendarUtils";
 import { isHoliday } from "../calendar/holidays";
-import { useAssignments } from "../useAssignments";
-import { getShiftModelForStation } from "../shiftModelsDefault";
 import { useTouchNavigation } from "../useTouchNavigation";
-
-type Employee = {
-  id: string;
-  name: string;
-};
 
 type Props = {
   stationName: string;
-  employees: Employee[];
-  onOpenToday?: () => void;
 };
 
-export default function MobileMonthViewEmployee({
-  stationName,
-  employees,
-  onOpenToday
-}: Props) {
+export default function MobileMonthViewEmployee({ stationName }: Props) {
   const today = new Date();
 
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
 
-  const safeStation = (stationName ?? "").toLowerCase();
-  const safeEmployees = Array.isArray(employees) ? employees : [];
+  const weeks: CalendarWeek[] = useMemo(
+    () => generateCalendar(year, month),
+    [year, month]
+  );
 
-  const { assignments } = useAssignments(safeStation);
-
-  const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
-
-  const model = getShiftModelForStation(safeStation);
-
-  // Touch-Gesten
   useTouchNavigation({
     onSwipeLeft: () => setMonth((m) => (m === 11 ? 0 : m + 1)),
     onSwipeRight: () => setMonth((m) => (m === 0 ? 11 : m - 1)),
-    onSwipeDown: onOpenToday
+    onSwipeUp: () => window.scrollBy({ top: 300, behavior: "smooth" }),
+    onSwipeDown: () => window.scrollBy({ top: -300, behavior: "smooth" })
   });
 
   const monthNames = [
@@ -49,8 +33,6 @@ export default function MobileMonthViewEmployee({
 
   return (
     <div className="mobile-root">
-
-      {/* HEADER */}
       <h2 className="mobile-month-title">
         {monthNames[month]} {year}
       </h2>
@@ -65,10 +47,7 @@ export default function MobileMonthViewEmployee({
         Heute
       </button>
 
-      {/* GRID */}
       <div className="mobile-month-grid">
-
-        {/* WEEKDAY HEADERS */}
         <div className="mobile-month-header">Mo</div>
         <div className="mobile-month-header">Di</div>
         <div className="mobile-month-header">Mi</div>
@@ -77,69 +56,22 @@ export default function MobileMonthViewEmployee({
         <div className="mobile-month-header">Sa</div>
         <div className="mobile-month-header">So</div>
 
-        {/* DAYS */}
-        {weeks.map((week) =>
-          week.days.map((day) => {
-            const iso = day.iso;
-            const holiday = isHoliday(iso);
-
-            const weekdayIndex = (new Date(iso).getDay() + 6) % 7;
-
-            let shiftList: any[] = [];
-            if (model) {
-              if (holiday.name) shiftList = model.holiday;
-              else if (weekdayIndex === 5) shiftList = model.saturday;
-              else if (weekdayIndex === 6) shiftList = model.sunday;
-              else shiftList = model.weekdays;
-            }
+        {weeks.map((week: CalendarWeek) =>
+          week.days.map((day: CalendarDay) => {
+            const holiday = isHoliday(day.iso);
 
             return (
               <div
-                key={iso}
-                className={`
-                  mobile-month-cell
-                  ${day.outside ? "mobile-month-outside" : ""}
-                  ${holiday.name ? "mobile-month-holiday-bg" : ""}
-                `}
+                key={day.iso}
+                className={`mobile-month-cell ${
+                  day.isOutsideMonth ? "mobile-month-outside" : ""
+                } ${holiday?.name ? "mobile-month-holiday-bg" : ""}`}
               >
-                {/* TAG */}
                 <div className="mobile-month-day">{day.day}</div>
 
-                {/* FEIERTAG */}
-                {holiday.name && (
+                {holiday?.name && (
                   <div className="mobile-month-holiday">{holiday.name}</div>
                 )}
-
-                {/* SCHICHTEN */}
-                <div className="mobile-month-shifts">
-                  {shiftList.map((shift) => (
-                    <div key={shift.name} className="mobile-month-shift">
-                      <strong>{shift.name}</strong>
-
-                      <div className="mobile-month-emp-list">
-                        {assignments
-                          .filter(
-                            (a) =>
-                              a.date === iso &&
-                              a.shift_name === shift.name &&
-                              a.station_id === safeStation
-                          )
-                          .map((a) => {
-                            const emp = safeEmployees.find(
-                              (e) => e.id === a.employee_id
-                            );
-                            if (!emp) return null;
-
-                            return (
-                              <div key={a.id} className="mobile-month-emp-pill">
-                                {emp.name}
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             );
           })
