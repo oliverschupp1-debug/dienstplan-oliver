@@ -11,7 +11,7 @@ interface Props {
   onCancel: () => void;
 }
 
-export default function InfoEditor({ _stationId, onSave, onCancel }: Props) {
+export default function InfoEditor({ onSave, onCancel }: Props) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
@@ -38,11 +38,3 @@ export default function InfoEditor({ _stationId, onSave, onCancel }: Props) {
         onChange={(e) => setContent(e.target.value)}
         style={{ width: "100%", height: "150px" }}
       />
-
-      <button onClick={handleSave}>Speichern</button>
-      <button onClick={onCancel} style={{ marginLeft: "10px" }}>
-        Abbrechen
-      </button>
-    </div>
-  );
-}

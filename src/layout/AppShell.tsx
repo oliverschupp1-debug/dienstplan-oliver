@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect,  } from "react";
 import { useAuth } from "../hooks/useAuth";
 import Sidebar from "../components/Sidebar/Sidebar";
 import MonthCalendar from "../calendar/MonthCalendar";
