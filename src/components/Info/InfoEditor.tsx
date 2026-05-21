@@ -36,5 +36,14 @@ export default function InfoEditor({ onSave, onCancel }: Props) {
         placeholder="Inhalt"
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        style={{ width: "100%", height: "150px" }}
+        style={{ width: "100%", height: "150px", marginBottom: "10px" }}
       />
+
+      <button onClick={handleSave} style={{ marginRight: "10px" }}>
+        Speichern
+      </button>
+
+      <button onClick={onCancel}>Abbrechen</button>
+    </div>
+  );
+}
