@@ -1,15 +1,28 @@
 // src/mobile/MobileMonthViewEmployee.tsx
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { generateCalendar } from "../calendar/calendarUtils";
 import type { CalendarWeek, CalendarDay } from "../calendar/calendarUtils";
 import { isHoliday } from "../calendar/holidays";
+import { useAssignments } from "../useAssignments";
 import { useTouchNavigation } from "../useTouchNavigation";
 
-export default function MobileMonthViewEmployee() {
-  const today = new Date();
+type Employee = {
+  id: string;
+  name: string;
+};
 
+type Props = {
+  stationName: string;
+  employees: Employee[];
+};
+
+export default function MobileMonthViewEmployee({ stationName, employees }: Props) {
+  const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+
+  const safeStation = (stationName ?? "").toLowerCase();
+  const { assignments } = useAssignments(safeStation);
 
   const weeks: CalendarWeek[] = useMemo(
     () => generateCalendar(year, month),
@@ -57,6 +70,12 @@ export default function MobileMonthViewEmployee() {
           week.days.map((day: CalendarDay) => {
             const holiday = isHoliday(day.iso);
 
+            const todaysAssignments = assignments.filter(
+              (a) =>
+                a.date === day.iso &&
+                a.station_id === safeStation
+            );
+
             return (
               <div
                 key={day.iso}
@@ -69,6 +88,19 @@ export default function MobileMonthViewEmployee() {
                 {holiday?.name && (
                   <div className="mobile-month-holiday">{holiday.name}</div>
                 )}
+
+                <div className="mobile-month-emp-list">
+                  {todaysAssignments.map((a) => {
+                    const emp = employees.find((e) => e.id === a.employee_id);
+                    if (!emp) return null;
+
+                    return (
+                      <div key={a.id} className="mobile-month-emp-pill">
+                        {emp.name}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })
