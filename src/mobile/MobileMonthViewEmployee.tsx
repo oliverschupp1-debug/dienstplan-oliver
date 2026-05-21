@@ -1,6 +1,7 @@
 // src/mobile/MobileMonthViewEmployee.tsx
 import { useState, useMemo } from "react";
-import { generateCalendar, CalendarWeek, CalendarDay } from "../calendar/calendarUtils";
+import { generateCalendar } from "../calendar/calendarUtils";
+import type { CalendarWeek, CalendarDay } from "../calendar/calendarUtils";
 import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
 
@@ -8,7 +9,7 @@ type Props = {
   stationName: string;
 };
 
-export default function MobileMonthViewEmployee({ stationName }: Props) {
+export default function MobileMonthViewEmployee({}: Props)
   const today = new Date();
 
   const [year, setYear] = useState(today.getFullYear());

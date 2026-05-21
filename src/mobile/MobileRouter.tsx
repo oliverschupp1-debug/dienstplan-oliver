@@ -67,7 +67,6 @@ export default function MobileRouter({
             element={
               <MobileTodayViewEmployee
                 stationName={stationName}
-                employees={employees}
                 onOpenMonth={onOpenMonth}
               />
             }
@@ -105,7 +104,6 @@ export default function MobileRouter({
             element={
               <MobileMonthViewEmployee
                 stationName={stationName}
-                employees={employees}
               />
             }
           />
