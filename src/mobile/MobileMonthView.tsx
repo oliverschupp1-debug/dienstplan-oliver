@@ -37,7 +37,7 @@ export default function MobileMonthView({ stationName, employees }: Props) {
 
   const { assignments } = useAssignments(safeStation);
 
-  const weeks = useMemo(() => generateCalendar({ year, month }), [year, month]);
+const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
 
   const model = getShiftModelForStation(safeStation);
 

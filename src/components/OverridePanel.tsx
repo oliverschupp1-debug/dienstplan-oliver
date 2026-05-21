@@ -38,7 +38,7 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
   ];
 
   // ------------------------------------------------------------
-  // BODY SCROLL LOCK (wichtig!)
+  // BODY SCROLL LOCK
   // ------------------------------------------------------------
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -52,7 +52,6 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
   // ------------------------------------------------------------
   useEffect(() => {
     async function load() {
-      // Mitarbeiter laden
       const { data: empData } = await supabase
         .from("employees")
         .select("id,name")
@@ -61,7 +60,6 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
 
       setEmployees(empData ?? []);
 
-      // Overrides laden
       const { data: dayRows } = await supabase
         .from("day_overrides")
         .select("*")
@@ -98,16 +96,16 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
   // ------------------------------------------------------------
   // Drag & Drop
   // ------------------------------------------------------------
-  function handleDragOver(e: React.DragEvent, index: number) {
+  function handleDragOver(e: React.DragEvent, _index: number) {
     e.preventDefault();
-    setDragActive(index);
+    setDragActive(_index);
   }
 
   function handleDragLeave() {
     setDragActive(null);
   }
 
-  function handleDrop(e: React.DragEvent, index: number) {
+  function handleDrop(e: React.DragEvent, _index: number) {
     e.preventDefault();
     setDragActive(null);
 
@@ -121,7 +119,7 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
       const emp = employees.find((x) => x.id === parsed.employeeId);
       if (!emp) return;
 
-      updateShift(index, "employee", emp.name);
+      updateShift(_index, "employee", emp.name);
     } catch {}
   }
 
@@ -143,17 +141,17 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
   // ------------------------------------------------------------
   // Schicht ändern
   // ------------------------------------------------------------
-  function updateShift(index: number, field: keyof ShiftRow, value: string | null) {
+  function updateShift(_index: number, field: keyof ShiftRow, value: string | null) {
     const updated = [...shifts];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[_index] = { ...updated[_index], [field]: value };
     setShifts(updated);
   }
 
   // ------------------------------------------------------------
   // Schicht löschen
   // ------------------------------------------------------------
-  function deleteShift(index: number) {
-    setShifts((prev) => prev.filter((_, i) => i !== index));
+  function deleteShift(_index: number) {
+    setShifts((prev) => prev.filter((_, i) => i !== _index));
   }
 
   // ------------------------------------------------------------
@@ -165,7 +163,6 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
     );
     const emptyNote = note.trim() === "";
 
-    // FALL A: Alles leer → Tag löschen
     if (allEmpty && emptyNote) {
       if (overrideId) {
         await supabase.from("override_shifts").delete().eq("override_id", overrideId);
@@ -175,7 +172,6 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
       return;
     }
 
-    // FALL B: Tag speichern (UPSERT)
     const { data: dayData } = await supabase
       .from("day_overrides")
       .upsert({
@@ -189,10 +185,8 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
     const newOverrideId = dayData.id;
     setOverrideId(newOverrideId);
 
-    // Alte Schichten löschen
     await supabase.from("override_shifts").delete().eq("override_id", newOverrideId);
 
-    // Neue Schichten speichern
     const validShifts = shifts.filter(
       (s) => s.start_time.trim() !== "" && s.end_time.trim() !== ""
     );
@@ -258,7 +252,7 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
           <div key={group} className="override-group">
             <h3 className="override-group-title">{group}</h3>
 
-            {groups[group].map((shift, index) => {
+            {groups[group].map((shift, _index) => {
               const globalIndex = shifts.indexOf(shift);
 
               return (
@@ -308,7 +302,6 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
                     />
                   </div>
 
-                  {/* Mitarbeiter Dropdown */}
                   <select
                     className="shift-employee-select"
                     value={shift.employee ?? ""}
@@ -324,7 +317,6 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
                     ))}
                   </select>
 
-                  {/* Drag & Drop Zone */}
                   <div className="shift-dropzone">
                     {shift.employee ? (
                       <div className="employee-chip">{shift.employee}</div>
