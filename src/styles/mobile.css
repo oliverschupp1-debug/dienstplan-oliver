@@ -28,6 +28,32 @@
   color: #222;
 }
 
+/* ⭐ Sticky Monatsname */
+.sticky-month {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--sticky-bg);
+  padding: 10px 0;
+  margin: 0;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+/* ⭐ Sticky Wochentagsleiste */
+.sticky-weekdays {
+  position: sticky;
+  top: 48px; /* direkt unter dem Monatsnamen */
+  z-index: 40;
+  background: var(--sticky-bg);
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+}
+
 /* ---------------------------------------------------------
    📱 BUTTONS
 --------------------------------------------------------- */
@@ -207,4 +233,59 @@
     border-left: 1px solid #ddd;
     border-right: 1px solid #ddd;
   }
+}
+
+/* ---------------------------------------------------------
+   ⭐ SLIDE-IN MITARBEITER PANEL
+--------------------------------------------------------- */
+
+.mobile-employee-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 80%;
+  height: 100%;
+  background: white;
+  z-index: 2000;
+  box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+  padding: 20px;
+  overflow-y: auto;
+  animation: slideIn 0.25s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+.mobile-employee-panel-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.mobile-employee-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-employee-panel-item {
+  padding: 12px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.mobile-employee-panel-close {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
 }

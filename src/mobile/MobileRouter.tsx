@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import MobileTodayView from "./MobileTodayView";
@@ -9,6 +10,7 @@ import MobileMonthViewAdmin from "./MobileMonthViewAdmin";
 import MobileMonthViewEmployee from "./MobileMonthViewEmployee";
 
 import MobileNavBar from "./MobileNavBar";
+import "./MobileEmployeePanel.css"; // gleich bekommst du die Datei
 
 type Props = {
   role: "admin" | "planner" | "employee";
@@ -27,14 +29,44 @@ export default function MobileRouter({
   const isPlanner = role === "planner";
   const isEmployee = role === "employee";
 
+  // ⭐ Panel-Status
+  const [showEmployees, setShowEmployees] = useState(false);
+
   return (
     <div className="mobile-root">
 
-      <MobileNavBar role={role} />
+      {/* ⭐ Navigation mit Mitarbeiter-Button */}
+      <MobileNavBar
+        role={role}
+        onToggleEmployees={() => setShowEmployees((s) => !s)}
+      />
 
+      {/* ⭐ Mitarbeiter-Panel (nur Admin/Planner) */}
+      {showEmployees && (isAdmin || isPlanner) && (
+        <div className="mobile-employee-panel">
+          <h3 className="mobile-employee-panel-title">Mitarbeiter</h3>
+
+          <div className="mobile-employee-panel-list">
+            {employees.map((e) => (
+              <div key={e.id} className="mobile-employee-panel-item">
+                {e.name}
+              </div>
+            ))}
+          </div>
+
+          <button
+            className="mobile-employee-panel-close"
+            onClick={() => setShowEmployees(false)}
+          >
+            Schließen
+          </button>
+        </div>
+      )}
+
+      {/* ⭐ Routes */}
       <Routes>
 
-        {/* ⭐ Heute */}
+        {/* Heute */}
         {isAdmin && (
           <Route
             path="today"
@@ -74,7 +106,7 @@ export default function MobileRouter({
           />
         )}
 
-        {/* ⭐ Monat */}
+        {/* Monat */}
         {isAdmin && (
           <Route
             path="month"
@@ -104,9 +136,9 @@ export default function MobileRouter({
             path="month"
             element={
               <MobileMonthViewEmployee
-  stationName={stationName}
-  employees={employees}
-/>
+                stationName={stationName}
+                employees={employees}
+              />
             }
           />
         )}

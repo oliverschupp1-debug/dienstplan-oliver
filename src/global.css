@@ -25,6 +25,9 @@ html, body {
   --text: #1a1a1a;
   --text-muted: #555;
   --accent: #4da3ff; /* sanftes Apple-Blau */
+
+  /* ⭐ NEU: Sticky-Hintergründe theme-aware */
+  --sticky-bg: var(--panel-alt);
 }
 
 /* -------------------------------------------------------
@@ -38,6 +41,9 @@ html, body {
   --text: #f5f5f5;
   --text-muted: #bdbdbd;
   --accent: #4da3ff;
+
+  /* ⭐ NEU */
+  --sticky-bg: var(--panel);
 }
 
 /* -------------------------------------------------------
@@ -52,6 +58,9 @@ html, body {
     --text: #f5f5f5;
     --text-muted: #bdbdbd;
     --accent: #4da3ff;
+
+    /* ⭐ NEU */
+    --sticky-bg: var(--panel);
   }
 }
 
@@ -64,6 +73,9 @@ html, body {
     --text: #1a1a1a;
     --text-muted: #555;
     --accent: #4da3ff;
+
+    /* ⭐ NEU */
+    --sticky-bg: var(--panel-alt);
   }
 }
 

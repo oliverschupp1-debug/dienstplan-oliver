@@ -43,7 +43,9 @@ export default function MobileMonthViewEmployee({ stationName, employees }: Prop
 
   return (
     <div className="mobile-root">
-      <h2 className="mobile-month-title">
+
+      {/* ⭐ Sticky Monatsname */}
+      <h2 className="mobile-month-title sticky-month">
         {monthNames[month]} {year}
       </h2>
 
@@ -57,15 +59,19 @@ export default function MobileMonthViewEmployee({ stationName, employees }: Prop
         Heute
       </button>
 
-      <div className="mobile-month-grid">
-        <div className="mobile-month-header">Mo</div>
-        <div className="mobile-month-header">Di</div>
-        <div className="mobile-month-header">Mi</div>
-        <div className="mobile-month-header">Do</div>
-        <div className="mobile-month-header">Fr</div>
-        <div className="mobile-month-header">Sa</div>
-        <div className="mobile-month-header">So</div>
+      {/* ⭐ Sticky Wochentagsleiste */}
+      <div className="mobile-month-header-row sticky-weekdays">
+        <div>Mo</div>
+        <div>Di</div>
+        <div>Mi</div>
+        <div>Do</div>
+        <div>Fr</div>
+        <div>Sa</div>
+        <div>So</div>
+      </div>
 
+      {/* ⭐ Grid */}
+      <div className="mobile-month-grid">
         {weeks.map((week: CalendarWeek) =>
           week.days.map((day: CalendarDay) => {
             const holiday = isHoliday(day.iso);

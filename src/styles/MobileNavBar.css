@@ -28,3 +28,21 @@
 .admin-link {
   color: #ffcc00;
 }
+
+/* ⭐ Neuer Mitarbeiter-Button */
+.mobile-nav-button {
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 16px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.mobile-nav-button:hover {
+  color: #fff;
+}
+
+.mobile-nav-button:active {
+  opacity: 0.7;
+}
