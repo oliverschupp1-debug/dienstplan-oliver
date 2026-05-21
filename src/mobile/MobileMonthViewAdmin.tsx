@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useAssignments } from "../useAssignments";
 import { useEmployees } from "../hooks/useEmployees";
 import { useOverrides } from "../useOverrides";
-import { getHolidayInfo } from "../calendar/calendarUtils";
+import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { useTouchNavigation } from "../useTouchNavigation";
 
@@ -202,7 +202,7 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
         {weeks.map((week) =>
           week.days.map((day) => {
             const iso = day.iso;
-            const holiday = getHolidayInfo(iso);
+            const holiday = isHoliday(iso);
             const override = overridesMap[iso];
 
             const weekdayIndex = (day.date.getDay() + 6) % 7;

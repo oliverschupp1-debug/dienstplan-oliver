@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { useAssignments } from "../useAssignments";
 import { useOverrides } from "../useOverrides";
-import { getHolidayInfo } from "../calendar/calendarUtils";
+import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { useTouchNavigation } from "../useTouchNavigation";
 
@@ -45,7 +45,7 @@ export default function MobileTodayViewAdmin({
   const [dragEmployee, setDragEmployee] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const holiday = getHolidayInfo(iso);
+  const holiday = isHoliday(iso);
 
   const overrideShifts = overrides[iso] ?? null;
 

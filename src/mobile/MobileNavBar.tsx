@@ -8,7 +8,6 @@ type Props = {
 export default function MobileNavBar({ role }: Props) {
   const isAdmin = role === "admin";
   const isPlanner = role === "planner";
-  const isEmployee = role === "employee";
 
   return (
     <nav className="mobile-nav">

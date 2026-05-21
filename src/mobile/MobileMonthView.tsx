@@ -21,7 +21,7 @@ type CalendarDay = {
   date: Date;
   day: number;
   weekday: number;
-  outside: boolean;
+  isOutsideMonth: boolean;
   isHoliday: boolean;
   holidayName?: string;
 };
@@ -100,7 +100,7 @@ const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
               <div
                 key={iso}
                 className={`mobile-month-cell ${
-                  day.outside ? "mobile-month-outside" : ""
+                  day.isOutsideMonth ? "mobile-month-outside" : ""
                 } ${holiday?.name ? "mobile-month-holiday-bg" : ""}`}
               >
                 <div className="mobile-month-day">{day.day}</div>

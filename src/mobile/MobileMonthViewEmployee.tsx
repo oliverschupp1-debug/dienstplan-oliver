@@ -1,6 +1,6 @@
 // src/mobile/MobileMonthViewEmployee.tsx
 import { useState, useMemo } from "react";
-import { generateCalendar, getHolidayInfo } from "../calendar/calendarUtils";
+import { isHoliday } from "../calendar/holidays";
 import { useAssignments } from "../useAssignments";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { useTouchNavigation } from "../useTouchNavigation";
@@ -81,7 +81,7 @@ export default function MobileMonthViewEmployee({
         {weeks.map((week) =>
           week.days.map((day) => {
             const iso = day.iso;
-            const holiday = getHolidayInfo(iso);
+            const holiday = isHoliday(iso);
 
             const weekdayIndex = (new Date(iso).getDay() + 6) % 7;
 

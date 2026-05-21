@@ -14,7 +14,7 @@ export default function AppShell() {
   const { stations, loading: stationsLoading } = useStations();
   const [stationName, setStationName] = useState("");
 
-  const { mode, setMode, resolvedTheme } = useTheme();
+  const { mode, setMode } = useTheme();
 
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());

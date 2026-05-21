@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { useAssignments } from "../useAssignments";
 import { getShiftModelForStation } from "../shiftModelsDefault";
-import { getHolidayInfo } from "../calendar/calendarUtils";
+import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
 
 type Employee = {
@@ -37,7 +37,7 @@ export default function MobileTodayView({
   const { assignments } = useAssignments(safeStation);
 
   const model = getShiftModelForStation(safeStation);
-  const holiday = getHolidayInfo(iso);
+  const holiday = isHoliday(iso);
 
   const weekdayIndex = (today.getDay() + 6) % 7;
 
