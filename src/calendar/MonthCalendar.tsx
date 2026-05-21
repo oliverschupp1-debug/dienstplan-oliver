@@ -67,38 +67,41 @@ export default function MonthCalendar({
   // Laden von Assignments + Employees
   // ------------------------------------------------------------
   useEffect(() => {
-    async function load() {
-      if (!safeStation) return;
+  async function load() {
+    if (!safeStation) return;
 
-      const firstDay = new Date(year, month, 1).toISOString().slice(0, 10);
-      const lastDay = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+    const firstDay = new Date(year, month, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(year, month + 1, 0).toISOString().slice(0, 10);
 
-      const { data: aData } = await supabase
-        .from("assignments")
-        .select("*")
-        .eq("station_id", safeStation)
-        .gte("date", firstDay)
-        .lte("date", lastDay);
+    const { data: aData } = await supabase
+      .from("assignments")
+      .select("*")
+      .eq("station_id", safeStation)
+      .gte("date", firstDay)
+      .lte("date", lastDay);
 
-      setAssignments((aData ?? []) as Assignment[]);
+    setAssignments((aData ?? []) as Assignment[]);
 
-      const { data: eData } = await supabase
-        .from("employees")
-        .select("id,name")
-        .eq("station_id", safeStation)
-        .order("name", { ascending: true });
+    const { data: eData } = await supabase
+      .from("employees")
+      .select("id,name")
+      .eq("station_id", safeStation)
+      .order("name", { ascending: true });
 
-      setEmployees((eData ?? []) as Employee[]);
-    }
+    setEmployees((eData ?? []) as Employee[]);
+  }
 
+  load();
+
+  const off = onAssignmentsChanged(() => {
     load();
+  });
 
-    const off = onAssignmentsChanged(() => {
-      load();
-    });
+  return () => {
+    off();   // ⭐ Cleanup gibt jetzt korrekt "void" zurück
+  };
+}, [safeStation, year, month]);
 
-    return () => off();
-  }, [safeStation, year, month]);
 
   // ------------------------------------------------------------
   // Navigation
