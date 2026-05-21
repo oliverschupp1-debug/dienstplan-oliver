@@ -47,7 +47,7 @@ export function useMonthlyHours(
         return;
       }
 
-      const total = calculateHoursForAssignments(stationId, assignments ?? []);
+      const total = calculateHoursForAssignments(stationId ?? "", assignments ?? []);
       setHours(total);
       setLoading(false);
     }

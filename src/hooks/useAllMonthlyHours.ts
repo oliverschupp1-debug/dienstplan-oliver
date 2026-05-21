@@ -47,15 +47,19 @@ export function useAllMonthlyHours(
       }
 
       const byEmployee: Record<string, any[]> = {};
+
       for (const a of assignments ?? []) {
-        if (!byEmployee[a.employee_id]) byEmployee[a.employee_id] = [];
+        if (!byEmployee[a.employee_id]) {
+          byEmployee[a.employee_id] = [];
+        }
         byEmployee[a.employee_id].push(a);
       }
 
       const result: Record<string, number> = {};
+
       for (const [employeeId, list] of Object.entries(byEmployee)) {
         result[employeeId] = calculateHoursForAssignments(
-          stationId,
+          stationId ?? "",
           list as any[]
         );
       }
