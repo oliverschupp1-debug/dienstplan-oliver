@@ -1,11 +1,5 @@
-import { NewsItem } from "../../types/NewsItem";
-
-interface NewsItem {
-  id: string;
-  title: string;
-  created_at: string;
-  content?: string;
-}
+import type { NewsItem } from "../../types/NewsItem";
+import InfoCard from "./InfoCard";
 
 interface Props {
   news: NewsItem[];

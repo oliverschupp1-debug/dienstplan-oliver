@@ -1,17 +1,9 @@
 import { useState } from "react";
 import { useNews } from "../../hooks/useNews";
-import { NewsItem } from "../../types/NewsItem";
+import type { NewsItem } from "../../types/NewsItem";
+import InfoPage from "./InfoPage";
 import InfoDetail from "./InfoDetail";
 import InfoEditor from "./InfoEditor";
-
-interface NewsItem {
-  id: string;
-  title: string;
-  content: string;
-  created_at: string;
-  visible_for_roles?: string[];
-}
-
 
 interface Props {
   stationId: string;
@@ -20,7 +12,7 @@ interface Props {
 }
 
 export default function InfoPageWrapper({ stationId, role, userId }: Props) {
-  const safeStation = stationId; // NICHT lowercased, NICHT verändert
+  const safeStation = stationId;
 
   const {
     news,
@@ -36,8 +28,6 @@ export default function InfoPageWrapper({ stationId, role, userId }: Props) {
 
   return (
     <div style={{ padding: "20px" }}>
-
-      {/* LISTE */}
       {!selected && !editorOpen && (
         <>
           {(role === "admin" || role === "planner") && (
@@ -60,7 +50,6 @@ export default function InfoPageWrapper({ stationId, role, userId }: Props) {
         </>
       )}
 
-      {/* DETAIL */}
       {selected && (
         <InfoDetail
           info={selected}
@@ -75,12 +64,14 @@ export default function InfoPageWrapper({ stationId, role, userId }: Props) {
         />
       )}
 
-      {/* EDITOR */}
       {editorOpen && (
         <InfoEditor
           stationId={safeStation}
           onSave={(data: Omit<NewsItem, "id" | "created_at">) => {
-            createNews(data);
+            createNews({
+              ...data,
+              visible_for_roles: data.visible_for_roles ?? []
+            });
             setEditorOpen(false);
           }}
           onCancel={() => setEditorOpen(false)}
