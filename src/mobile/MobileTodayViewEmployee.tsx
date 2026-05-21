@@ -7,7 +7,6 @@ import { useTouchNavigation } from "../useTouchNavigation";
 
 type Props = {
   stationName: string;
-  employees: { id: string; name: string }[];
   onOpenMonth: () => void;
 };
 
@@ -18,11 +17,7 @@ function getLocalISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-export default function MobileTodayViewEmployee({
-  stationName,
-  employees,
-  onOpenMonth,
-}: Props) {
+export default function MobileTodayViewEmployee({ stationName, onOpenMonth }: Props)
   const today = new Date();
   const iso = getLocalISO(today);
 
