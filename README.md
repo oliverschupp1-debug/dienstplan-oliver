@@ -72,3 +72,4 @@ export default defineConfig([
 ])
 ```
 Update for redeploy
+Trigger redeploy
