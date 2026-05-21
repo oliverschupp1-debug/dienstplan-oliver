@@ -9,7 +9,7 @@ export function useNews(stationId: string, userId: string) {
   const [readIds, setReadIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const safeStation = (stationId ?? "").toLowerCase();
+  const safeStation = stationId; // NICHT lowercased, NICHT verändert
 
   // -------------------------------------------------------
   // NEWS LADEN

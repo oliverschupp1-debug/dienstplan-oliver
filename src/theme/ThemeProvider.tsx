@@ -1,34 +1,66 @@
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
-export const ThemeContext = createContext({
-  theme: "system",
-  setTheme: (t: string) => {},
-});
+type ThemeMode = "light" | "dark" | "system";
+
+type ThemeContextType = {
+  mode: ThemeMode;
+  setMode: (mode: ThemeMode) => void;
+  resolvedTheme: "light" | "dark";
+};
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState("system");
+  const [mode, setMode] = useState<ThemeMode>(() => {
+    return (localStorage.getItem("theme-mode") as ThemeMode) || "system";
+  });
 
-  // gespeichertes Theme laden
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
+
+  // System theme listener
   useEffect(() => {
-    const saved = localStorage.getItem("theme-mode");
-    if (saved) setThemeState(saved);
-  }, []);
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
 
-  // Theme anwenden
+    const update = () => {
+      const systemTheme = media.matches ? "dark" : "light";
+
+      if (mode === "system") {
+        setResolvedTheme(systemTheme);
+        document.documentElement.setAttribute("data-theme", systemTheme);
+      }
+    };
+
+    update();
+    media.addEventListener("change", update);
+
+    return () => media.removeEventListener("change", update);
+  }, [mode]);
+
+  // Apply theme when mode changes
   useEffect(() => {
-    localStorage.setItem("theme-mode", theme);
-
-    if (theme === "system") {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+    if (mode === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      setResolvedTheme(systemTheme);
+      document.documentElement.setAttribute("data-theme", systemTheme);
     } else {
-      document.documentElement.setAttribute("data-theme", theme);
+      setResolvedTheme(mode);
+      document.documentElement.setAttribute("data-theme", mode);
     }
-  }, [theme]);
+
+    localStorage.setItem("theme-mode", mode);
+  }, [mode]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: setThemeState }}>
+    <ThemeContext.Provider value={{ mode, setMode, resolvedTheme }}>
       {children}
     </ThemeContext.Provider>
   );
+}
+
+export function useTheme() {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useTheme must be used inside ThemeProvider");
+  return ctx;
 }

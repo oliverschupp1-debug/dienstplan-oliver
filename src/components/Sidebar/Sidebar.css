@@ -1,87 +1,114 @@
-/* SIDEBAR ROOT */
-.sidebar-dark {
+/* ROOT SIDEBAR */
+.sidebar {
   width: 260px;
   background: var(--panel);
   color: var(--text);
   border-right: 1px solid var(--border);
-  padding: 15px;
+  padding: 18px;
   box-sizing: border-box;
 
-  /* ⭐ Sidebar bleibt stehen */
   position: sticky;
   top: 0;
   height: 100vh;
   overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 /* TITLE */
-.sidebar-title-dark {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
+.sidebar-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
 }
 
 /* STATION SELECT */
-.station-select-dark {
+.station-select-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.station-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.station-select {
   width: 100%;
-  padding: 8px;
+  padding: 8px 10px;
   background: var(--panel-alt);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.station-select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 /* EMPLOYEE LIST */
-.employee-list-dark {
+.employee-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 /* EMPLOYEE CARD */
-.employee-item-dark {
+.employee-item {
   background: var(--panel-alt);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
   position: relative;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.employee-item-dark:hover {
+.employee-item:hover {
   background: var(--panel);
+  border-color: var(--accent);
 }
 
 /* AVATAR */
-.employee-avatar-dark {
-  width: 32px;
-  height: 32px;
+.employee-avatar {
+  width: 34px;
+  height: 34px;
   background: var(--accent);
   color: black;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 /* NAME + HOURS */
-.employee-info-dark {
+.employee-info {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.employee-name-dark {
-  font-weight: bold;
+.employee-name {
+  font-weight: 600;
   color: var(--text);
 }
 
-.employee-hours-dark {
-  font-size: 12px;
-  opacity: 0.8;
+.employee-hours {
+  font-size: 0.8rem;
+  opacity: 0.85;
   display: flex;
   justify-content: space-between;
 }
@@ -92,11 +119,11 @@
 }
 
 .hours-under {
-  color: #4da3ff;
+  color: var(--accent);
 }
 
 .hours-neutral {
-  color: var(--text);
+  color: var(--text-muted);
 }
 
 /* DELETE BUTTON */
@@ -109,6 +136,7 @@
   color: #ff4d4d;
   font-size: 16px;
   cursor: pointer;
+  transition: color 0.2s;
 }
 
 .employee-delete-btn:hover {
@@ -116,37 +144,57 @@
 }
 
 /* ADD EMPLOYEE FORM */
-.add-employee-form-dark {
-  margin-top: 20px;
+.add-employee-form {
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.add-employee-input-dark {
-  padding: 8px;
+.add-employee-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.add-employee-input {
+  padding: 8px 10px;
   background: var(--panel);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
 }
 
-.add-employee-btn-dark {
-  padding: 8px;
+.add-employee-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.add-employee-error {
+  color: #ff4d4d;
+  font-size: 0.85rem;
+}
+
+.add-employee-btn {
+  padding: 10px;
   background: var(--accent);
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
+  color: black;
+  transition: filter 0.2s;
 }
 
-.add-employee-btn-dark:hover {
-  opacity: 0.9;
+.add-employee-btn:hover {
+  filter: brightness(0.9);
 }
 
 /* PRINT MODE */
 @media print {
-  .sidebar-dark {
+  .sidebar {
     display: none !important;
   }
 }

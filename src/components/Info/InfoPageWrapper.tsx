@@ -20,7 +20,7 @@ interface Props {
 }
 
 export default function InfoPageWrapper({ stationId, role, userId }: Props) {
-  const safeStation = (stationId ?? "").toLowerCase();
+  const safeStation = stationId; // NICHT lowercased, NICHT verändert
 
   const {
     news,

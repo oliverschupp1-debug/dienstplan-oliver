@@ -1,3 +1,4 @@
+// AppRouter.tsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 
@@ -21,21 +22,24 @@ export default function AppRouter() {
     );
   }
 
-  const isLoggedIn = !!user;
-
+  const meta = user?.user_metadata ?? {};
+  const rawRole = meta.role as string | undefined;
   let role: "admin" | "planner" | "employee" | null = null;
-  let stationId: string | null = null;
-  let employees: any[] = [];
 
-  if (isLoggedIn) {
-    const meta = user.user_metadata ?? {};
-    role = meta.role ?? null;
-    stationId = meta.station_id ?? null;
-
-    employees = useEmployees(stationId).employees;
+  if (rawRole === "admin" || rawRole === "planner" || rawRole === "employee") {
+    role = rawRole;
+  } else if (user) {
+    // Fallback: jeder eingeloggte User ohne gültige Rolle wird als Mitarbeiter behandelt
+    role = "employee";
   }
 
-  // ⭐ Mitarbeiter → Mobile
+  const stationId = (meta.station_id ?? null) as string | null;
+
+  const { employees } = useEmployees(stationId ?? "");
+
+  const isLoggedIn = !!user;
+
+  // ⭐ Mitarbeiter (oder Fallback) → Mobile
   if (isLoggedIn && role === "employee") {
     return (
       <BrowserRouter>
@@ -44,7 +48,7 @@ export default function AppRouter() {
             path="/m/*"
             element={
               <MobileRouter
-                role={role ?? "employee"}
+                role={role}
                 stationName={stationId ?? ""}
                 employees={employees}
                 onOpenMonth={() => {}}
@@ -63,12 +67,11 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* LOGIN */}
         {!isLoggedIn && <Route path="*" element={<LoginScreen />} />}
 
         {/* DESKTOP */}
-        {isLoggedIn && (
+        {isLoggedIn && (role === "admin" || role === "planner") && (
           <>
             <Route path="/" element={<AppShell />} />
 
@@ -78,7 +81,7 @@ export default function AppRouter() {
                 <InfoPageWrapper
                   role={role}
                   stationId={stationId ?? ""}
-                  userId={user.id}
+                  userId={user!.id}
                 />
               }
             />
@@ -86,15 +89,15 @@ export default function AppRouter() {
             <Route
               path="/employees"
               element={
-                role === "admin" || role === "planner"
-                  ? (
-                      <EmployeePanel
-                        stationId={stationId ?? ""}
-                        isOpen={true}
-                        onClose={() => {}}
-                      />
-                    )
-                  : <Navigate to="/" replace />
+                role === "admin" || role === "planner" ? (
+                  <EmployeePanel
+                    stationId={stationId ?? ""}
+                    isOpen={true}
+                    onClose={() => {}}
+                  />
+                ) : (
+                  <Navigate to="/" replace />
+                )
               }
             />
 
@@ -106,6 +109,10 @@ export default function AppRouter() {
           </>
         )}
 
+        {/* Falls ein eingeloggter User ohne gültige Rolle hier landet */}
+        {isLoggedIn && !role && (
+          <Route path="*" element={<Navigate to="/m/today" replace />} />
+        )}
       </Routes>
     </BrowserRouter>
   );

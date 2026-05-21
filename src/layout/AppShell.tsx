@@ -4,7 +4,7 @@ import Sidebar from "../components/Sidebar/Sidebar";
 import MonthCalendar from "../calendar/MonthCalendar";
 import LoginScreen from "../auth/LoginScreen";
 import { useStations } from "../hooks/useStations";
-import { ThemeContext } from "../theme/ThemeProvider";
+import { useTheme } from "../theme/ThemeProvider";
 import "./AppShell.css";
 
 export default function AppShell() {
@@ -14,13 +14,14 @@ export default function AppShell() {
   const { stations, loading: stationsLoading } = useStations();
   const [stationName, setStationName] = useState("");
 
-  const { theme, setTheme } = useContext(ThemeContext);
+  const { mode, setMode, resolvedTheme } = useTheme();
 
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
   useEffect(() => {
     if (!stationsLoading && u?.station) {
+      // station aus dem User, wie bisher, in Kleinbuchstaben
       setStationName(u.station.trim().toLowerCase());
     }
   }, [u, stationsLoading]);
@@ -33,6 +34,11 @@ export default function AppShell() {
 
   function handlePrint() {
     window.print();
+  }
+
+  function handleMonthChange(year: number, month: number) {
+    setCurrentYear(year);
+    setCurrentMonth(month);
   }
 
   return (
@@ -51,14 +57,15 @@ export default function AppShell() {
           </button>
 
           <select
-            className="theme-select"
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-          >
-            <option value="light">Hell</option>
-            <option value="dark">Dunkel</option>
-            <option value="system">System</option>
-          </select>
+  className="theme-select"
+  value={mode}
+  onChange={(e) => setMode(e.target.value as "light" | "dark" | "system")}
+>
+  <option value="light">Hell</option>
+  <option value="dark">Dunkel</option>
+  <option value="system">System</option>
+</select>
+
 
           <button className="logout-btn" onClick={logout}>
             Logout
@@ -78,10 +85,9 @@ export default function AppShell() {
         <div style={{ flex: 1, overflow: "auto" }}>
           <MonthCalendar
             stationName={stationName}
-            onMonthChange={(y, m) => {
-              setCurrentYear(y);
-              setCurrentMonth(m);
-            }}
+            year={currentYear}
+            month={currentMonth}
+            onMonthChange={handleMonthChange}
           />
         </div>
       </div>

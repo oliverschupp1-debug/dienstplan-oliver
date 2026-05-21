@@ -1,192 +1,177 @@
-/* ROOT CONTAINER */
-.month-root-dark {
+/* ROOT WRAPPER */
+.month-root {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   background: var(--bg);
   color: var(--text);
-  padding: 10px;
-  min-height: 100%;
-  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
 }
 
-/* HEADER – Variante B */
-.calendar-header-dark {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  color: var(--text);
-}
-
-.calendar-header-left {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.calendar-header-left button {
-  background: var(--panel-alt);
-  color: var(--text);
-  border: 1px solid var(--border);
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.calendar-header-left button:hover {
-  background: var(--panel);
-}
-
-.calendar-header-right {
-  font-size: 18px;
-  font-weight: bold;
-  opacity: 0.9;
-}
-
-/* WEEKDAY ROW */
-.calendar-weekdays-dark {
+/* HEADER */
+.calendar-header {
   display: grid;
-  grid-template-columns: 50px repeat(7, 1fr);
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
   background: var(--panel);
-  color: var(--text);
-  border-bottom: 1px solid var(--border);
-  padding: 8px 0;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.calendar-title {
   text-align: center;
-  font-weight: bold;
-}
-
-/* GRID */
-.calendar-grid-dark {
-  display: grid;
-  grid-template-columns: 50px repeat(7, 1fr);
-  gap: 1px;
-  background: var(--border);
-}
-
-/* WEEK NUMBER */
-.calendar-weeknumber-dark {
-  background: var(--panel);
+  font-size: 1.45rem;
+  font-weight: 700;
   color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
+  pointer-events: none;
 }
 
-/* DAY CELL */
-.calendar-cell-dark {
-  background: var(--panel);
-  color: var(--text);
-  padding: 6px;
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-.outside-month-dark {
-  opacity: 0.4;
-}
-
-/* DATE ROW */
-.calendar-date-row-dark {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.calendar-date-dark {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.holiday-badge-dark {
-  background: var(--accent);
-  color: black;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-/* SHIFT LIST */
-.shift-list-dark {
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* SHIFT ROW */
-.shift-row-dark {
+.nav-btn {
   background: var(--panel-alt);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.override-dark {
+.nav-btn:hover {
+  background: var(--panel);
   border-color: var(--accent);
 }
 
-/* SHIFT HEADER */
-.shift-header-dark {
-  display: flex;
-  align-items: center;
+/* WEEKDAY ROW */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: 46px repeat(7, 1fr);
+  text-align: center;
+  font-weight: 600;
+  padding: 10px 0;
+  background: var(--panel);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+/* GRID */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 46px repeat(7, 1fr);
   gap: 8px;
 }
 
-.shift-name-dark {
-  font-weight: bold;
+/* WEEK NUMBER */
+.calendar-weeknumber {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* DAY CELL */
+.calendar-cell {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 140px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.calendar-cell:hover {
+  border-color: var(--accent);
+}
+
+.calendar-cell.outside-month {
+  background: var(--panel-alt);
+  opacity: 0.45;
+}
+
+/* DATE */
+.calendar-date {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
   color: var(--text);
+  font-size: 0.95rem;
 }
 
-.shift-time-dark {
+.holiday-badge {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* SHIFT LIST */
+.shift-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* SHIFT ROW */
+.shift-row {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.shift-row:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+/* SHIFT HEADER */
+.shift-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shift-name {
+  font-weight: 600;
   color: var(--text);
-  opacity: 0.8;
+  font-size: 0.9rem;
 }
 
-/* DELETE BUTTON */
-.shift-delete-btn {
-  margin-left: auto;
-  background: transparent;
-  border: none;
-  color: #ff4d4d;
-  font-size: 16px;
-  cursor: pointer;
+.shift-time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+  font-size: 0.85rem;
 }
 
-.shift-delete-btn:hover {
-  color: #ff1a1a;
-}
-
-/* EMPLOYEES */
+/* EMPLOYEES IN SHIFT */
 .shift-employees-dark {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
+/* Mitarbeiter-Chip */
 .shift-employee-item-dark {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 4px;
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.shift-employee-avatar-dark {
-  width: 24px;
-  height: 24px;
-  background: var(--accent);
-  color: black;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
 }
 
 .shift-employee-name-dark {
@@ -194,73 +179,43 @@
   color: var(--text);
 }
 
+/* Entfernen-Button */
 .shift-employee-remove-dark {
   background: transparent;
   border: none;
-  color: #ff4d4d;
+  color: #ff6b6b;
   cursor: pointer;
   font-size: 16px;
+  transition: color 0.2s;
 }
 
 .shift-employee-remove-dark:hover {
-  color: #ff1a1a;
+  color: #ff3b3b;
 }
 
-/* ----------------------------- */
-/* ⭐ PRINT MODE (PDF / DRUCKEN) */
-/* ----------------------------- */
+/* DROPZONE */
+.shift-dropzone {
+  background: var(--panel);
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  color: var(--text-muted);
+  opacity: 0.7;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+}
 
-@media print {
+.shift-row:hover .shift-dropzone {
+  border-color: var(--accent);
+}
 
-  /* Hintergrund weiß */
-  html, body {
-    background: white !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
+.shift-row.drag-active .shift-dropzone {
+  border-color: var(--accent);
+  opacity: 1;
+  background: var(--panel-alt);
+}
 
-  /* Keine Scrollbars */
-  body {
-    overflow: visible !important;
-  }
-
-  /* A4 Querformat */
-  @page {
-    size: A4 landscape;
-    margin: 10mm;
-  }
-
-  /* Buttons entfernen */
-  .shift-delete-btn,
-  .shift-employee-remove-dark {
-    display: none !important;
-  }
-
-  /* Keine dunklen Hintergründe */
-  .month-root-dark,
-  .calendar-cell-dark,
-  .shift-row-dark,
-  .shift-employee-item-dark {
-    background: white !important;
-    color: black !important;
-    border-color: #000 !important;
-  }
-
-  .calendar-weekdays-dark,
-  .calendar-weeknumber-dark {
-    background: #f0f0f0 !important;
-    color: black !important;
-  }
-
-  /* Feiertags-Badge druckfreundlich */
-  .holiday-badge-dark {
-    background: #ffd966 !important;
-    color: black !important;
-  }
-
-  /* Keine Schatten, keine Rundungen */
-  .shift-row-dark,
-  .shift-employee-item-dark {
-    border-radius: 0 !important;
-  }
+.drop-hint {
+  font-size: 0.85rem;
+  opacity: 0.8;
 }

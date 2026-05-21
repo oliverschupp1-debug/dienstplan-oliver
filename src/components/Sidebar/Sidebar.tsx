@@ -1,4 +1,4 @@
-console.log("SIDEBAR VERSION DARK + DELETE");
+console.log("SIDEBAR VERSION THEME-READY");
 
 import { useState, useEffect } from "react";
 import { useEmployees } from "../../hooks/useEmployees";
@@ -26,7 +26,6 @@ export default function Sidebar({
 
   const [reloadFlag, setReloadFlag] = useState(0);
 
-  // ⭐ FIX: Kein Cleanup, kein boolean-Return
   useEffect(() => {
     onAssignmentsChanged(() => {
       setReloadFlag((x) => x + 1);
@@ -98,11 +97,11 @@ export default function Sidebar({
   }
 
   return (
-    <div className="sidebar-dark">
-      <div className="station-select-block-dark">
-        <label className="station-label-dark">Station</label>
+    <div className="sidebar">
+      <div className="station-select-block">
+        <label className="station-label">Station</label>
         <select
-          className="station-select-dark"
+          className="station-select"
           value={stations.some((s) => s.id === stationId) ? stationId ?? "" : ""}
           onChange={(e) => onStationChange(e.target.value)}
         >
@@ -114,11 +113,11 @@ export default function Sidebar({
         </select>
       </div>
 
-      <h2 className="sidebar-title-dark">Mitarbeiter</h2>
+      <h2 className="sidebar-title">Mitarbeiter</h2>
 
-      {loading && <div className="loading-dark">Lade Mitarbeiter…</div>}
+      {loading && <div className="loading">Lade Mitarbeiter…</div>}
 
-      <div className="employee-list-dark">
+      <div className="employee-list">
         {employees.map((emp) => {
           const hours = hoursMap[emp.id] ?? 0;
           const max = emp.max_hours ?? 0;
@@ -127,23 +126,23 @@ export default function Sidebar({
           return (
             <div
               key={emp.id}
-              className="employee-item-dark"
+              className="employee-item"
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData("employeeId", emp.id);
+                e.dataTransfer.setData("text/plain", JSON.stringify({ employeeId: emp.id }));
               }}
             >
-              <div className="employee-avatar-dark">
+              <div className="employee-avatar">
                 {emp.name?.charAt(0)?.toUpperCase()}
               </div>
 
-              <div className="employee-info-dark">
-                <div className="employee-name-dark">{emp.name}</div>
+              <div className="employee-info">
+                <div className="employee-name">{emp.name}</div>
 
                 {hoursLoading ? (
-                  <div className="employee-hours-dark">Berechne…</div>
+                  <div className="employee-hours">Berechne…</div>
                 ) : (
-                  <div className="employee-hours-dark">
+                  <div className="employee-hours">
                     <span>
                       {hours.toFixed(1)} / {max} Std/Monat
                     </span>
@@ -178,12 +177,12 @@ export default function Sidebar({
         })}
       </div>
 
-      <form className="add-employee-form-dark" onSubmit={handleAddEmployee}>
-        <div className="add-employee-label-dark">Neuer Mitarbeiter</div>
+      <form className="add-employee-form" onSubmit={handleAddEmployee}>
+        <div className="add-employee-label">Neuer Mitarbeiter</div>
 
         <input
           type="text"
-          className="add-employee-input-dark"
+          className="add-employee-input"
           placeholder="Name"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
@@ -191,17 +190,15 @@ export default function Sidebar({
 
         <input
           type="number"
-          className="add-employee-input-dark"
+          className="add-employee-input"
           placeholder="Max. Stunden/Monat"
           value={newMaxHours}
           onChange={(e) => setNewMaxHours(e.target.value)}
         />
 
-        {errorMsg && (
-          <div className="add-employee-error-dark">{errorMsg}</div>
-        )}
+        {errorMsg && <div className="add-employee-error">{errorMsg}</div>}
 
-        <button className="add-employee-btn-dark" type="submit" disabled={saving}>
+        <button className="add-employee-btn" type="submit" disabled={saving}>
           {saving ? "Speichere…" : "+ Mitarbeiter hinzufügen"}
         </button>
       </form>

@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+// src/mobile/MobileTodayViewAdmin.tsx
+import React, { useMemo, useState } from "react";
 import { useAssignments } from "../useAssignments";
 import { useOverrides } from "../useOverrides";
 import { getHolidayInfo } from "../calendar/calendarUtils";
@@ -16,13 +17,20 @@ interface Props {
   onOpenMonth: () => void;
 }
 
+function getLocalISO(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export default function MobileTodayViewAdmin({
   stationName,
   employees,
-  onOpenMonth
+  onOpenMonth,
 }: Props) {
   const today = new Date();
-  const iso = today.toISOString().split("T")[0];
+  const iso = getLocalISO(today);
 
   const safeStation = (stationName ?? "").toLowerCase();
   const safeEmployees = Array.isArray(employees) ? employees : [];
@@ -39,7 +47,6 @@ export default function MobileTodayViewAdmin({
 
   const holiday = getHolidayInfo(iso);
 
-  // overrides ist ein Record<string, any[]>
   const overrideShifts = overrides[iso] ?? null;
 
   const model = useMemo(() => {
@@ -55,7 +62,7 @@ export default function MobileTodayViewAdmin({
     if (weekdayIndex === 5) return shiftModel.saturday;
 
     return shiftModel.weekdays;
-  }, [overrideShifts, holiday, shiftModel]);
+  }, [overrideShifts, holiday, shiftModel, today]);
 
   const filteredEmployees = useMemo(() => {
     return safeEmployees.filter((e) =>
@@ -63,10 +70,9 @@ export default function MobileTodayViewAdmin({
     );
   }, [safeEmployees, search]);
 
-  // Touch-Gesten
   useTouchNavigation({
     onSwipeLeft: onOpenMonth,
-    onSwipeRight: onOpenMonth
+    onSwipeRight: onOpenMonth,
   });
 
   function onDragStart(empId: string) {
@@ -94,7 +100,7 @@ export default function MobileTodayViewAdmin({
       date: iso,
       shift_name: shiftName,
       employee_id: dragEmployee,
-      station_id: safeStation
+      station_id: safeStation,
     });
   }
 
@@ -126,16 +132,12 @@ export default function MobileTodayViewAdmin({
 
   return (
     <div className="mobile-root">
-
-      {/* HEADER */}
       <h2 className="mobile-today-title">Heute – {iso}</h2>
 
-      {/* FEIERTAG */}
       {holiday?.name && (
         <div className="mobile-holiday-banner">{holiday.name}</div>
       )}
 
-      {/* OVERRIDE */}
       <div className="admin-override-row">
         <button className="mobile-button" onClick={openOverrideEditor}>
           Override setzen
@@ -148,7 +150,6 @@ export default function MobileTodayViewAdmin({
         )}
       </div>
 
-      {/* SUCHE */}
       <input
         type="text"
         placeholder="Mitarbeiter suchen…"
@@ -157,7 +158,6 @@ export default function MobileTodayViewAdmin({
         className="mobile-search"
       />
 
-      {/* MITARBEITERLISTE */}
       <div className="mobile-employee-list">
         {filteredEmployees.map((emp) => (
           <div
@@ -172,7 +172,6 @@ export default function MobileTodayViewAdmin({
         ))}
       </div>
 
-      {/* SCHICHTEN */}
       <div className="mobile-shift-list">
         {model?.map((shift: any) => (
           <div
@@ -220,7 +219,6 @@ export default function MobileTodayViewAdmin({
         ))}
       </div>
 
-      {/* MONATSANSICHT */}
       <button className="mobile-button" onClick={onOpenMonth}>
         Monatsansicht anzeigen
       </button>

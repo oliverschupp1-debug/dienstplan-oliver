@@ -20,7 +20,10 @@ type CalendarDay = {
   iso: string;
   date: Date;
   day: number;
+  weekday: number;
   outside: boolean;
+  isHoliday: boolean;
+  holidayName?: string;
 };
 
 export default function MobileMonthView({ stationName, employees }: Props) {
@@ -34,11 +37,10 @@ export default function MobileMonthView({ stationName, employees }: Props) {
 
   const { assignments } = useAssignments(safeStation);
 
-  const weeks = useMemo(() => generateCalendar(year, month), [year, month]);
+  const weeks = useMemo(() => generateCalendar({ year, month }), [year, month]);
 
   const model = getShiftModelForStation(safeStation);
 
-  // Touch-Gesten
   useTouchNavigation({
     onSwipeLeft: () => setMonth((m) => (m === 11 ? 0 : m + 1)),
     onSwipeRight: () => setMonth((m) => (m === 0 ? 11 : m - 1)),
@@ -54,7 +56,6 @@ export default function MobileMonthView({ stationName, employees }: Props) {
   return (
     <div className="mobile-root">
 
-      {/* HEADER */}
       <h2 className="mobile-month-title">
         {monthNames[month]} {year}
       </h2>
@@ -69,10 +70,8 @@ export default function MobileMonthView({ stationName, employees }: Props) {
         Heute
       </button>
 
-      {/* GRID */}
       <div className="mobile-month-grid">
 
-        {/* WEEKDAY HEADERS */}
         <div className="mobile-month-header">Mo</div>
         <div className="mobile-month-header">Di</div>
         <div className="mobile-month-header">Mi</div>
@@ -81,15 +80,13 @@ export default function MobileMonthView({ stationName, employees }: Props) {
         <div className="mobile-month-header">Sa</div>
         <div className="mobile-month-header">So</div>
 
-        {/* DAYS */}
-        {weeks.map((week: { days: CalendarDay[] }) =>
-          week.days.map((day) => {
+        {weeks.map((week) =>
+          week.days.map((day: CalendarDay) => {
             const iso = day.iso;
             const holiday = getHolidayInfo(iso);
 
-            const weekdayIndex = (day.date.getDay() + 6) % 7;
+            const weekdayIndex = day.weekday;
 
-            // ⭐ Shiftmodell bestimmen
             let shiftList: any[] = [];
 
             if (model) {
@@ -106,17 +103,12 @@ export default function MobileMonthView({ stationName, employees }: Props) {
                   day.outside ? "mobile-month-outside" : ""
                 } ${holiday?.name ? "mobile-month-holiday-bg" : ""}`}
               >
-                {/* TAG */}
                 <div className="mobile-month-day">{day.day}</div>
 
-                {/* FEIERTAG */}
                 {holiday?.name && (
-                  <div className="mobile-month-holiday">
-                    {holiday.name}
-                  </div>
+                  <div className="mobile-month-holiday">{holiday.name}</div>
                 )}
 
-                {/* SCHICHTEN */}
                 <div className="mobile-month-shifts">
                   {shiftList.map((shift) => (
                     <div key={shift.name} className="mobile-month-shift">

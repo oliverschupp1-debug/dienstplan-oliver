@@ -11,13 +11,20 @@ type Props = {
   onOpenMonth: () => void;
 };
 
+function getLocalISO(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export default function MobileTodayViewEmployee({
   stationName,
   employees,
-  onOpenMonth
+  onOpenMonth,
 }: Props) {
   const today = new Date();
-  const iso = today.toISOString().split("T")[0];
+  const iso = getLocalISO(today);
 
   const safeStation = (stationName ?? "").toLowerCase();
   const safeEmployees = Array.isArray(employees) ? employees : [];
@@ -39,9 +46,8 @@ export default function MobileTodayViewEmployee({
     return model.weekdays;
   }, [holiday, weekdayIndex, model]);
 
-  // Touch-Gesten (richtige Nutzung!)
   useTouchNavigation({
-    onSwipeUp: onOpenMonth
+    onSwipeUp: onOpenMonth,
   });
 
   const weekdayNames = [
@@ -51,26 +57,20 @@ export default function MobileTodayViewEmployee({
     "Donnerstag",
     "Freitag",
     "Samstag",
-    "Sonntag"
+    "Sonntag",
   ];
 
   return (
     <div className="mobile-today-root">
-
-      {/* HEADER */}
       <h2 className="mobile-today-title">
         {weekdayNames[weekdayIndex]}, {today.getDate()}.{today.getMonth() + 1}.
         {today.getFullYear()}
       </h2>
 
-      {/* FEIERTAG */}
       {holiday?.name && (
-        <div className="mobile-today-holiday">
-          🎉 {holiday.name}
-        </div>
+        <div className="mobile-today-holiday">🎉 {holiday.name}</div>
       )}
 
-      {/* SCHICHTEN */}
       <div className="mobile-today-shifts">
         {shiftList.map((shift) => (
           <div key={shift.name} className="mobile-today-shift">
@@ -104,7 +104,6 @@ export default function MobileTodayViewEmployee({
         ))}
       </div>
 
-      {/* BUTTON */}
       <button className="mobile-today-month-btn" onClick={onOpenMonth}>
         Monatsansicht öffnen
       </button>

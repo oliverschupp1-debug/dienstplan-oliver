@@ -10,6 +10,11 @@ type ShiftRow = {
   employee?: string | null;
 };
 
+type Employee = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   date: string;
   stationName: string;
@@ -22,6 +27,8 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
   const [note, setNote] = useState("");
   const [overrideId, setOverrideId] = useState<number | null>(null);
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [dragActive, setDragActive] = useState<number | null>(null);
 
   const defaultShifts: ShiftRow[] = [
     { name: "Früh", start_time: "", end_time: "" },
@@ -31,10 +38,30 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
   ];
 
   // ------------------------------------------------------------
+  // BODY SCROLL LOCK (wichtig!)
+  // ------------------------------------------------------------
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  // ------------------------------------------------------------
   // Laden
   // ------------------------------------------------------------
   useEffect(() => {
     async function load() {
+      // Mitarbeiter laden
+      const { data: empData } = await supabase
+        .from("employees")
+        .select("id,name")
+        .eq("station_id", stationName)
+        .order("name", { ascending: true });
+
+      setEmployees(empData ?? []);
+
+      // Overrides laden
       const { data: dayRows } = await supabase
         .from("day_overrides")
         .select("*")
@@ -61,12 +88,42 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
       if (!shiftRows || shiftRows.length === 0) {
         setShifts(defaultShifts);
       } else {
-        setShifts(shiftRows);
+        setShifts(shiftRows as ShiftRow[]);
       }
     }
 
     load();
   }, [date, stationName]);
+
+  // ------------------------------------------------------------
+  // Drag & Drop
+  // ------------------------------------------------------------
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    setDragActive(index);
+  }
+
+  function handleDragLeave() {
+    setDragActive(null);
+  }
+
+  function handleDrop(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    setDragActive(null);
+
+    const raw = e.dataTransfer.getData("text/plain");
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed.employeeId) return;
+
+      const emp = employees.find((x) => x.id === parsed.employeeId);
+      if (!emp) return;
+
+      updateShift(index, "employee", emp.name);
+    } catch {}
+  }
 
   // ------------------------------------------------------------
   // Schicht hinzufügen
@@ -86,7 +143,7 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
   // ------------------------------------------------------------
   // Schicht ändern
   // ------------------------------------------------------------
-  function updateShift(index: number, field: keyof ShiftRow, value: string) {
+  function updateShift(index: number, field: keyof ShiftRow, value: string | null) {
     const updated = [...shifts];
     updated[index] = { ...updated[index], [field]: value };
     setShifts(updated);
@@ -145,7 +202,8 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
         override_id: newOverrideId,
         name: s.name,
         start_time: s.start_time,
-        end_time: s.end_time
+        end_time: s.end_time,
+        employee: s.employee ?? null
       }));
 
       await supabase.from("override_shifts").insert(rows);
@@ -183,10 +241,7 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
     <div
       className="override-backdrop"
       onClick={(e) => {
-        // WICHTIG: Nur schließen, wenn wirklich der Hintergrund geklickt wurde
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
+        if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="override-panel" onClick={(e) => e.stopPropagation()}>
@@ -207,7 +262,16 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
               const globalIndex = shifts.indexOf(shift);
 
               return (
-                <div key={globalIndex} className="shift-card">
+                <div
+                  key={globalIndex}
+                  className={
+                    "shift-card" +
+                    (dragActive === globalIndex ? " shift-card-active" : "")
+                  }
+                  onDragOver={(e) => handleDragOver(e, globalIndex)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, globalIndex)}
+                >
                   <div className="shift-card-header">
                     <input
                       className="shift-name-input"
@@ -244,6 +308,23 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
                     />
                   </div>
 
+                  {/* Mitarbeiter Dropdown */}
+                  <select
+                    className="shift-employee-select"
+                    value={shift.employee ?? ""}
+                    onChange={(e) =>
+                      updateShift(globalIndex, "employee", e.target.value || null)
+                    }
+                  >
+                    <option value="">(kein Mitarbeiter)</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.name}>
+                        {emp.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Drag & Drop Zone */}
                   <div className="shift-dropzone">
                     {shift.employee ? (
                       <div className="employee-chip">{shift.employee}</div>

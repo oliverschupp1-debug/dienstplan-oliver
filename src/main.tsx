@@ -1,8 +1,9 @@
+// main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import "./theme/theme.css";
 
+import "./global.css";
 
 // Supabase
 import { supabase } from "./lib/supabaseClient";
