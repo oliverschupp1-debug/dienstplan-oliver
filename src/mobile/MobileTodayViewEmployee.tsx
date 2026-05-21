@@ -5,8 +5,14 @@ import { getShiftModelForStation } from "../shiftModelsDefault";
 import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
 
+type Employee = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   stationName: string;
+  employees: Employee[];
   onOpenMonth: () => void;
 };
 
@@ -17,7 +23,12 @@ function getLocalISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-export default function MobileTodayViewEmployee({ stationName, onOpenMonth }: Props) {
+export default function MobileTodayViewEmployee({
+  stationName,
+  employees,
+  onOpenMonth
+}: Props) {
+
   const today = new Date();
   const iso = getLocalISO(today);
 
@@ -84,9 +95,12 @@ export default function MobileTodayViewEmployee({ stationName, onOpenMonth }: Pr
                     a.station_id === safeStation
                 )
                 .map((a) => {
+                  const emp = employees.find((e) => e.id === a.employee_id);
+                  if (!emp) return null;
+
                   return (
                     <div key={a.id} className="mobile-today-emp-pill">
-                      {a.employee_name}
+                      {emp.name}
                     </div>
                   );
                 })}
