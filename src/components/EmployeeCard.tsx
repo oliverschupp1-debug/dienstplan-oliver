@@ -1,9 +1,6 @@
-import React from "react";
 import "../calendar/MonthCalendar.css";
 
-
 interface EmployeeCardProps {
-  shiftName: string;
   time: string;
   employee: string;
   colorClass: string;
@@ -13,7 +10,6 @@ interface EmployeeCardProps {
 }
 
 export default function EmployeeCard({
-  shiftName,
   time,
   employee,
   colorClass,
