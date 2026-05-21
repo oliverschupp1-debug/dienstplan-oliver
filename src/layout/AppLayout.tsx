@@ -1,7 +1,12 @@
-import React from "react";
 import "./AppLayout.css";
+import type { ReactNode } from "react";
 
-export default function AppLayout({ sidebar, children }) {
+interface Props {
+  sidebar: ReactNode;
+  children: ReactNode;
+}
+
+export default function AppLayout({ sidebar, children }: Props) {
   return (
     <div className="layout-root">
       <aside className="layout-sidebar">

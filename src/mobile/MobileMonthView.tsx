@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { generateCalendar } from "../calendar/calendarUtils";
 import { useAssignments } from "../useAssignments";
 import { getShiftModelForStation } from "../shiftModelsDefault";
-import { getHolidayInfo } from "../calendar/calendarUtils";
+import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
 
 type Employee = {
@@ -83,7 +83,7 @@ export default function MobileMonthView({ stationName, employees }: Props) {
         {weeks.map((week) =>
           week.days.map((day: CalendarDay) => {
             const iso = day.iso;
-            const holiday = getHolidayInfo(iso);
+            const holiday = isHoliday(iso);
 
             const weekdayIndex = day.weekday;
 

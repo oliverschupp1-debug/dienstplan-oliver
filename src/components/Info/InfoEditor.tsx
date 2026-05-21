@@ -11,7 +11,7 @@ interface Props {
   onCancel: () => void;
 }
 
-export default function InfoEditor({ stationId, onSave, onCancel }: Props) {
+export default function InfoEditor({ _stationId, onSave, onCancel }: Props) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 

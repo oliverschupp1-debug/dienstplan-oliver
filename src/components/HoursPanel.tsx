@@ -1,4 +1,3 @@
-import React from "react";
 import { useEmployees } from "../hooks/useEmployees";
 import { useMonthlyHours } from "../hooks/useMonthlyHours";
 import "./HoursPanel.css";
