@@ -50,11 +50,12 @@ export default function AppRouter() {
         console.error("Fehler beim Laden des Mitarbeiters:", error);
       }
 
-      setEmployee(data ?? null);
+      const emp = data ?? null;
+      setEmployee(emp);
 
-      if (data) {
-        setStation(data.station_id);
-        setRole(data.role);
+      if (emp) {
+        setStation(emp.station_id);
+        setRole(emp.role);
       } else {
         setStation(null);
         setRole(null);
