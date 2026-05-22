@@ -7,7 +7,7 @@ import LoginScreen from "./auth/LoginScreen";
 import { supabase } from "./lib/supabaseClient";
 
 export default function AppRouter() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth(); // ✔ logout entfernt
 
   const setStationId = useAppStore((s) => s.setStationId);
   const setRole = useAppStore((s) => s.setRole);
