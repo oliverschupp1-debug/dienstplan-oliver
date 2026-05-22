@@ -1,7 +1,6 @@
-
+// src/auth/LoginScreen.tsx
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { supabase } from "../lib/supabaseClient";
 import "./LoginScreen.css";
 
 export default function LoginScreen() {
@@ -18,18 +17,13 @@ export default function LoginScreen() {
     setErrorMsg("");
     setLoading(true);
 
-    try {
-      await login(email, password);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Login fehlgeschlagen");
+    const { error } = await login(email, password);
+
+    if (error) {
+      setErrorMsg(error.message || "Login fehlgeschlagen");
     }
 
     setLoading(false);
-  }
-
-  async function forceLogout() {
-    await supabase.auth.signOut();
-    window.location.reload();
   }
 
   return (
@@ -67,10 +61,6 @@ export default function LoginScreen() {
           {loading ? "Bitte warten…" : "Login"}
         </button>
       </form>
-
-      <button className="login-reset" onClick={forceLogout}>
-        Als anderer Benutzer anmelden
-      </button>
     </div>
   );
 }

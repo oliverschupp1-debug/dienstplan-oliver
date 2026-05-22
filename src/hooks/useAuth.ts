@@ -1,50 +1,26 @@
-// useAuth.ts
+// src/hooks/useAuth.ts
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useAppStore } from "../store/useAppStore";
 
 export function useAuth() {
-  const [user, setUser] = useState<null | {
-    id: string;
-    email?: string;
-  }>(null);
+  const [user, setUser] = useState<any>(null);
+  const resetStore = useAppStore((s) => s.reset);
 
-  const [loading, setLoading] = useState(true);
-
-  // ⭐ Session laden
   useEffect(() => {
-    async function loadSession() {
-      const { data } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
 
-      if (data?.session?.user) {
-        setUser({
-          id: data.session.user.id,
-          email: data.session.user.email ?? undefined,
-        });
-      } else {
-        await supabase.auth.signOut();
-        setUser(null);
-      }
-
-      setLoading(false);
-    }
-
-    loadSession();
-
-    // ⭐ Listener für Login/Logout
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email ?? undefined,
-          });
-        } else {
-          setUser(null);
-        }
+        setUser(session?.user ?? null);
       }
     );
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   async function login(email: string, password: string) {
@@ -53,14 +29,14 @@ export function useAuth() {
       password,
     });
 
-    if (error) throw error;
-    return data;
+    return { data, error };
   }
 
   async function logout() {
     await supabase.auth.signOut();
+    resetStore();
     setUser(null);
   }
 
-  return { user, loading, login, logout };
+  return { user, login, logout };
 }
