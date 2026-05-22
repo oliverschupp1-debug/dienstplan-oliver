@@ -1,3 +1,4 @@
+// src/components/Sidebar/Sidebar.tsx
 console.log("SIDEBAR VERSION THEME-READY");
 
 import { useState, useEffect } from "react";
@@ -5,6 +6,7 @@ import { useEmployees } from "../../hooks/useEmployees";
 import { useAllMonthlyHours } from "../../hooks/useAllMonthlyHours";
 import { supabase } from "../../lib/supabaseClient";
 import { onAssignmentsChanged } from "../../events";
+import { useAppStore } from "../../store/useAppStore";   // ⭐ Rolle importieren
 import "./Sidebar.css";
 
 interface SidebarProps {
@@ -22,6 +24,10 @@ export default function Sidebar({
   year,
   month
 }: SidebarProps) {
+
+  // ⭐ Rolle aus globalem Zustand holen
+  const role = useAppStore((s) => s.role);
+
   const { employees, loading, reload } = useEmployees(stationId);
 
   const [reloadFlag, setReloadFlag] = useState(0);
@@ -98,12 +104,24 @@ export default function Sidebar({
 
   return (
     <div className="sidebar">
+
+      {/* ⭐ Mitarbeiter sehen ihren Namen */}
+      <h2 className="sidebar-title">
+        {role === "employee"
+          ? `Hallo ${employees[0]?.name ?? ""}`
+          : "Mitarbeiter"}
+      </h2>
+
+      {/* ⭐ Station nur für Admin/Planner auswählbar */}
       <div className="station-select-block">
         <label className="station-label">Station</label>
         <select
           className="station-select"
           value={stations.some((s) => s.id === stationId) ? stationId ?? "" : ""}
-          onChange={(e) => onStationChange(e.target.value)}
+          onChange={(e) => {
+            if (role === "employee") return; // Mitarbeiter dürfen NICHT wechseln
+            onStationChange(e.target.value);
+          }}
         >
           {stations.map((s) => (
             <option key={s.id} value={s.id}>
@@ -112,8 +130,6 @@ export default function Sidebar({
           ))}
         </select>
       </div>
-
-      <h2 className="sidebar-title">Mitarbeiter</h2>
 
       {loading && <div className="loading">Lade Mitarbeiter…</div>}
 
@@ -129,7 +145,10 @@ export default function Sidebar({
               className="employee-item"
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", JSON.stringify({ employeeId: emp.id }));
+                e.dataTransfer.setData(
+                  "text/plain",
+                  JSON.stringify({ employeeId: emp.id })
+                );
               }}
             >
               <div className="employee-avatar">
@@ -177,31 +196,34 @@ export default function Sidebar({
         })}
       </div>
 
-      <form className="add-employee-form" onSubmit={handleAddEmployee}>
-        <div className="add-employee-label">Neuer Mitarbeiter</div>
+      {/* Admin/Planner dürfen Mitarbeiter anlegen */}
+      {role !== "employee" && (
+        <form className="add-employee-form" onSubmit={handleAddEmployee}>
+          <div className="add-employee-label">Neuer Mitarbeiter</div>
 
-        <input
-          type="text"
-          className="add-employee-input"
-          placeholder="Name"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        />
+          <input
+            type="text"
+            className="add-employee-input"
+            placeholder="Name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+          />
 
-        <input
-          type="number"
-          className="add-employee-input"
-          placeholder="Max. Stunden/Monat"
-          value={newMaxHours}
-          onChange={(e) => setNewMaxHours(e.target.value)}
-        />
+          <input
+            type="number"
+            className="add-employee-input"
+            placeholder="Max. Stunden/Monat"
+            value={newMaxHours}
+            onChange={(e) => setNewMaxHours(e.target.value)}
+          />
 
-        {errorMsg && <div className="add-employee-error">{errorMsg}</div>}
+          {errorMsg && <div className="add-employee-error">{errorMsg}</div>}
 
-        <button className="add-employee-btn" type="submit" disabled={saving}>
-          {saving ? "Speichere…" : "+ Mitarbeiter hinzufügen"}
-        </button>
-      </form>
+          <button className="add-employee-btn" type="submit" disabled={saving}>
+            {saving ? "Speichere…" : "+ Mitarbeiter hinzufügen"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }

@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
+// src/layout/AppShell.tsx
+import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import Sidebar from "../components/Sidebar/Sidebar";
-import MonthCalendar from "../calendar/MonthCalendar";
-import LoginScreen from "../auth/LoginScreen";
 import { useStations } from "../hooks/useStations";
 import { useTheme } from "../theme/ThemeProvider";
 import { useAppStore } from "../store/useAppStore";
+
+import Sidebar from "../components/Sidebar/Sidebar";
+import MonthCalendar from "../calendar/MonthCalendar";
+import LoginScreen from "../auth/LoginScreen";
+
 import "./AppShell.css";
 
 export default function AppShell() {
@@ -13,40 +16,41 @@ export default function AppShell() {
   const { stations, loading: stationsLoading } = useStations();
   const { mode, setMode } = useTheme();
 
-  const stationId = useAppStore((state) => state.stationId);
-  const role = useAppStore((state) => state.role);
+  const stationIdFromStore = useAppStore((s) => s.stationId);
+  const role = useAppStore((s) => s.role);
 
-  const [stationName, setStationName] = useState("");
+  const [stationId, setStationId] = useState<string>("");
 
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [month, setMonth] = useState<number>(new Date().getMonth());
 
-  // ⭐ stationId aus globalem Zustand → stationName setzen
+  // Wenn der Mitarbeiter aus AppRouter geladen wurde, stationId übernehmen
   useEffect(() => {
-    if (stationId) {
-      setStationName(stationId);
+    if (stationIdFromStore) {
+      setStationId(stationIdFromStore);
     }
-  }, [stationId]);
+  }, [stationIdFromStore]);
 
-  if (!user) return <LoginScreen />;
+  if (!user) {
+    return <LoginScreen />;
+  }
 
   const displayStation =
-    (stations.find((s) => s.id === stationName)?.name ?? stationName) ||
-    "Keine Station";
+    stations.find((s) => s.id === stationId)?.name ?? stationId ?? "";
 
-  function handlePrint() {
-    window.print();
-  }
-
-  function handleMonthChange(year: number, month: number) {
-    setCurrentYear(year);
-    setCurrentMonth(month);
-  }
-
-  // ⭐ Employees dürfen NICHT die Station wechseln
-  const handleStationChange = (newId: string) => {
+  const handleStationChange = (id: string) => {
+    // Mitarbeiter dürfen die Station nicht wechseln
     if (role === "employee") return;
-    setStationName(newId);
+    setStationId(id);
+  };
+
+  const handleMonthChange = (y: number, m: number) => {
+    setYear(y);
+    setMonth(m);
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
@@ -55,7 +59,7 @@ export default function AppShell() {
         <div className="topbar-left">
           <div className="topbar-title">DIENSTPLAN</div>
           <div className="topbar-subtitle">
-            {displayStation} · {user.email}
+            {displayStation || "Keine Station"} · {user.email}
           </div>
         </div>
 
@@ -84,18 +88,18 @@ export default function AppShell() {
 
       <div className="main-layout">
         <Sidebar
-          stationId={stationName}
+          stationId={stationId || null}
           stations={stationsLoading ? [] : stations}
           onStationChange={handleStationChange}
-          year={currentYear}
-          month={currentMonth}
+          year={year}
+          month={month}
         />
 
         <div className="calendar-container">
           <MonthCalendar
-            stationName={stationName}
-            year={currentYear}
-            month={currentMonth}
+            stationName={stationId}
+            year={year}
+            month={month}
             onMonthChange={handleMonthChange}
           />
         </div>

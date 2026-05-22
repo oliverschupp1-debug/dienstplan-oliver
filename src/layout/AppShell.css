@@ -1,4 +1,4 @@
-/* ROOT LAYOUT */
+/* Root-Layout für die AppShell */
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -6,7 +6,7 @@
   overflow: hidden;
 }
 
-/* FIXED TOPBAR */
+/* Fixe Topbar oben */
 .topbar {
   height: 56px;
   background: var(--panel);
@@ -16,45 +16,34 @@
   justify-content: space-between;
   padding: 0 20px;
   border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 999;
 }
 
-/* MAIN LAYOUT UNDER TOPBAR */
+/* Bereich unter der Topbar */
 .main-layout {
   display: flex;
   flex: 1;
-  margin-top: 56px; /* Platz für fixen Header */
+  margin-top: 56px; /* Platz für die Topbar */
   height: calc(100vh - 56px);
   overflow: hidden;
 }
 
-/* FIXED SIDEBAR */
-.sidebar {
-  width: 260px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  position: fixed;
-  top: 56px; /* unter dem Header */
-  bottom: 0;
-  left: 0;
-  padding: 10px;
-}
-
-/* CALENDAR AREA */
+/* Kalenderbereich rechts neben der Sidebar */
 .calendar-container {
   flex: 1;
-  margin-left: 260px; /* Platz für Sidebar */
+  margin-left: 260px; /* Breite der Sidebar */
   overflow-y: auto;
   padding: 20px;
   background: var(--bg);
+  box-sizing: border-box;
 }
 
-/* TOPBAR LEFT */
+/* Topbar links */
 .topbar-left {
   display: flex;
   flex-direction: column;
@@ -72,14 +61,14 @@
   margin-top: 2px;
 }
 
-/* TOPBAR RIGHT */
+/* Topbar rechts */
 .topbar-actions {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 
-/* BUTTONS */
+/* Buttons */
 .print-btn,
 .logout-btn {
   padding: 6px 12px;
@@ -107,7 +96,7 @@
   background: #ff2a2a;
 }
 
-/* THEME SELECT */
+/* Theme-Select */
 .theme-select {
   background: var(--panel-alt);
   color: var(--text);
@@ -116,13 +105,9 @@
   border-radius: 4px;
 }
 
-/* PRINT MODE */
+/* Print-Modus */
 @media print {
   .no-print {
-    display: none !important;
-  }
-
-  .sidebar {
     display: none !important;
   }
 

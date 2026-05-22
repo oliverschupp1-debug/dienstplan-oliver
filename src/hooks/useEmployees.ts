@@ -1,12 +1,18 @@
+// src/hooks/useEmployees.ts
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export function useEmployees(stationId: string | null) {
   const [employees, setEmployees] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const loadEmployees = useCallback(async () => {
-    if (!stationId) return;
+    // Wenn keine Station gewählt ist → leere Liste, kein Loading
+    if (!stationId) {
+      setEmployees([]);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
 
@@ -18,6 +24,7 @@ export function useEmployees(stationId: string | null) {
 
     if (error) {
       console.error("Fehler beim Laden der Mitarbeiter:", error);
+      setEmployees([]);
     } else {
       setEmployees(data || []);
     }

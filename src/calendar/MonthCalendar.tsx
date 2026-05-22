@@ -42,7 +42,7 @@ export default function MonthCalendar({
   month,
   onMonthChange,
 }: Props) {
-  const safeStation = (stationName ?? "").toLowerCase();
+  const safeStation = stationName;
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
