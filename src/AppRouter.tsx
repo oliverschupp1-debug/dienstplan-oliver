@@ -1,6 +1,8 @@
 // AppRouter.tsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
+import { useEffect, useState } from "react";
+import { supabase } from "./lib/supabaseClient";
 
 import LoginScreen from "./auth/LoginScreen";
 import AppShell from "./layout/AppShell";
@@ -11,10 +13,49 @@ import EmployeePanel from "./components/EmployeePanel";
 import MobileRouter from "./mobile/MobileRouter";
 import { useEmployees } from "./hooks/useEmployees";
 
+// ⭐ Typ für employees-Tabelle
+type Employee = {
+  id: string;
+  auth_user_id: string;
+  role: "admin" | "planner" | "employee";
+  station_id: string;
+};
+
 export default function AppRouter() {
   const { user, loading } = useAuth();
 
-  if (loading) {
+  // ⭐ employee sauber typisiert
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [empLoading, setEmpLoading] = useState(true);
+
+  // ⭐ Mitarbeiter-Datensatz aus Supabase laden
+  useEffect(() => {
+    async function loadEmployee() {
+      if (!user) {
+        setEmployee(null);
+        setEmpLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("employees")
+        .select("*")
+        .eq("auth_user_id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Fehler beim Laden des Mitarbeiters:", error);
+      }
+
+      setEmployee(data);
+      setEmpLoading(false);
+    }
+
+    loadEmployee();
+  }, [user]);
+
+  // ⭐ Ladeanzeige
+  if (loading || empLoading) {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
         <h2>Lade…</h2>
@@ -22,24 +63,20 @@ export default function AppRouter() {
     );
   }
 
-  const meta = user?.user_metadata ?? {};
-  const rawRole = meta.role as string | undefined;
-  let role: "admin" | "planner" | "employee" | null = null;
+  const isLoggedIn = !!user;
 
-  if (rawRole === "admin" || rawRole === "planner" || rawRole === "employee") {
-    role = rawRole;
-  } else if (user) {
-    // Fallback: jeder eingeloggte User ohne gültige Rolle wird als Mitarbeiter behandelt
-    role = "employee";
+  // ⭐ Falls kein Mitarbeiter-Datensatz → zurück zum Login
+  if (isLoggedIn && !employee) {
+    return <LoginScreen />;
   }
 
-  const stationId = (meta.station_id ?? null) as string | null;
+  // ⭐ Rolle & Station aus employees-Tabelle
+  const role = employee?.role ?? null;
+  const stationId = employee?.station_id ?? null;
 
   const { employees } = useEmployees(stationId ?? "");
 
-  const isLoggedIn = !!user;
-
-  // ⭐ Mitarbeiter (oder Fallback) → Mobile
+  // ⭐ Mitarbeiter → Mobile Router
   if (isLoggedIn && role === "employee") {
     return (
       <BrowserRouter>
@@ -63,7 +100,7 @@ export default function AppRouter() {
     );
   }
 
-  // ⭐ Admin & Planner → Desktop
+  // ⭐ Admin & Planner → Desktop Router
   return (
     <BrowserRouter>
       <Routes>
