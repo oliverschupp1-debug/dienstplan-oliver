@@ -15,6 +15,14 @@ export default function AppShell() {
 
   // ⭐ stationId & role kommen jetzt aus globalem Zustand
   const stationId = useAppStore((s) => s.stationId);
+  if (!stationId) {
+  return (
+    <div style={{ padding: 40, textAlign: "center" }}>
+      <h2>Station wird geladen…</h2>
+    </div>
+  );
+}
+
 
 
   const [stationName, setStationName] = useState("");
@@ -78,13 +86,15 @@ export default function AppShell() {
       </div>
 
       <div style={{ display: "flex", flex: 1 }}>
-        <Sidebar
-          stationId={stationName}
-          stations={stationsLoading ? [] : stations}
-          onStationChange={(s) => setStationName(s)}
-          year={currentYear}
-          month={currentMonth}
-        />
+        {stationName && (
+  <Sidebar
+    stationId={stationName}
+    stations={stationsLoading ? [] : stations}
+    onStationChange={(s) => setStationName(s)}
+    year={currentYear}
+    month={currentMonth}
+  />
+)}
 
         <div style={{ flex: 1, overflow: "auto" }}>
           <MonthCalendar

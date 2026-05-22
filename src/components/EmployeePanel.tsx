@@ -1,8 +1,6 @@
-// src/components/EmployeePanel.tsx
 import { useState } from "react";
+import { useAppStore } from "../store/useAppStore";
 import { useEmployees } from "../hooks/useEmployees";
-import { supabase } from "../lib/supabaseClient";
-import "./EmployeePanel.css";
 
 type Props = {
   stationId: string;
@@ -11,7 +9,10 @@ type Props = {
 };
 
 export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
-  const { employees, loading, reload } = useEmployees(stationId);
+  const role = useAppStore((s) => s.role);
+
+  // ⭐ Mitarbeiter laden (nur wenn stationId existiert)
+  const { employees } = useEmployees(stationId);
 
   const [newName, setNewName] = useState("");
   const [newHours, setNewHours] = useState<number | null>(null);
@@ -23,166 +24,103 @@ export default function EmployeePanel({ stationId, isOpen, onClose }: Props) {
     el.style.height = el.scrollHeight + "px";
   }
 
-  async function handleAddEmployee() {
-    if (!newName.trim()) return;
+  if (!isOpen) return null;
 
-    await supabase.from("employees").insert({
-      name: newName.trim(),
-      station_id: stationId,
-      max_hours: newHours ?? 0,
-      remarks: newRemarks || null,
-      auth_user_id: null,
-      role: null
-    });
+  // ⭐ Mitarbeiter (role === employee) → KEINE Liste anzeigen
+  if (role === "employee") {
+    return (
+      <div className="slide-panel">
+        <button onClick={onClose} style={{ float: "right" }}>
+          ✕
+        </button>
 
-    setNewName("");
-    setNewHours(null);
-    setNewRemarks("");
-    reload();
-  }
-
-  async function handleUpdateEmployee(
-    id: string,
-    name: string,
-    max_hours: number | null,
-    remarks: string
-  ) {
-    await supabase
-      .from("employees")
-      .update({
-        name,
-        max_hours,
-        remarks
-      })
-      .eq("id", id);
-
-    reload();
-  }
-
-  async function handleDeleteEmployee(id: string) {
-    await supabase.from("employees").delete().eq("id", id);
-    reload();
-  }
-
-  return (
-    <>
-      {/* OVERLAY */}
-      <div className={`employee-overlay ${isOpen ? "open" : ""}`} onClick={onClose} />
-
-      {/* PANEL */}
-      <div className={`employee-panel ${isOpen ? "open" : ""}`}>
-        <div className="panel-header">
-          <h2 className="employee-title">Mitarbeiter verwalten</h2>
-          <button className="close-btn" onClick={onClose}>✕</button>
-        </div>
-
-        {loading && <p>Lade Mitarbeiter…</p>}
-
-        {!loading && (
-          <>
-            <h3>Liste</h3>
-
-            {employees.map((emp) => (
-              <div key={emp.id} className="employee-item">
-                {/* Name */}
-                <input
-                  type="text"
-                  value={emp.name}
-                  onChange={(e) =>
-                    handleUpdateEmployee(
-                      emp.id,
-                      e.target.value,
-                      emp.max_hours,
-                      emp.remarks ?? ""
-                    )
-                  }
-                  className="employee-input"
-                />
-
-                {/* Max Stunden */}
-                <input
-                  type="number"
-                  value={emp.max_hours ?? ""}
-                  placeholder="Max Stunden"
-                  onChange={(e) =>
-                    handleUpdateEmployee(
-                      emp.id,
-                      emp.name,
-                      e.target.value ? Number(e.target.value) : null,
-                      emp.remarks ?? ""
-                    )
-                  }
-                  className="employee-input"
-                />
-
-                {/* Bemerkungen */}
-                <textarea
-                  placeholder="Bemerkungen"
-                  value={emp.remarks ?? ""}
-                  onChange={(e) => {
-                    handleUpdateEmployee(
-                      emp.id,
-                      emp.name,
-                      emp.max_hours,
-                      e.target.value
-                    );
-                    autoResize(e.target);
-                  }}
-                  ref={(el) => autoResize(el)}
-                  className="employee-textarea"
-                />
-
-                {/* Entfernen */}
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDeleteEmployee(emp.id)}
-                >
-                  Entfernen
-                </button>
-              </div>
-            ))}
-
-            <h3>Neuen Mitarbeiter hinzufügen</h3>
-
-            {/* Neuer Name */}
-            <input
-              type="text"
-              placeholder="Name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="employee-input"
-            />
-
-            {/* Neue Max Stunden */}
-            <input
-              type="number"
-              placeholder="Max Stunden"
-              value={newHours ?? ""}
-              onChange={(e) =>
-                setNewHours(e.target.value ? Number(e.target.value) : null)
-              }
-              className="employee-input"
-            />
-
-            {/* Neue Bemerkungen */}
-            <textarea
-              placeholder="Bemerkungen"
-              value={newRemarks}
-              onChange={(e) => {
-                setNewRemarks(e.target.value);
-                autoResize(e.target);
-              }}
-              ref={(el) => autoResize(el)}
-              className="employee-textarea"
-            />
-
-            {/* Hinzufügen */}
-            <button className="add-btn" onClick={handleAddEmployee}>
-              Hinzufügen
-            </button>
-          </>
-        )}
+        <h2>Hallo 🙂</h2>
+        <p style={{ fontSize: "1.2em", marginTop: "10px" }}>
+          Diese Seite ist nur für Admins und Planer sichtbar.
+        </p>
       </div>
-    </>
+    );
+  }
+
+  // ⭐ Admin & Planner → normale Ansicht
+  return (
+    <div className="slide-panel">
+      <h2>Mitarbeiter verwalten</h2>
+
+      <button onClick={onClose} style={{ float: "right" }}>
+        ✕
+      </button>
+
+      <h3>Liste</h3>
+
+      {employees.length === 0 && (
+        <div style={{ marginBottom: "10px", color: "#777" }}>
+          Keine Mitarbeiter gefunden.
+        </div>
+      )}
+
+      {employees.map((emp) => (
+        <div
+          key={emp.id}
+          style={{
+            borderBottom: "1px solid #ddd",
+            padding: "10px 0",
+            marginBottom: "10px",
+          }}
+        >
+          <div style={{ fontWeight: 600 }}>{emp.name}</div>
+          <div>Max. Stunden: {emp.max_hours ?? "-"}</div>
+          <div>Bemerkungen: {emp.remarks ?? "-"}</div>
+        </div>
+      ))}
+
+      <h3>Neuen Mitarbeiter hinzufügen</h3>
+
+      <input
+        type="text"
+        placeholder="Name"
+        value={newName}
+        onChange={(e) => setNewName(e.target.value)}
+        style={{ width: "100%", marginBottom: "6px" }}
+      />
+
+      <input
+        type="number"
+        placeholder="Max Stunden"
+        value={newHours ?? ""}
+        onChange={(e) =>
+          setNewHours(e.target.value ? Number(e.target.value) : null)
+        }
+        style={{ width: "100%", marginBottom: "6px" }}
+      />
+
+      <textarea
+        placeholder="Bemerkungen"
+        value={newRemarks}
+        onChange={(e) => {
+          setNewRemarks(e.target.value);
+          autoResize(e.target);
+        }}
+        ref={(el) => autoResize(el)}
+        style={{
+          width: "100%",
+          resize: "none",
+          overflow: "hidden",
+          marginBottom: "10px",
+          padding: "6px",
+        }}
+      />
+
+      <button
+        style={{ background: "#0275d8", color: "#fff" }}
+        onClick={() => {
+          alert(
+            "⚠️ Mitarbeiter können aktuell NICHT hinzugefügt werden, weil du Modus A (nur anzeigen) aktiviert hast."
+          );
+        }}
+      >
+        Hinzufügen (derzeit deaktiviert)
+      </button>
+    </div>
   );
 }

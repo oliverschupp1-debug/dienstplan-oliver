@@ -85,7 +85,15 @@ export default function AppRouter() {
   const role = employee?.role ?? null;
   const stationId = employee?.station_id ?? null;
 
-  const { employees } = useEmployees(stationId ?? "");
+if (!stationId) {
+  return (
+    <div style={{ padding: 40, textAlign: "center" }}>
+      <h2>Station wird geladen…</h2>
+    </div>
+  );
+}
+
+  const { employees } = useEmployees(stationId || "___NO_STATION___");
 
   // ⭐ Mitarbeiter → Mobile
   if (isLoggedIn && role === "employee") {
