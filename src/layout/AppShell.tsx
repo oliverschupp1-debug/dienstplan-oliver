@@ -1,8 +1,7 @@
 // src/layout/AppShell.tsx
-import { useEffect, useState } from "react";
-import { useAuth } from "../hooks/useAuth";
-import { useStations } from "../hooks/useStations";
 import { useTheme } from "../theme/ThemeProvider";
+import { useStations } from "../hooks/useStations";
+import { useAuth } from "../hooks/useAuth";
 import { useAppStore } from "../store/useAppStore";
 
 import Sidebar from "../components/Sidebar/Sidebar";
@@ -16,41 +15,34 @@ export default function AppShell() {
   const { stations, loading: stationsLoading } = useStations();
   const { mode, setMode } = useTheme();
 
-  const stationIdFromStore = useAppStore((s) => s.stationId);
+  // ⭐ stationId kommt NUR aus dem Store
+  const stationId = useAppStore((s) => s.stationId);
   const role = useAppStore((s) => s.role);
+  const setStationId = useAppStore((s) => s.setStationId);
 
-  const [stationId, setStationId] = useState<string>("");
+  const [year, setYear] = useAppStore((s) => [
+    s.year ?? new Date().getFullYear(),
+    s.setYear,
+  ]);
 
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number>(new Date().getMonth());
+  const [month, setMonth] = useAppStore((s) => [
+    s.month ?? new Date().getMonth(),
+    s.setMonth,
+  ]);
 
-  // Wenn der Mitarbeiter aus AppRouter geladen wurde, stationId übernehmen
-  useEffect(() => {
-    if (stationIdFromStore) {
-      setStationId(stationIdFromStore);
-    }
-  }, [stationIdFromStore]);
-
-  if (!user) {
-    return <LoginScreen />;
-  }
+  if (!user) return <LoginScreen />;
 
   const displayStation =
     stations.find((s) => s.id === stationId)?.name ?? stationId ?? "";
 
   const handleStationChange = (id: string) => {
-    // Mitarbeiter dürfen die Station nicht wechseln
-    if (role === "employee") return;
-    setStationId(id);
+    if (role === "employee") return; // Mitarbeiter dürfen NICHT wechseln
+    setStationId(id); // ⭐ direkt in den Store schreiben
   };
 
   const handleMonthChange = (y: number, m: number) => {
     setYear(y);
     setMonth(m);
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   return (
@@ -64,7 +56,7 @@ export default function AppShell() {
         </div>
 
         <div className="topbar-actions">
-          <button className="print-btn" onClick={handlePrint}>
+          <button className="print-btn" onClick={() => window.print()}>
             Drucken / PDF
           </button>
 
@@ -88,7 +80,7 @@ export default function AppShell() {
 
       <div className="main-layout">
         <Sidebar
-          stationId={stationId || null}
+          stationId={stationId ?? ""}
           stations={stationsLoading ? [] : stations}
           onStationChange={handleStationChange}
           year={year}
@@ -97,7 +89,7 @@ export default function AppShell() {
 
         <div className="calendar-container">
           <MonthCalendar
-            stationName={stationId}
+            stationName={stationId ?? ""}
             year={year}
             month={month}
             onMonthChange={handleMonthChange}
