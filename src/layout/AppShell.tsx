@@ -14,6 +14,7 @@ export default function AppShell() {
   const { mode, setMode } = useTheme();
 
   const stationId = useAppStore((state) => state.stationId);
+  const role = useAppStore((state) => state.role);
 
   const [stationName, setStationName] = useState("");
 
@@ -42,8 +43,14 @@ export default function AppShell() {
     setCurrentMonth(month);
   }
 
+  // ⭐ Employees dürfen NICHT die Station wechseln
+  const handleStationChange = (newId: string) => {
+    if (role === "employee") return;
+    setStationName(newId);
+  };
+
   return (
-    <div style={{ display: "flex", height: "100vh", flexDirection: "column" }}>
+    <div className="app-shell">
       <div className="topbar no-print">
         <div className="topbar-left">
           <div className="topbar-title">DIENSTPLAN</div>
@@ -75,16 +82,16 @@ export default function AppShell() {
         </div>
       </div>
 
-      <div style={{ display: "flex", flex: 1 }}>
+      <div className="main-layout">
         <Sidebar
           stationId={stationName}
           stations={stationsLoading ? [] : stations}
-          onStationChange={(s) => setStationName(s)} // ⭐ Admin/Planner dürfen wechseln
+          onStationChange={handleStationChange}
           year={currentYear}
           month={currentMonth}
         />
 
-        <div style={{ flex: 1, overflow: "auto" }}>
+        <div className="calendar-container">
           <MonthCalendar
             stationName={stationName}
             year={currentYear}

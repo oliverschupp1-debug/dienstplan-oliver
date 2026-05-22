@@ -1,19 +1,60 @@
-/* TOPBAR */
-.topbar {
-  height: 56px !important;
-  background: var(--panel) !important;
-  color: var(--text) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 0 20px !important;
-  border-bottom: 1px solid var(--border) !important;
-  box-sizing: border-box !important;
-  position: relative !important;
-  z-index: 999 !important;
+/* ROOT LAYOUT */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* LEFT SIDE */
+/* FIXED TOPBAR */
+.topbar {
+  height: 56px;
+  background: var(--panel);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+/* MAIN LAYOUT UNDER TOPBAR */
+.main-layout {
+  display: flex;
+  flex: 1;
+  margin-top: 56px; /* Platz für fixen Header */
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+/* FIXED SIDEBAR */
+.sidebar {
+  width: 260px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  position: fixed;
+  top: 56px; /* unter dem Header */
+  bottom: 0;
+  left: 0;
+  padding: 10px;
+}
+
+/* CALENDAR AREA */
+.calendar-container {
+  flex: 1;
+  margin-left: 260px; /* Platz für Sidebar */
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--bg);
+}
+
+/* TOPBAR LEFT */
 .topbar-left {
   display: flex;
   flex-direction: column;
@@ -31,12 +72,11 @@
   margin-top: 2px;
 }
 
-/* RIGHT SIDE */
+/* TOPBAR RIGHT */
 .topbar-actions {
-  margin-left: auto !important;
-  display: flex !important;
-  gap: 12px !important;
-  align-items: center !important;
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 /* BUTTONS */
@@ -77,13 +117,18 @@
 }
 
 /* PRINT MODE */
-.no-print {
-  display: block;
-}
-
 @media print {
   .no-print {
     display: none !important;
+  }
+
+  .sidebar {
+    display: none !important;
+  }
+
+  .calendar-container {
+    margin-left: 0 !important;
+    padding: 0 !important;
   }
 
   @page {
