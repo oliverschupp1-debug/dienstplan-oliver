@@ -13,6 +13,8 @@ import EmployeePanel from "./components/EmployeePanel";
 import MobileRouter from "./mobile/MobileRouter";
 import { useEmployees } from "./hooks/useEmployees";
 
+import { useAppStore } from "./store/useAppStore";
+
 // ⭐ Typ für employees-Tabelle
 type Employee = {
   id: string;
@@ -24,15 +26,20 @@ type Employee = {
 export default function AppRouter() {
   const { user, loading } = useAuth();
 
-  // ⭐ employee sauber typisiert
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [empLoading, setEmpLoading] = useState(true);
 
-  // ⭐ Mitarbeiter-Datensatz aus Supabase laden
+  // ⭐ Zustand-Funktionen holen
+  const setStation = useAppStore((state) => state.setStation);
+  const setRole = useAppStore((state) => state.setRole);
+
+  // ⭐ Mitarbeiter-Datensatz laden
   useEffect(() => {
     async function loadEmployee() {
       if (!user) {
         setEmployee(null);
+        setStation(null);
+        setRole(null);
         setEmpLoading(false);
         return;
       }
@@ -48,13 +55,19 @@ export default function AppRouter() {
       }
 
       setEmployee(data);
+
+      // ⭐ WICHTIG: stationId & role in globalen Zustand schreiben
+      if (data) {
+        setStation(data.station_id);
+        setRole(data.role);
+      }
+
       setEmpLoading(false);
     }
 
     loadEmployee();
   }, [user]);
 
-  // ⭐ Ladeanzeige
   if (loading || empLoading) {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
@@ -65,18 +78,16 @@ export default function AppRouter() {
 
   const isLoggedIn = !!user;
 
-  // ⭐ Falls kein Mitarbeiter-Datensatz → zurück zum Login
   if (isLoggedIn && !employee) {
     return <LoginScreen />;
   }
 
-  // ⭐ Rolle & Station aus employees-Tabelle
   const role = employee?.role ?? null;
   const stationId = employee?.station_id ?? null;
 
   const { employees } = useEmployees(stationId ?? "");
 
-  // ⭐ Mitarbeiter → Mobile Router
+  // ⭐ Mitarbeiter → Mobile
   if (isLoggedIn && role === "employee") {
     return (
       <BrowserRouter>
@@ -92,22 +103,18 @@ export default function AppRouter() {
               />
             }
           />
-
-          {/* Mitarbeiter dürfen NICHT auf Desktop */}
           <Route path="*" element={<Navigate to="/m/today" replace />} />
         </Routes>
       </BrowserRouter>
     );
   }
 
-  // ⭐ Admin & Planner → Desktop Router
+  // ⭐ Admin & Planner → Desktop
   return (
     <BrowserRouter>
       <Routes>
-        {/* LOGIN */}
         {!isLoggedIn && <Route path="*" element={<LoginScreen />} />}
 
-        {/* DESKTOP */}
         {isLoggedIn && (role === "admin" || role === "planner") && (
           <>
             <Route path="/" element={<AppShell />} />
@@ -138,17 +145,9 @@ export default function AppRouter() {
               }
             />
 
-            {/* Admin/Planner dürfen NICHT auf Mobile */}
             <Route path="/m/*" element={<Navigate to="/" replace />} />
-
-            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
-        )}
-
-        {/* Falls ein eingeloggter User ohne gültige Rolle hier landet */}
-        {isLoggedIn && !role && (
-          <Route path="*" element={<Navigate to="/m/today" replace />} />
         )}
       </Routes>
     </BrowserRouter>
