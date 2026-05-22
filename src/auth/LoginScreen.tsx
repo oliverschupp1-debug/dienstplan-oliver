@@ -1,6 +1,7 @@
 // src/auth/LoginScreen.tsx
 import React, { useState } from "react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";              // ✔ korrekt
+import { supabase } from "../lib/supabaseClient";        // ✔ korrekt
 import "./LoginScreen.css";
 
 export default function LoginScreen() {
@@ -24,6 +25,11 @@ export default function LoginScreen() {
     }
 
     setLoading(false);
+  }
+
+  async function forceLogout() {
+    await supabase.auth.signOut();
+    window.location.reload();
   }
 
   return (
@@ -61,6 +67,10 @@ export default function LoginScreen() {
           {loading ? "Bitte warten…" : "Login"}
         </button>
       </form>
+
+      <button className="login-reset" onClick={forceLogout}>
+        Als anderer Benutzer anmelden
+      </button>
     </div>
   );
 }
