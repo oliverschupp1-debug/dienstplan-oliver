@@ -16,12 +16,14 @@ export default function AppShell() {
   const stationId = useAppStore((state) => state.stationId);
 
   const [stationName, setStationName] = useState("");
+
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
+  // ⭐ stationId aus globalem Zustand → stationName setzen
   useEffect(() => {
     if (stationId) {
-      setStationName(stationId.trim().toLowerCase());
+      setStationName(stationId);
     }
   }, [stationId]);
 
@@ -77,7 +79,7 @@ export default function AppShell() {
         <Sidebar
           stationId={stationName}
           stations={stationsLoading ? [] : stations}
-          onStationChange={(s) => setStationName(s)}
+          onStationChange={(s) => setStationName(s)} // ⭐ Admin/Planner dürfen wechseln
           year={currentYear}
           month={currentMonth}
         />
