@@ -5,28 +5,31 @@ import MonthCalendar from "../calendar/MonthCalendar";
 import LoginScreen from "../auth/LoginScreen";
 import { useStations } from "../hooks/useStations";
 import { useTheme } from "../theme/ThemeProvider";
+import { useAppStore } from "../store/useAppStore";
 import "./AppShell.css";
 
 export default function AppShell() {
   const { user, logout } = useAuth();
-  const u = user ?? null;
-
   const { stations, loading: stationsLoading } = useStations();
-  const [stationName, setStationName] = useState("");
-
   const { mode, setMode } = useTheme();
+
+  // ⭐ stationId & role kommen jetzt aus globalem Zustand
+  const stationId = useAppStore((s) => s.stationId);
+
+
+  const [stationName, setStationName] = useState("");
 
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
+  // ⭐ stationId aus Zustand → stationName setzen
   useEffect(() => {
-    if (!stationsLoading && u?.station) {
-      // station aus dem User, wie bisher, in Kleinbuchstaben
-      setStationName(u.station.trim().toLowerCase());
+    if (!stationsLoading && stationId) {
+      setStationName(stationId.trim().toLowerCase());
     }
-  }, [u, stationsLoading]);
+  }, [stationId, stationsLoading]);
 
-  if (!u) return <LoginScreen />;
+  if (!user) return <LoginScreen />;
 
   const displayStation =
     (stations.find((s) => s.id === stationName)?.name ?? stationName) ||
@@ -47,7 +50,7 @@ export default function AppShell() {
         <div className="topbar-left">
           <div className="topbar-title">DIENSTPLAN</div>
           <div className="topbar-subtitle">
-            {displayStation} · {u.email}
+            {displayStation} · {user.email}
           </div>
         </div>
 
@@ -57,15 +60,16 @@ export default function AppShell() {
           </button>
 
           <select
-  className="theme-select"
-  value={mode}
-  onChange={(e) => setMode(e.target.value as "light" | "dark" | "system")}
->
-  <option value="light">Hell</option>
-  <option value="dark">Dunkel</option>
-  <option value="system">System</option>
-</select>
-
+            className="theme-select"
+            value={mode}
+            onChange={(e) =>
+              setMode(e.target.value as "light" | "dark" | "system")
+            }
+          >
+            <option value="light">Hell</option>
+            <option value="dark">Dunkel</option>
+            <option value="system">System</option>
+          </select>
 
           <button className="logout-btn" onClick={logout}>
             Logout
