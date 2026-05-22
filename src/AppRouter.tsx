@@ -12,10 +12,8 @@ import EmployeePanel from "./components/EmployeePanel";
 
 import MobileRouter from "./mobile/MobileRouter";
 import { useEmployees } from "./hooks/useEmployees";
-
 import { useAppStore } from "./store/useAppStore";
 
-// ⭐ Typ für employees-Tabelle
 type Employee = {
   id: string;
   auth_user_id: string;
@@ -29,11 +27,9 @@ export default function AppRouter() {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [empLoading, setEmpLoading] = useState(true);
 
-  // ⭐ Zustand-Funktionen holen
   const setStation = useAppStore((state) => state.setStation);
   const setRole = useAppStore((state) => state.setRole);
 
-  // ⭐ Mitarbeiter-Datensatz laden
   useEffect(() => {
     async function loadEmployee() {
       if (!user) {
@@ -54,19 +50,21 @@ export default function AppRouter() {
         console.error("Fehler beim Laden des Mitarbeiters:", error);
       }
 
-      setEmployee(data);
+      setEmployee(data ?? null);
 
-      // ⭐ WICHTIG: stationId & role in globalen Zustand schreiben
       if (data) {
         setStation(data.station_id);
         setRole(data.role);
+      } else {
+        setStation(null);
+        setRole(null);
       }
 
       setEmpLoading(false);
     }
 
     loadEmployee();
-  }, [user]);
+  }, [user, setStation, setRole]);
 
   if (loading || empLoading) {
     return (
@@ -85,17 +83,9 @@ export default function AppRouter() {
   const role = employee?.role ?? null;
   const stationId = employee?.station_id ?? null;
 
-if (!stationId) {
-  return (
-    <div style={{ padding: 40, textAlign: "center" }}>
-      <h2>Station wird geladen…</h2>
-    </div>
-  );
-}
+  const { employees } = useEmployees(stationId ?? "");
 
-  const { employees } = useEmployees(stationId || "___NO_STATION___");
-
-  // ⭐ Mitarbeiter → Mobile
+  // Mitarbeiter → Mobile
   if (isLoggedIn && role === "employee") {
     return (
       <BrowserRouter>
@@ -117,7 +107,7 @@ if (!stationId) {
     );
   }
 
-  // ⭐ Admin & Planner → Desktop
+  // Admin & Planner → Desktop
   return (
     <BrowserRouter>
       <Routes>
@@ -156,6 +146,10 @@ if (!stationId) {
             <Route path="/m/*" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
+        )}
+
+        {isLoggedIn && !role && (
+          <Route path="*" element={<Navigate to="/m/today" replace />} />
         )}
       </Routes>
     </BrowserRouter>

@@ -13,29 +13,17 @@ export default function AppShell() {
   const { stations, loading: stationsLoading } = useStations();
   const { mode, setMode } = useTheme();
 
-  // ⭐ stationId & role kommen jetzt aus globalem Zustand
-  const stationId = useAppStore((s) => s.stationId);
-  if (!stationId) {
-  return (
-    <div style={{ padding: 40, textAlign: "center" }}>
-      <h2>Station wird geladen…</h2>
-    </div>
-  );
-}
-
-
+  const stationId = useAppStore((state) => state.stationId);
 
   const [stationName, setStationName] = useState("");
-
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
-  // ⭐ stationId aus Zustand → stationName setzen
   useEffect(() => {
-    if (!stationsLoading && stationId) {
+    if (stationId) {
       setStationName(stationId.trim().toLowerCase());
     }
-  }, [stationId, stationsLoading]);
+  }, [stationId]);
 
   if (!user) return <LoginScreen />;
 
@@ -86,15 +74,13 @@ export default function AppShell() {
       </div>
 
       <div style={{ display: "flex", flex: 1 }}>
-        {stationName && (
-  <Sidebar
-    stationId={stationName}
-    stations={stationsLoading ? [] : stations}
-    onStationChange={(s) => setStationName(s)}
-    year={currentYear}
-    month={currentMonth}
-  />
-)}
+        <Sidebar
+          stationId={stationName}
+          stations={stationsLoading ? [] : stations}
+          onStationChange={(s) => setStationName(s)}
+          year={currentYear}
+          month={currentMonth}
+        />
 
         <div style={{ flex: 1, overflow: "auto" }}>
           <MonthCalendar
