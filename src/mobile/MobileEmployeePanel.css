@@ -1,0 +1,57 @@
+.mobile-employee-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+
+  background: rgba(0, 0, 0, 0.88);
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 20px;
+
+  overflow-y: auto;
+}
+
+.mobile-employee-panel-title {
+  font-size: 22px;
+  font-weight: 700;
+
+  margin-bottom: 20px;
+}
+
+.mobile-employee-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  flex: 1;
+}
+
+.mobile-employee-panel-item {
+  background: rgba(255, 255, 255, 0.06);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 14px;
+
+  padding: 16px;
+
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.mobile-employee-panel-close {
+  margin-top: 20px;
+
+  height: 52px;
+
+  border: none;
+  border-radius: 14px;
+
+  background: #2563eb;
+  color: white;
+
+  font-size: 16px;
+  font-weight: 700;
+}

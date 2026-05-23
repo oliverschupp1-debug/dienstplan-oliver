@@ -223,3 +223,6 @@
   padding: 24px;
   color: var(--text);
 }
+.sidebar {
+  flex-shrink: 0;
+}

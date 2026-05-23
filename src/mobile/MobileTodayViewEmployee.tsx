@@ -4,6 +4,7 @@ import { useAssignments } from "../useAssignments";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
+import "./MobileTodayView.css";
 
 type Employee = {
   id: string;

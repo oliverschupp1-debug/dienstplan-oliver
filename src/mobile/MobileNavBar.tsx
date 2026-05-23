@@ -1,57 +1,46 @@
-import { NavLink } from "react-router-dom";
 import "./MobileNavBar.css";
 
 type Props = {
   role: "admin" | "planner" | "employee";
-  onToggleEmployees?: () => void; // nur Admin/Planner
+  activeView: "today" | "month";
+  onViewChange: (view: "today" | "month") => void;
+  onToggleEmployees?: () => void;
 };
 
-export default function MobileNavBar({ role, onToggleEmployees }: Props) {
-  const isAdmin = role === "admin";
-  const isPlanner = role === "planner";
-  const isStaff = isAdmin || isPlanner;
+export default function MobileNavBar({
+  role,
+  activeView,
+  onViewChange,
+  onToggleEmployees,
+}: Props) {
+  const isStaff = role === "admin" || role === "planner";
 
   return (
     <nav className="mobile-nav">
-
-      {/* Heute */}
-      <NavLink
-        to="/m/today"
-        className={({ isActive }) =>
-          "mobile-nav-item" + (isActive ? " active" : "")
-        }
+      <button
+        type="button"
+        className={"mobile-nav-item" + (activeView === "today" ? " active" : "")}
+        onClick={() => onViewChange("today")}
       >
         Heute
-      </NavLink>
+      </button>
 
-      {/* Monat */}
-      <NavLink
-        to="/m/month"
-        className={({ isActive }) =>
-          "mobile-nav-item" + (isActive ? " active" : "")
-        }
+      <button
+        type="button"
+        className={"mobile-nav-item" + (activeView === "month" ? " active" : "")}
+        onClick={() => onViewChange("month")}
       >
         Monat
-      </NavLink>
+      </button>
 
-      {/* Mitarbeiter-Panel nur für Admin/Planner */}
       {isStaff && (
         <button
+          type="button"
           className="mobile-nav-item mobile-nav-button"
           onClick={onToggleEmployees}
         >
           Mitarbeiter
         </button>
-      )}
-
-      {/* Desktop-Link nur für Admin/Planner */}
-      {isStaff && (
-        <NavLink
-          to="/"
-          className="mobile-nav-item admin-link"
-        >
-          Desktop
-        </NavLink>
       )}
     </nav>
   );

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
 
 import MobileTodayView from "./MobileTodayView";
 import MobileTodayViewAdmin from "./MobileTodayViewAdmin";
@@ -16,25 +15,27 @@ type Props = {
   role: "admin" | "planner" | "employee";
   stationName: string;
   employees: { id: string; name: string }[];
-  onOpenMonth: () => void;
+  onOpenMonth?: () => void;
 };
 
 export default function MobileRouter({
   role,
   stationName,
   employees,
-  onOpenMonth,
 }: Props) {
+  const [view, setView] = useState<"today" | "month">("today");
+  const [showEmployees, setShowEmployees] = useState(false);
+
   const isAdmin = role === "admin";
   const isPlanner = role === "planner";
   const isEmployee = role === "employee";
-
-  const [showEmployees, setShowEmployees] = useState(false);
 
   return (
     <div className="mobile-root">
       <MobileNavBar
         role={role}
+        activeView={view}
+        onViewChange={setView}
         onToggleEmployees={() => setShowEmployees((s) => !s)}
       />
 
@@ -52,6 +53,7 @@ export default function MobileRouter({
 
           <button
             className="mobile-employee-panel-close"
+            type="button"
             onClick={() => setShowEmployees(false)}
           >
             Schließen
@@ -59,76 +61,44 @@ export default function MobileRouter({
         </div>
       )}
 
-      <Routes>
-        {isAdmin && (
-          <Route
-            path="today"
-            element={
-              <MobileTodayViewAdmin
-                stationName={stationName}
-                employees={employees}
-                onOpenMonth={onOpenMonth}
-              />
-            }
-          />
-        )}
+      {view === "today" && isAdmin && (
+        <MobileTodayViewAdmin
+          stationName={stationName}
+          employees={employees}
+          onOpenMonth={() => setView("month")}
+        />
+      )}
 
-        {isPlanner && (
-          <Route
-            path="today"
-            element={
-              <MobileTodayView
-                stationName={stationName}
-                employees={employees}
-                onOpenMonth={onOpenMonth}
-              />
-            }
-          />
-        )}
+      {view === "today" && isPlanner && (
+        <MobileTodayView
+          stationName={stationName}
+          employees={employees}
+          onOpenMonth={() => setView("month")}
+        />
+      )}
 
-        {isEmployee && (
-          <Route
-            path="today"
-            element={
-              <MobileTodayViewEmployee
-                stationName={stationName}
-                employees={employees}
-                onOpenMonth={onOpenMonth}
-              />
-            }
-          />
-        )}
+      {view === "today" && isEmployee && (
+        <MobileTodayViewEmployee
+          stationName={stationName}
+          employees={employees}
+          onOpenMonth={() => setView("month")}
+        />
+      )}
 
-        {isAdmin && (
-          <Route
-            path="month"
-            element={<MobileMonthViewAdmin stationName={stationName} />}
-          />
-        )}
+      {view === "month" && isAdmin && (
+        <MobileMonthViewAdmin stationName={stationName} />
+      )}
 
-        {isPlanner && (
-          <Route
-            path="month"
-            element={
-              <MobileMonthView stationName={stationName} employees={employees} />
-            }
-          />
-        )}
+      {view === "month" && isPlanner && (
+        <MobileMonthView stationName={stationName} employees={employees} />
+      )}
 
-        {isEmployee && (
-          <Route
-            path="month"
-            element={
-              <MobileMonthViewEmployee
-                stationName={stationName}
-                employees={employees}
-              />
-            }
-          />
-        )}
-
-        <Route path="*" element={<Navigate to="today" replace />} />
-      </Routes>
+      {view === "month" && isEmployee && (
+        <MobileMonthViewEmployee
+          stationName={stationName}
+          employees={employees}
+        />
+      )}
     </div>
   );
 }

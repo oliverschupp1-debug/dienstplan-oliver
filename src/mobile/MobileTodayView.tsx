@@ -5,6 +5,7 @@ import { getShiftModelForStation } from "../shiftModelsDefault";
 import { isHoliday } from "../calendar/holidays";
 import { useTouchNavigation } from "../useTouchNavigation";
 import { useOverrides } from "../useOverrides";
+import "./MobileTodayView.css";
 
 type Employee = {
   id: string;

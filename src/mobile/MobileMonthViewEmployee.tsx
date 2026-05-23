@@ -5,6 +5,7 @@ import type { CalendarWeek, CalendarDay } from "../calendar/calendarUtils";
 import { isHoliday } from "../calendar/holidays";
 import { useAssignments } from "../useAssignments";
 import { useTouchNavigation } from "../useTouchNavigation";
+import "./MobileMonthView.css";
 
 type Employee = {
   id: string;

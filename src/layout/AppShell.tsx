@@ -1,19 +1,45 @@
 // src/layout/AppShell.tsx
+import { useEffect, useState } from "react";
 import { useTheme } from "../theme/ThemeProvider";
 import { useStations } from "../hooks/useStations";
 import { useAuth } from "../hooks/useAuth";
 import { useAppStore } from "../store/useAppStore";
+import { useEmployees } from "../hooks/useEmployees";
 
 import Sidebar from "../components/Sidebar/Sidebar";
 import MonthCalendar from "../calendar/MonthCalendar";
 import LoginScreen from "../auth/LoginScreen";
+import MobileRouter from "../mobile/MobileRouter";
 
 import "./AppShell.css";
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth <= 768;
+  });
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth <= 768);
+    }
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  return isMobile;
+}
+
 export default function AppShell() {
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const { stations, loading: stationsLoading } = useStations();
   const { mode, setMode } = useTheme();
+  const isMobile = true;
 
   const stationId = useAppStore((s) => s.stationId);
   const role = useAppStore((s) => s.role);
@@ -28,7 +54,13 @@ export default function AppShell() {
   const year = yearFromStore ?? new Date().getFullYear();
   const month = monthFromStore ?? new Date().getMonth();
 
-  if (!user) return <LoginScreen />;
+  const { employees } = useEmployees(stationId ?? null);
+
+  if (authLoading) {
+  return <div className="app-loading">Lade Anmeldung…</div>;
+}
+
+if (!user) return <LoginScreen />;
 
   const displayStation =
     stations.find((s) => s.id === stationId)?.name ?? stationId ?? "";
@@ -42,6 +74,23 @@ export default function AppShell() {
     setYear(y);
     setMonth(m);
   };
+
+  if (isMobile && role && stationId) {
+    return (
+      <MobileRouter
+        role={role}
+        stationName={stationId}
+        employees={employees.map((employee) => ({
+          id: employee.id,
+          name: employee.name ?? "Ohne Namen",
+        }))}
+        onOpenMonth={() => {
+          window.history.pushState({}, "", "/month");
+          window.dispatchEvent(new PopStateEvent("popstate"));
+        }}
+      />
+    );
+  }
 
   return (
     <div className="app-shell">

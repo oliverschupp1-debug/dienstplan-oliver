@@ -4,6 +4,7 @@ import { useEmployees } from "../hooks/useEmployees";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { useTouchNavigation } from "../useTouchNavigation";
+import "./MobileMonthView.css";
 
 interface Props {
   stationName: string;
@@ -153,10 +154,43 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
 
   return (
     <div className="mobile-root">
-      <h2 className="mobile-month-title">
-        {monthNames[month]} {year}
-      </h2>
+      <div className="mobile-month-topbar">
+  <button
+    type="button"
+    className="mobile-button small"
+    onClick={() => {
+      setMonth((m) => {
+        if (m === 0) {
+          setYear((y) => y - 1);
+          return 11;
+        }
+        return m - 1;
+      });
+    }}
+  >
+    ←
+  </button>
 
+  <h2 className="mobile-month-title">
+    {monthNames[month]} {year}
+  </h2>
+
+  <button
+    type="button"
+    className="mobile-button small"
+    onClick={() => {
+      setMonth((m) => {
+        if (m === 11) {
+          setYear((y) => y + 1);
+          return 0;
+        }
+        return m + 1;
+      });
+    }}
+  >
+    →
+  </button>
+</div>
       <input
         type="text"
         placeholder="Mitarbeiter suchen…"
