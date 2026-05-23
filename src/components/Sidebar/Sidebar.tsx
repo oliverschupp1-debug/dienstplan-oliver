@@ -1,5 +1,5 @@
 // src/components/Sidebar/Sidebar.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useEmployees } from "../../hooks/useEmployees";
 import { useAllMonthlyHours } from "../../hooks/useAllMonthlyHours";
 import { supabase } from "../../lib/supabaseClient";
@@ -27,62 +27,75 @@ export default function Sidebar({
 
   const canManageEmployees = role === "admin" || role === "planner";
   const canChangeStation = role === "admin";
-  const showEmployeeList = role !== "employee";
+  const showEmployeeList = role === "admin" || role === "planner";
+
+  const effectiveStationId = stationId || null;
 
   const { employees, loading, reload } = useEmployees(
-    showEmployeeList ? stationId : null
+    showEmployeeList ? effectiveStationId : null
   );
 
   const [reloadFlag, setReloadFlag] = useState(0);
+  const [newName, setNewName] = useState("");
+  const [newMaxHours, setNewMaxHours] = useState("43");
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const off = onAssignmentsChanged(() => {
       setReloadFlag((x) => x + 1);
+      reload();
     });
 
-    return () => {
-      off();
-    };
-  }, []);
+    return () => off();
+  }, [reload]);
 
   const { hoursMap, loading: hoursLoading } = useAllMonthlyHours(
-    showEmployeeList ? stationId : null,
+    showEmployeeList ? effectiveStationId : null,
     year,
     month,
     reloadFlag
   );
 
   const selectedStationName = useMemo(() => {
-    return stations.find((s) => s.id === stationId)?.name ?? stationId ?? "";
-  }, [stationId, stations]);
+    if (!effectiveStationId) return "";
+    return (
+      stations.find((station) => station.id === effectiveStationId)?.name ??
+      effectiveStationId
+    );
+  }, [effectiveStationId, stations]);
 
-  const [newName, setNewName] = useState("");
-  const [newMaxHours, setNewMaxHours] = useState("43");
-  const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  async function handleAddEmployee(e: React.FormEvent) {
+  async function handleAddEmployee(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorMsg(null);
 
     if (!canManageEmployees) return;
 
-    if (!stationId) {
+    if (!effectiveStationId) {
       setErrorMsg("Keine Station ausgewählt.");
       return;
     }
 
-    if (!newName.trim()) {
+    const cleanName = newName.trim();
+
+    if (!cleanName) {
       setErrorMsg("Bitte einen Namen eingeben.");
+      return;
+    }
+
+    const maxHours = Number(newMaxHours);
+
+    if (!Number.isFinite(maxHours) || maxHours < 0) {
+      setErrorMsg("Bitte eine gültige maximale Stundenzahl eingeben.");
       return;
     }
 
     setSaving(true);
 
     const { error } = await supabase.from("employees").insert({
-      name: newName.trim(),
-      station_id: stationId,
-      max_hours: Number(newMaxHours) || 0,
+      name: cleanName,
+      station_id: effectiveStationId,
+      max_hours: maxHours,
       remarks: null,
       auth_user_id: null,
       role: "employee",
@@ -91,19 +104,22 @@ export default function Sidebar({
     if (error) {
       console.error("Fehler beim Anlegen des Mitarbeiters:", error);
       setErrorMsg("Mitarbeiter konnte nicht gespeichert werden.");
-    } else {
-      setNewName("");
-      setNewMaxHours("43");
-      reload();
+      setSaving(false);
+      return;
     }
 
+    setNewName("");
+    setNewMaxHours("43");
+    reload();
+    setReloadFlag((x) => x + 1);
     setSaving(false);
   }
 
-  async function handleDeleteEmployee(id: string, name: string) {
+  async function handleDeleteEmployee(id: string, name?: string | null) {
     if (!canManageEmployees) return;
 
-    const ok = confirm(`Mitarbeiter "${name}" wirklich löschen?`);
+    const displayName = name || "diesen Mitarbeiter";
+    const ok = confirm(`Mitarbeiter "${displayName}" wirklich löschen?`);
     if (!ok) return;
 
     const { error } = await supabase.from("employees").delete().eq("id", id);
@@ -115,12 +131,15 @@ export default function Sidebar({
     }
 
     reload();
+    setReloadFlag((x) => x + 1);
   }
 
   return (
     <aside className="sidebar">
       <h2 className="sidebar-title">
-        {role === "employee" ? `Hallo ${userName ?? ""} :-)` : "Mitarbeiter"}
+        {role === "employee"
+          ? `Hallo ${userName || "Nutzer"} :-)`
+          : "Mitarbeiter"}
       </h2>
 
       <div className="station-select-block">
@@ -129,17 +148,23 @@ export default function Sidebar({
         {canChangeStation ? (
           <select
             className="station-select"
-            value={stations.some((s) => s.id === stationId) ? stationId ?? "" : ""}
+            value={effectiveStationId ?? ""}
             onChange={(e) => onStationChange(e.target.value)}
           >
-            {stations.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
+            <option value="" disabled>
+              Station auswählen
+            </option>
+
+            {stations.map((station) => (
+              <option key={station.id} value={station.id}>
+                {station.name}
               </option>
             ))}
           </select>
         ) : (
-          <div className="station-readonly">{selectedStationName || "Keine Station"}</div>
+          <div className="station-readonly">
+            {selectedStationName || "Keine Station"}
+          </div>
         )}
       </div>
 
@@ -149,16 +174,25 @@ export default function Sidebar({
         </div>
       )}
 
-      {showEmployeeList && loading && (
+      {showEmployeeList && !effectiveStationId && (
+        <div className="loading">Bitte zuerst eine Station auswählen.</div>
+      )}
+
+      {showEmployeeList && effectiveStationId && loading && (
         <div className="loading">Lade Mitarbeiter…</div>
       )}
 
-      {showEmployeeList && (
+      {showEmployeeList && effectiveStationId && !loading && (
         <div className="employee-list">
+          {employees.length === 0 && (
+            <div className="loading">Keine Mitarbeiter gefunden.</div>
+          )}
+
           {employees.map((emp) => {
             const hours = hoursMap[emp.id] ?? 0;
             const max = emp.max_hours ?? 0;
             const remaining = max - hours;
+            const employeeName = emp.name || "Ohne Namen";
 
             return (
               <div
@@ -174,11 +208,11 @@ export default function Sidebar({
                 }}
               >
                 <div className="employee-avatar">
-                  {emp.name?.charAt(0)?.toUpperCase()}
+                  {employeeName.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="employee-info">
-                  <div className="employee-name">{emp.name}</div>
+                  <div className="employee-name">{employeeName}</div>
 
                   {hoursLoading ? (
                     <div className="employee-hours">Berechne…</div>
@@ -197,7 +231,9 @@ export default function Sidebar({
                             : "hours-neutral"
                         }
                       >
-                        {remaining >= 0 ? `${remaining.toFixed(1)} frei` : `${Math.abs(remaining).toFixed(1)} drüber`}
+                        {remaining >= 0
+                          ? `${remaining.toFixed(1)} frei`
+                          : `${Math.abs(remaining).toFixed(1)} drüber`}
                       </span>
                     </div>
                   )}
@@ -206,11 +242,12 @@ export default function Sidebar({
                 {canManageEmployees && (
                   <button
                     className="employee-delete-btn"
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteEmployee(emp.id, emp.name);
                     }}
-                    aria-label={`${emp.name} löschen`}
+                    aria-label={`${employeeName} löschen`}
                   >
                     ✕
                   </button>
@@ -221,7 +258,7 @@ export default function Sidebar({
         </div>
       )}
 
-      {canManageEmployees && (
+      {canManageEmployees && effectiveStationId && (
         <form className="add-employee-form" onSubmit={handleAddEmployee}>
           <div className="add-employee-label">Neuer Mitarbeiter</div>
 
@@ -235,6 +272,8 @@ export default function Sidebar({
 
           <input
             type="number"
+            min="0"
+            step="0.5"
             className="add-employee-input"
             placeholder="Max. Stunden/Monat"
             value={newMaxHours}
