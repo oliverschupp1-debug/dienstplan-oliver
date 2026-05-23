@@ -1,0 +1,18 @@
+/* DEBUG: Entfernt ALLE Overlays, die die Seite blockieren */
+
+* {
+  z-index: auto !important;
+}
+
+div, section, main, aside {
+  position: static !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.employee-overlay,
+.month-overlay,
+.panel-overlay,
+.modal-overlay {
+  display: none !important;
+}

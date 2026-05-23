@@ -15,20 +15,18 @@ export default function AppShell() {
   const { stations, loading: stationsLoading } = useStations();
   const { mode, setMode } = useTheme();
 
-  // ⭐ stationId kommt NUR aus dem Store
   const stationId = useAppStore((s) => s.stationId);
   const role = useAppStore((s) => s.role);
+
+  const yearFromStore = useAppStore((s) => s.year);
+  const monthFromStore = useAppStore((s) => s.month);
+
   const setStationId = useAppStore((s) => s.setStationId);
+  const setYear = useAppStore((s) => s.setYear);
+  const setMonth = useAppStore((s) => s.setMonth);
 
-  const [year, setYear] = useAppStore((s) => [
-    s.year ?? new Date().getFullYear(),
-    s.setYear,
-  ]);
-
-  const [month, setMonth] = useAppStore((s) => [
-    s.month ?? new Date().getMonth(),
-    s.setMonth,
-  ]);
+  const year = yearFromStore ?? new Date().getFullYear();
+  const month = monthFromStore ?? new Date().getMonth();
 
   if (!user) return <LoginScreen />;
 
@@ -36,8 +34,8 @@ export default function AppShell() {
     stations.find((s) => s.id === stationId)?.name ?? stationId ?? "";
 
   const handleStationChange = (id: string) => {
-    if (role === "employee") return; // Mitarbeiter dürfen NICHT wechseln
-    setStationId(id); // ⭐ direkt in den Store schreiben
+    if (role === "employee") return;
+    setStationId(id);
   };
 
   const handleMonthChange = (y: number, m: number) => {

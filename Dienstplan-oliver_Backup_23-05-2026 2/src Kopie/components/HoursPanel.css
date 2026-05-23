@@ -1,0 +1,61 @@
+.hours-panel {
+  background: #ffffff;
+  border-left: 1px solid #ddd;
+  padding: 20px;
+  width: 340px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.panel-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #444;
+}
+
+.hours-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hours-table th {
+  text-align: left;
+  padding: 8px 4px;
+  font-size: 14px;
+  border-bottom: 1px solid #ddd;
+}
+
+.hours-table td {
+  padding: 8px 4px;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+}
+
+.diff-over {
+  color: #d60000;
+  font-weight: 700;
+}
+
+.diff-under {
+  color: #008000;
+  font-weight: 700;
+}
+
+.diff-neutral {
+  color: #444;
+}

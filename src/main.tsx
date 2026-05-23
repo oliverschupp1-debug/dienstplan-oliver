@@ -1,7 +1,8 @@
-// main.tsx
+// src/main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+import AppRouter from "./AppRouter";
+import { ThemeProvider } from "./theme/ThemeProvider";
 
 import "./global.css";
 
@@ -17,6 +18,8 @@ window.supabase = supabase;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider>
+      <AppRouter />
+    </ThemeProvider>
   </React.StrictMode>
 );

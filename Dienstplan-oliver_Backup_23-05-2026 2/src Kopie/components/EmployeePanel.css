@@ -1,0 +1,81 @@
+.employee-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 900;
+}
+
+.employee-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.employee-panel {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 420px;
+  height: 100vh;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+  padding: 24px;
+  overflow-y: auto;
+  transition: right 0.3s ease;
+  z-index: 1000;
+}
+
+.employee-panel.open {
+  right: 0;
+}
+
+.employee-title {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.employee-label {
+  font-weight: 600;
+  margin-top: 12px;
+  display: block;
+}
+
+.employee-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.employee-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.employee-cancel {
+  background: #999;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.employee-save {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}

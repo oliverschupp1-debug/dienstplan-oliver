@@ -1,0 +1,279 @@
+/* BACKDROP */
+.override-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* PANEL */
+.override-panel {
+  background: var(--panel);
+  color: var(--text);
+  width: 460px;
+  max-width: 92%;
+  padding: 22px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.15s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* TITLE */
+.override-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text);
+}
+
+/* LABEL */
+.override-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+/* TEXTAREA */
+.override-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-alt);
+  color: var(--text);
+  font-size: 0.95rem;
+  min-height: 70px;
+  resize: vertical;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.override-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--panel);
+}
+
+/* GROUP */
+.override-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.override-group-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.9;
+}
+
+/* SHIFT CARD */
+.shift-card {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.shift-card-active {
+  border-color: var(--accent);
+  background: var(--panel);
+}
+
+/* SHIFT HEADER */
+.shift-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shift-name-input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.shift-name-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* DELETE BUTTON */
+.shift-delete {
+  background: transparent;
+  border: none;
+  color: #ff6b6b;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.shift-delete:hover {
+  color: #ff3b3b;
+}
+
+/* TIME ROW */
+.shift-time-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shift-time-input {
+  width: 90px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.9rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.shift-time-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* EMPLOYEE SELECT */
+.shift-employee-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.shift-employee-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* DROPZONE */
+.shift-dropzone {
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px dashed transparent;
+  background: var(--panel);
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.shift-card-active .shift-dropzone {
+  border-color: var(--accent);
+  background: var(--panel-alt);
+}
+
+/* CHIP */
+.employee-chip {
+  display: inline-block;
+  padding: 6px 10px;
+  background: var(--accent);
+  color: black;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* HINT */
+.drop-hint {
+  opacity: 0.6;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+/* ADD BUTTON */
+.override-add {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.override-add:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+/* ACTIONS */
+.override-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* CANCEL */
+.override-cancel {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.override-cancel:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+/* SAVE */
+.override-save {
+  background: var(--accent);
+  color: black;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.override-save:hover {
+  filter: brightness(0.9);
+}
+.override-panel {
+  max-height: 90vh;      /* Panel darf nicht größer als der Bildschirm werden */
+  overflow-y: auto;      /* Scrollbar aktivieren */
+}

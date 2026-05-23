@@ -1,10 +1,11 @@
-import AppShell from "./layout/AppShell";
-import { ThemeProvider } from "./theme/ThemeProvider";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import AppRouter from "./AppRouter";
 
-export default function App() {
-  return (
-    <ThemeProvider>
-      <AppShell />
-    </ThemeProvider>
-  );
-}
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <AppRouter />
+  </React.StrictMode>
+);

@@ -1,0 +1,200 @@
+/* ROOT SIDEBAR */
+.sidebar {
+  width: 260px;
+  background: var(--panel);
+  color: var(--text);
+  border-right: 1px solid var(--border);
+  padding: 18px;
+  box-sizing: border-box;
+
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* TITLE */
+.sidebar-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+/* STATION SELECT */
+.station-select-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.station-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.station-select {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--panel-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.station-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* EMPLOYEE LIST */
+.employee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* EMPLOYEE CARD */
+.employee-item {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.employee-item:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+/* AVATAR */
+.employee-avatar {
+  width: 34px;
+  height: 34px;
+  background: var(--accent);
+  color: black;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* NAME + HOURS */
+.employee-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.employee-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.employee-hours {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* HOURS COLORS */
+.hours-over {
+  color: #ff4d4d;
+}
+
+.hours-under {
+  color: var(--accent);
+}
+
+.hours-neutral {
+  color: var(--text-muted);
+}
+
+/* DELETE BUTTON */
+.employee-delete-btn {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  background: transparent;
+  border: none;
+  color: #ff4d4d;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.employee-delete-btn:hover {
+  color: #ff1a1a;
+}
+
+/* ADD EMPLOYEE FORM */
+.add-employee-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-employee-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.add-employee-input {
+  padding: 8px 10px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.add-employee-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.add-employee-error {
+  color: #ff4d4d;
+  font-size: 0.85rem;
+}
+
+.add-employee-btn {
+  padding: 10px;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: black;
+  transition: filter 0.2s;
+}
+
+.add-employee-btn:hover {
+  filter: brightness(0.9);
+}
+
+/* PRINT MODE */
+@media print {
+  .sidebar {
+    display: none !important;
+  }
+}

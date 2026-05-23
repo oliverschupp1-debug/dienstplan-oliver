@@ -1,0 +1,124 @@
+/* PANEL WRAPPER */
+.employee-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  width: 260px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* HEADER */
+.employee-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.employee-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* SEARCH FIELD */
+.employee-search {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-alt);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.employee-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--panel);
+}
+
+/* LIST */
+.employee-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+/* SCROLLBAR (Apple‑Style) */
+.employee-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.employee-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.employee-list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* EMPTY / LOADING */
+.employee-loading,
+.employee-empty {
+  text-align: center;
+  padding: 20px 0;
+  opacity: 0.7;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+/* EMPLOYEE ITEM */
+.employee-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: grab;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.employee-item:active {
+  cursor: grabbing;
+}
+
+.employee-item:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+/* AVATAR */
+.employee-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* NAME */
+.employee-name {
+  flex: 1;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 500;
+}

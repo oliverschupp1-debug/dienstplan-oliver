@@ -1,0 +1,106 @@
+/* -------------------------------------------------------
+   GLOBAL RESET
+------------------------------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* -------------------------------------------------------
+   LIGHT MODE (Apple Clean Grey)
+------------------------------------------------------- */
+:root {
+  --bg: #f2f2f2;
+  --panel: #ffffff;
+  --panel-alt: #f7f7f7;
+  --border: #d0d0d0;
+  --text: #1a1a1a;
+  --text-muted: #555;
+  --accent: #4da3ff; /* sanftes Apple-Blau */
+
+  /* ⭐ NEU: Sticky-Hintergründe theme-aware */
+  --sticky-bg: var(--panel-alt);
+}
+
+/* -------------------------------------------------------
+   DARK MODE
+------------------------------------------------------- */
+[data-theme="dark"] {
+  --bg: #1b1b1d;
+  --panel: #242427;
+  --panel-alt: #2c2c2f;
+  --border: #3a3a3d;
+  --text: #f5f5f5;
+  --text-muted: #bdbdbd;
+  --accent: #4da3ff;
+
+  /* ⭐ NEU */
+  --sticky-bg: var(--panel);
+}
+
+/* -------------------------------------------------------
+   SYSTEM MODE (automatisch)
+------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --bg: #1b1b1d;
+    --panel: #242427;
+    --panel-alt: #2c2c2f;
+    --border: #3a3a3d;
+    --text: #f5f5f5;
+    --text-muted: #bdbdbd;
+    --accent: #4da3ff;
+
+    /* ⭐ NEU */
+    --sticky-bg: var(--panel);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] {
+    --bg: #f2f2f2;
+    --panel: #ffffff;
+    --panel-alt: #f7f7f7;
+    --border: #d0d0d0;
+    --text: #1a1a1a;
+    --text-muted: #555;
+    --accent: #4da3ff;
+
+    /* ⭐ NEU */
+    --sticky-bg: var(--panel-alt);
+  }
+}
+
+/* -------------------------------------------------------
+   GLOBAL ELEMENTS
+------------------------------------------------------- */
+button {
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  color: var(--text);
+}
+
+/* Scrollbar (Apple Style) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}

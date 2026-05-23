@@ -1,0 +1,173 @@
+/* ===========================
+   Allgemeines Layout
+   =========================== */
+
+.info-page-root {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+/* ===========================
+   InfoCard (Liste)
+   =========================== */
+
+.info-card {
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.info-card:hover {
+  background: var(--bg);
+}
+
+/* ===========================
+   InfoDetail
+   =========================== */
+
+.info-detail-root {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.info-detail-card {
+  width: 100%;
+  max-width: 600px;
+  background: var(--panel-bg);
+  padding: 24px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.info-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  float: right;
+  color: var(--text);
+}
+
+.info-date {
+  opacity: 0.6;
+  margin-bottom: 20px;
+}
+
+.info-content {
+  white-space: pre-wrap;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.info-read-btn {
+  background: var(--blue);
+  color: white;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.info-read-btn:hover {
+  opacity: 0.9;
+}
+
+/* ===========================
+   InfoEditor
+   =========================== */
+
+.info-editor-root {
+  display: flex;
+  flex-direction: column;
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--panel-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.info-input,
+.info-textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.info-textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.info-role-selector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-role-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.info-editor-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.info-save-btn {
+  background: var(--blue);
+  color: white;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.info-save-btn:hover {
+  opacity: 0.9;
+}
+
+.info-cancel-btn {
+  background: var(--border);
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.info-delete-btn {
+  background: var(--red);
+  color: white;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: var(--transition);
+}
+
+.info-delete-btn:hover {
+  opacity: 0.9;
+}
