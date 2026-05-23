@@ -41,15 +41,16 @@ export default function Sidebar({
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    const off = onAssignmentsChanged(() => {
-      setReloadFlag((x) => x + 1);
-      reload();
-    });
+useEffect(() => {
+  const off = onAssignmentsChanged(() => {
+    setReloadFlag((x) => x + 1);
+    reload();
+  });
 
-   return () => {
-  off();
-};
+  return () => {
+    off();
+  };
+}, [reload]);
 
   const { hoursMap, loading: hoursLoading } = useAllMonthlyHours(
     showEmployeeList ? effectiveStationId : null,
@@ -290,4 +291,4 @@ export default function Sidebar({
       )}
     </aside>
   );
-}
+  }
