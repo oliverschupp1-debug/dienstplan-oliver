@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { assignmentsChanged } from "../events";
 import "./OverridePanel.css";
 
 type ShiftRow = {
@@ -34,12 +35,9 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
     { name: "Früh", start_time: "", end_time: "" },
     { name: "Früh 2", start_time: "", end_time: "" },
     { name: "Mittel", start_time: "", end_time: "" },
-    { name: "Spät", start_time: "", end_time: "" }
+    { name: "Spät", start_time: "", end_time: "" },
   ];
 
-  // ------------------------------------------------------------
-  // BODY SCROLL LOCK
-  // ------------------------------------------------------------
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -47,9 +45,6 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
     };
   }, []);
 
-  // ------------------------------------------------------------
-  // Laden
-  // ------------------------------------------------------------
   useEffect(() => {
     async function load() {
       const { data: empData } = await supabase
@@ -65,6 +60,7 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
         .select("*")
         .eq("station_id", stationName)
         .eq("date", date)
+        .order("id", { ascending: false })
         .limit(1);
 
       if (!dayRows || dayRows.length === 0) {
@@ -83,29 +79,28 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
         .select("*")
         .eq("override_id", day.id);
 
-      if (!shiftRows || shiftRows.length === 0) {
-        setShifts(defaultShifts);
-      } else {
-        setShifts(shiftRows as ShiftRow[]);
-      }
+      setShifts(shiftRows && shiftRows.length > 0 ? shiftRows : defaultShifts);
     }
 
     load();
   }, [date, stationName]);
 
-  // ------------------------------------------------------------
-  // Drag & Drop
-  // ------------------------------------------------------------
-  function handleDragOver(e: React.DragEvent, _index: number) {
+  function updateShift(index: number, field: keyof ShiftRow, value: string | null) {
+    setShifts((prev) =>
+      prev.map((shift, i) => (i === index ? { ...shift, [field]: value } : shift))
+    );
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
     e.preventDefault();
-    setDragActive(_index);
+    setDragActive(index);
   }
 
   function handleDragLeave() {
     setDragActive(null);
   }
 
-  function handleDrop(e: React.DragEvent, _index: number) {
+  function handleDrop(e: React.DragEvent, index: number) {
     e.preventDefault();
     setDragActive(null);
 
@@ -114,113 +109,129 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
 
     try {
       const parsed = JSON.parse(raw);
-      if (!parsed.employeeId) return;
-
       const emp = employees.find((x) => x.id === parsed.employeeId);
       if (!emp) return;
-
-      updateShift(_index, "employee", emp.name);
+      updateShift(index, "employee", emp.name);
     } catch {}
   }
 
-  // ------------------------------------------------------------
-  // Schicht hinzufügen
-  // ------------------------------------------------------------
   function addShift() {
     setShifts((prev) => [
       ...prev,
-      {
-        name: "Sonstige",
-        start_time: "",
-        end_time: "",
-        employee: null
-      }
+      { name: "Sonstige", start_time: "", end_time: "", employee: null },
     ]);
   }
 
-  // ------------------------------------------------------------
-  // Schicht ändern
-  // ------------------------------------------------------------
-  function updateShift(_index: number, field: keyof ShiftRow, value: string | null) {
-    const updated = [...shifts];
-    updated[_index] = { ...updated[_index], [field]: value };
-    setShifts(updated);
+  function deleteShift(index: number) {
+    setShifts((prev) => prev.filter((_, i) => i !== index));
   }
 
-  // ------------------------------------------------------------
-  // Schicht löschen
-  // ------------------------------------------------------------
-  function deleteShift(_index: number) {
-    setShifts((prev) => prev.filter((_, i) => i !== _index));
-  }
-
-  // ------------------------------------------------------------
-  // Speichern
-  // ------------------------------------------------------------
   async function handleSave() {
-    const allEmpty = shifts.every(
-      (s) => s.start_time.trim() === "" && s.end_time.trim() === ""
-    );
-    const emptyNote = note.trim() === "";
-
-    if (allEmpty && emptyNote) {
-      if (overrideId) {
-        await supabase.from("override_shifts").delete().eq("override_id", overrideId);
-        await supabase.from("day_overrides").delete().eq("id", overrideId);
-      }
-      onClose();
-      return;
-    }
-
-    const { data: dayData } = await supabase
-      .from("day_overrides")
-      .upsert({
-        station_id: stationName,
-        date,
-        note
-      })
-      .select()
-      .single();
-
-    const newOverrideId = dayData.id;
-    setOverrideId(newOverrideId);
-
-    await supabase.from("override_shifts").delete().eq("override_id", newOverrideId);
-
     const validShifts = shifts.filter(
       (s) => s.start_time.trim() !== "" && s.end_time.trim() !== ""
     );
 
+    const emptyNote = note.trim() === "";
+
+    const { data: existingRows } = await supabase
+      .from("day_overrides")
+      .select("id")
+      .eq("station_id", stationName)
+      .eq("date", date)
+      .order("id", { ascending: false });
+
+    const existingIds = (existingRows ?? []).map((row) => row.id);
+    let activeOverrideId = overrideId ?? existingIds[0] ?? null;
+
+    if (validShifts.length === 0 && emptyNote) {
+      if (existingIds.length > 0) {
+        await supabase.from("override_shifts").delete().in("override_id", existingIds);
+        await supabase.from("day_overrides").delete().in("id", existingIds);
+      }
+
+      assignmentsChanged();
+      onClose();
+      return;
+    }
+
+    if (!activeOverrideId) {
+      const { data, error } = await supabase
+        .from("day_overrides")
+        .insert({
+          station_id: stationName,
+          date,
+          note,
+        })
+        .select()
+        .single();
+
+      if (error || !data) {
+        console.error("Override konnte nicht angelegt werden:", error);
+        alert("Override konnte nicht gespeichert werden.");
+        return;
+      }
+
+      activeOverrideId = data.id;
+    } else {
+      const { error } = await supabase
+        .from("day_overrides")
+        .update({
+          station_id: stationName,
+          date,
+          note,
+        })
+        .eq("id", activeOverrideId);
+
+      if (error) {
+        console.error("Override konnte nicht aktualisiert werden:", error);
+        alert("Override konnte nicht gespeichert werden.");
+        return;
+      }
+    }
+
+    if (existingIds.length > 0) {
+      await supabase.from("override_shifts").delete().in("override_id", existingIds);
+    }
+
+    const duplicateIds = existingIds.filter((id) => id !== activeOverrideId);
+    if (duplicateIds.length > 0) {
+      await supabase.from("day_overrides").delete().in("id", duplicateIds);
+    }
+
     if (validShifts.length > 0) {
       const rows = validShifts.map((s) => ({
-        override_id: newOverrideId,
+        override_id: activeOverrideId,
         name: s.name,
         start_time: s.start_time,
         end_time: s.end_time,
-        employee: s.employee ?? null
+        employee: s.employee ?? null,
       }));
 
-      await supabase.from("override_shifts").insert(rows);
+      const { error } = await supabase.from("override_shifts").insert(rows);
+
+      if (error) {
+        console.error("Override-Schichten konnten nicht gespeichert werden:", error);
+        alert("Override-Schichten konnten nicht gespeichert werden.");
+        return;
+      }
     }
 
+    assignmentsChanged();
     onClose();
   }
 
-  // ------------------------------------------------------------
-  // Gruppierung
-  // ------------------------------------------------------------
   function getGroupedShifts() {
     const groups: Record<string, ShiftRow[]> = {
       Früh: [],
       "Früh 2": [],
       Mittel: [],
       Spät: [],
-      Sonstige: []
+      Sonstige: [],
     };
 
     for (const s of shifts) {
       if (ORDER.includes(s.name)) groups[s.name].push(s);
-      else groups["Sonstige"].push(s);
+      else groups.Sonstige.push(s);
     }
 
     return groups;
@@ -228,9 +239,6 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
 
   const groups = getGroupedShifts();
 
-  // ------------------------------------------------------------
-  // UI
-  // ------------------------------------------------------------
   return (
     <div
       className="override-backdrop"
@@ -252,7 +260,7 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
           <div key={group} className="override-group">
             <h3 className="override-group-title">{group}</h3>
 
-            {groups[group].map((shift, _index) => {
+            {groups[group].map((shift) => {
               const globalIndex = shifts.indexOf(shift);
 
               return (
@@ -274,8 +282,10 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
                         updateShift(globalIndex, "name", e.target.value)
                       }
                     />
+
                     <button
                       className="shift-delete"
+                      type="button"
                       onClick={() => deleteShift(globalIndex)}
                     >
                       ✕
@@ -291,7 +301,9 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
                       }
                       placeholder="Start"
                     />
+
                     <span>–</span>
+
                     <input
                       className="shift-time-input"
                       value={shift.end_time}
@@ -330,15 +342,16 @@ export default function OverridePanel({ date, stationName, onClose }: Props) {
           </div>
         ))}
 
-        <button className="override-add" onClick={addShift}>
+        <button className="override-add" type="button" onClick={addShift}>
           + Schicht hinzufügen
         </button>
 
         <div className="override-actions">
-          <button className="override-cancel" onClick={onClose}>
+          <button className="override-cancel" type="button" onClick={onClose}>
             Abbrechen
           </button>
-          <button className="override-save" onClick={handleSave}>
+
+          <button className="override-save" type="button" onClick={handleSave}>
             Speichern
           </button>
         </div>

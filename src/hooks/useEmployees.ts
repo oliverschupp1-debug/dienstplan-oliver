@@ -1,13 +1,22 @@
 // src/hooks/useEmployees.ts
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
+export type Employee = {
+  id: string;
+  name: string | null;
+  station_id: string | null;
+  max_hours: number | null;
+  remarks?: string | null;
+  auth_user_id?: string | null;
+  role?: "admin" | "planner" | "employee" | null;
+};
+
 export function useEmployees(stationId: string | null) {
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const loadEmployees = useCallback(async () => {
-    // Wenn keine Station gewählt ist → leere Liste, kein Loading
     if (!stationId) {
       setEmployees([]);
       setLoading(false);
@@ -18,23 +27,61 @@ export function useEmployees(stationId: string | null) {
 
     const { data, error } = await supabase
       .from("employees")
-      .select("*")
+      .select(
+        "id, name, station_id, max_hours, remarks, auth_user_id, role"
+      )
       .eq("station_id", stationId)
       .order("name", { ascending: true });
 
     if (error) {
       console.error("Fehler beim Laden der Mitarbeiter:", error);
       setEmployees([]);
-    } else {
-      setEmployees(data || []);
+      setLoading(false);
+      return;
     }
 
+    setEmployees(data ?? []);
     setLoading(false);
   }, [stationId]);
 
   useEffect(() => {
-    loadEmployees();
-  }, [loadEmployees]);
+    let cancelled = false;
+
+    async function run() {
+      if (!stationId) {
+        setEmployees([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("employees")
+        .select(
+          "id, name, station_id, max_hours, remarks, auth_user_id, role"
+        )
+        .eq("station_id", stationId)
+        .order("name", { ascending: true });
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Fehler beim Laden der Mitarbeiter:", error);
+        setEmployees([]);
+      } else {
+        setEmployees(data ?? []);
+      }
+
+      setLoading(false);
+    }
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [stationId]);
 
   return { employees, loading, reload: loadEmployees };
 }

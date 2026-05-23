@@ -219,7 +219,7 @@ export default function Sidebar({
                   ) : (
                     <div className="employee-hours">
                       <span>
-                        {hours.toFixed(1)} / {max} Std/Monat
+                        {hours.toFixed(2)} / {max} Std/Monat
                       </span>
 
                       <span
@@ -232,8 +232,8 @@ export default function Sidebar({
                         }
                       >
                         {remaining >= 0
-                          ? `${remaining.toFixed(1)} frei`
-                          : `${Math.abs(remaining).toFixed(1)} drüber`}
+                          ? `${remaining.toFixed(2)} frei`
+                          : `${Math.abs(remaining).toFixed(2)} drüber`}
                       </span>
                     </div>
                   )}
