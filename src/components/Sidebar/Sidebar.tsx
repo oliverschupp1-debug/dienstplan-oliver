@@ -47,8 +47,9 @@ export default function Sidebar({
       reload();
     });
 
-    return () => off();
-  }, [reload]);
+   return () => {
+  off();
+};
 
   const { hoursMap, loading: hoursLoading } = useAllMonthlyHours(
     showEmployeeList ? effectiveStationId : null,

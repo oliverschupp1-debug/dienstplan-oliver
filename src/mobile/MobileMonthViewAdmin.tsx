@@ -34,10 +34,14 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
   const overridesMap = overrides;
 
   const filteredEmployees = useMemo(() => {
-    return safeEmployees.filter((e) =>
-      e.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [safeEmployees, search]);
+  return safeEmployees.filter((e) => {
+    const employeeName = e.name ?? "Ohne Namen";
+
+    return employeeName
+      .toLowerCase()
+      .includes(search.toLowerCase());
+  });
+}, [safeEmployees, search]);
 
   // Kalender generieren
   const weeks = useMemo(() => {
