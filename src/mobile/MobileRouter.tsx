@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useEmployees } from "../hooks/useEmployees";
 import { useAllMonthlyHours } from "../hooks/useAllMonthlyHours";
+import { onAssignmentsChanged } from "../events";
 
 import MobileTodayViewAdmin from "./MobileTodayViewAdmin";
 import MobileTodayViewEmployee from "./MobileTodayViewEmployee";
-
 import MobileMonthViewAdmin from "./MobileMonthViewAdmin";
 import MobileMonthViewEmployee from "./MobileMonthViewEmployee";
 
@@ -33,17 +33,32 @@ export default function MobileRouter({
 }: Props) {
   const [view, setView] = useState<"today" | "month">("today");
   const [showEmployees, setShowEmployees] = useState(false);
+  const [reloadFlag, setReloadFlag] = useState(0);
 
   const today = new Date();
 
-  const { employees: panelEmployees } = useEmployees(stationName);
+  const { employees: allPanelEmployees } = useEmployees(stationName);
+
+  const panelEmployees = allPanelEmployees.filter(
+    (employee) => employee.role !== "admin"
+  );
 
   const { hoursMap } = useAllMonthlyHours(
     stationName,
     today.getFullYear(),
     today.getMonth(),
-    0
+    reloadFlag
   );
+
+  useEffect(() => {
+    const off = onAssignmentsChanged(() => {
+      setReloadFlag((value) => value + 1);
+    });
+
+    return () => {
+      off();
+    };
+  }, []);
 
   const isAdmin = role === "admin";
   const isPlanner = role === "planner";
@@ -91,7 +106,7 @@ export default function MobileRouter({
                   <strong>{employee.name ?? "Ohne Namen"}</strong>
 
                   <span>
-                    {hours.toFixed(2)} / {max} Std ·{" "}
+                    {hours.toFixed(2)} / {max.toFixed(2)} Std ·{" "}
                     {remaining.toFixed(2)} frei
                   </span>
                 </div>
