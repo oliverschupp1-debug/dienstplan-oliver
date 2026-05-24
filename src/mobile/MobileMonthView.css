@@ -5,14 +5,6 @@
   box-sizing: border-box;
 }
 
-.mobile-month-title {
-  font-size: 30px;
-  font-weight: 900;
-  padding: 18px 16px 8px;
-  margin: 0;
-  color: var(--text);
-}
-
 .mobile-month-topbar {
   display: grid;
   grid-template-columns: 48px 1fr 48px;
@@ -21,99 +13,95 @@
   padding: 18px 16px 8px;
 }
 
-.mobile-month-topbar .mobile-month-title {
-  padding: 0;
+.mobile-month-title {
+  font-size: 28px;
+  font-weight: 900;
+  margin: 0;
   text-align: center;
+  color: var(--text);
 }
 
 .mobile-month-header-row {
   position: sticky;
   top: 0;
   z-index: 10;
-
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-
-  background: var(--panel);
-  border-top: 1px solid var(--border);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
-
   padding: 10px 6px;
-  margin-bottom: 6px;
-
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 900;
   text-align: center;
-  color: var(--text);
 }
 
 .mobile-month-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  padding: 0 6px 24px;
+  gap: 5px;
+  padding: 6px 6px 24px;
 }
 
 .mobile-month-cell {
-  min-height: 115px;
+  min-height: 88px;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 13px;
   padding: 6px;
   overflow: hidden;
-  color: var(--text);
 }
 
 .mobile-month-outside {
-  opacity: 0.35;
+  opacity: 0.28;
 }
 
 .mobile-month-day {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
   margin-bottom: 4px;
 }
 
 .mobile-month-holiday {
   color: #ef4444;
-  font-size: 9px;
-  line-height: 1.1;
+  font-size: 8px;
+  line-height: 1.05;
   margin-bottom: 4px;
+  font-weight: 800;
 }
 
 .mobile-month-emp-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+}
+
+.mobile-month-assignment {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mobile-month-assignment strong {
+  font-size: 9px;
+  font-weight: 900;
+  color: var(--text);
 }
 
 .mobile-month-emp-pill {
+  display: block;
+  min-width: 0;
   background: #2563eb;
   color: #ffffff;
   border: none;
   border-radius: 999px;
-  padding: 3px 7px;
-  font-size: 10px;
-  font-weight: 700;
+  padding: 2px 5px;
+  font-size: 9px;
+  font-weight: 800;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.mobile-month-shift {
-  margin-bottom: 6px;
-}
-
-.mobile-month-shift-name {
-  font-size: 10px;
-  font-weight: 900;
-  margin-bottom: 2px;
-}
-
-.mobile-month-shift-time {
-  font-size: 9px;
-  opacity: 0.75;
-  margin-bottom: 4px;
 }
 
 .mobile-month-holiday-bg {
