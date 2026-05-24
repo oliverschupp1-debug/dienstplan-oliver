@@ -324,3 +324,84 @@
     display: none !important;
   }
 }
+/* ADD EMPLOYEE MODAL */
+
+.add-employee-floating-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.add-employee-floating-btn:hover {
+  filter: brightness(0.92);
+}
+
+.add-employee-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+
+  background: rgba(0, 0, 0, 0.6);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.add-employee-modal {
+  width: 100%;
+  max-width: 420px;
+
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  box-sizing: border-box;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.add-employee-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.add-employee-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.add-employee-modal-close {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.add-employee-modal .add-employee-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.add-employee-modal .add-employee-btn {
+  margin-top: 6px;
+}
