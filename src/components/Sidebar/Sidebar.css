@@ -405,3 +405,57 @@
 .add-employee-modal .add-employee-btn {
   margin-top: 6px;
 }
+.add-employee-floating-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-employee-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.add-employee-modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
+}
+
+.add-employee-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.add-employee-modal-header h3 {
+  margin: 0;
+}
+
+.add-employee-modal-close {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 28px;
+  cursor: pointer;
+}
