@@ -418,12 +418,22 @@ export default function Sidebar({
                 className="employee-item employee-item-expandable"
               >
                 <div
-                  className="employee-header"
-                  onClick={() =>
-                    setExpandedEmployeeId(
-                      expanded ? null : emp.id
-                    )
-                  }
+  className="employee-header"
+  draggable={canManageEmployees}
+  onDragStart={(e) => {
+    if (!canManageEmployees) return;
+
+    e.dataTransfer.setData(
+      "text/plain",
+      JSON.stringify({ employeeId: emp.id })
+    );
+  }}
+  onClick={() =>
+    setExpandedEmployeeId(
+      expanded ? null : emp.id
+    )
+  }
+
                 >
                   <div className="employee-avatar">
                     {employeeName.charAt(0).toUpperCase()}
