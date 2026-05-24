@@ -9,6 +9,12 @@ type Props = {
   stationName: string;
 };
 
+type SelectedDay = {
+  iso: string;
+  date: Date;
+  day: number;
+};
+
 function getLocalISO(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -32,6 +38,7 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [search, setSearch] = useState("");
+  const [selectedDay, setSelectedDay] = useState<SelectedDay | null>(null);
 
   const stationId = stationName;
   const shiftModel = getShiftModelForStation(stationId);
@@ -53,18 +60,17 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
     const start = new Date(first);
     start.setDate(first.getDate() - ((first.getDay() + 6) % 7));
 
-    const result: { days: any[] }[] = [];
+    const result: { days: SelectedDay[] }[] = [];
     const current = new Date(start);
 
     for (let week = 0; week < 6; week++) {
-      const days: any[] = [];
+      const days: SelectedDay[] = [];
 
       for (let day = 0; day < 7; day++) {
         days.push({
           iso: getLocalISO(current),
           date: new Date(current),
           day: current.getDate(),
-          outside: current.getMonth() !== month,
         });
 
         current.setDate(current.getDate() + 1);
@@ -77,6 +83,7 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
   }, [year, month]);
 
   function handlePreviousMonth() {
+    setSelectedDay(null);
     setMonth((currentMonth) => {
       if (currentMonth === 0) {
         setYear((currentYear) => currentYear - 1);
@@ -88,6 +95,7 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
   }
 
   function handleNextMonth() {
+    setSelectedDay(null);
     setMonth((currentMonth) => {
       if (currentMonth === 11) {
         setYear((currentYear) => currentYear + 1);
@@ -115,6 +123,39 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
     );
   }
 
+  function getDayAssignments(day: SelectedDay) {
+    const holiday = isHoliday(day.iso);
+    const holidayName = holiday?.name ?? undefined;
+    const shifts = getShiftsForDay(day.date, holidayName);
+
+    return shifts.map((shift) => {
+      const storedShiftName = getStoredShiftName(
+        day.date,
+        shift.name,
+        holidayName
+      );
+
+      const shiftAssignments = assignments
+        .filter(
+          (assignment) =>
+            assignment.date === day.iso &&
+            assignment.shift_name === storedShiftName &&
+            assignment.station_id === stationId
+        )
+        .map((assignment) => ({
+          id: assignment.id,
+          employeeName: getEmployeeName(assignment.employee_id),
+        }));
+
+      return {
+        shiftName: shift.name,
+        start: shift.start,
+        end: shift.end,
+        assignments: shiftAssignments,
+      };
+    });
+  }
+
   const monthNames = [
     "Januar",
     "Februar",
@@ -128,6 +169,16 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
     "Oktober",
     "November",
     "Dezember",
+  ];
+
+  const weekdayNames = [
+    "Sonntag",
+    "Montag",
+    "Dienstag",
+    "Mittwoch",
+    "Donnerstag",
+    "Freitag",
+    "Samstag",
   ];
 
   return (
@@ -185,35 +236,25 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
           week.days.map((day) => {
             const holiday = isHoliday(day.iso);
             const holidayName = holiday?.name ?? undefined;
-            const shifts = getShiftsForDay(day.date, holidayName);
-
-            const dayAssignments = shifts.flatMap((shift) => {
-              const storedShiftName = getStoredShiftName(
-                day.date,
-                shift.name,
-                holidayName
-              );
-
-              return assignments
-                .filter(
-                  (assignment) =>
-                    assignment.date === day.iso &&
-                    assignment.shift_name === storedShiftName &&
-                    assignment.station_id === stationId
-                )
-                .map((assignment) => ({
+            const outside = day.date.getMonth() !== month;
+            const compactAssignments = getDayAssignments(day)
+              .flatMap((shift) =>
+                shift.assignments.map((assignment) => ({
                   id: assignment.id,
-                  employeeName: getEmployeeName(assignment.employee_id),
-                  shiftName: shift.name,
-                }));
-            });
+                  shiftName: shift.shiftName,
+                  employeeName: assignment.employeeName,
+                }))
+              )
+              .slice(0, 3);
 
             return (
-              <div
+              <button
                 key={day.iso}
+                type="button"
+                onClick={() => setSelectedDay(day)}
                 className={`
                   mobile-month-cell
-                  ${day.outside ? "mobile-month-outside" : ""}
+                  ${outside ? "mobile-month-outside" : ""}
                   ${holidayName ? "mobile-month-holiday-bg" : ""}
                 `}
               >
@@ -224,20 +265,93 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
                 )}
 
                 <div className="mobile-month-emp-list">
-                  {dayAssignments.map((item) => (
+                  {compactAssignments.map((item) => (
                     <div key={item.id} className="mobile-month-assignment">
-                      <strong>{item.shiftName}</strong>
+                      <strong>{item.shiftName.slice(0, 1)}</strong>
                       <span className="mobile-month-emp-pill">
                         {item.employeeName}
                       </span>
                     </div>
                   ))}
+
+                  {compactAssignments.length === 0 && (
+                    <span className="mobile-month-empty-dot">–</span>
+                  )}
                 </div>
-              </div>
+              </button>
             );
           })
         )}
       </div>
+
+      {selectedDay && (
+        <div
+          className="mobile-day-detail-backdrop"
+          onClick={() => setSelectedDay(null)}
+        >
+          <div
+            className="mobile-day-detail"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mobile-day-detail-header">
+              <div>
+                <h3>
+                  {weekdayNames[selectedDay.date.getDay()]},{" "}
+                  {selectedDay.day}.{selectedDay.date.getMonth() + 1}.
+                  {selectedDay.date.getFullYear()}
+                </h3>
+
+                {isHoliday(selectedDay.iso)?.name && (
+                  <div className="mobile-day-detail-holiday">
+                    {isHoliday(selectedDay.iso)?.name}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="mobile-day-detail-close"
+                onClick={() => setSelectedDay(null)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mobile-day-detail-shifts">
+              {getDayAssignments(selectedDay).map((shift) => (
+                <div
+                  key={`${selectedDay.iso}-${shift.shiftName}`}
+                  className="mobile-day-detail-shift"
+                >
+                  <div className="mobile-day-detail-shift-head">
+                    <strong>{shift.shiftName}</strong>
+                    <span>
+                      {shift.start} – {shift.end}
+                    </span>
+                  </div>
+
+                  {shift.assignments.length === 0 ? (
+                    <div className="mobile-day-detail-empty">
+                      Nicht besetzt
+                    </div>
+                  ) : (
+                    <div className="mobile-day-detail-people">
+                      {shift.assignments.map((assignment) => (
+                        <span
+                          key={assignment.id}
+                          className="mobile-day-detail-person"
+                        >
+                          {assignment.employeeName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
