@@ -42,7 +42,9 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
   const iso = getLocalISO(currentDate);
 
   const { employees } = useEmployees(stationId);
-  const safeEmployees = Array.isArray(employees) ? employees : [];
+  const safeEmployees = Array.isArray(employees)
+  ? employees.filter((employee) => employee.role !== "admin")
+  : [];
 
   const { assignments, addAssignment, removeAssignment } =
     useAssignments(stationId);
