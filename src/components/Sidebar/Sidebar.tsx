@@ -83,11 +83,8 @@ export default function Sidebar({
     showEmployeeList ? effectiveStationId : null
   );
 
-  const {
-    absences,
-    createAbsence,
-    deleteAbsence,
-  } = useAbsences(effectiveStationId);
+  const { absences, createAbsence, deleteAbsence } =
+    useAbsences(effectiveStationId);
 
   const visibleEmployees = employees.filter((emp) => emp.role !== "admin");
 
@@ -97,6 +94,7 @@ export default function Sidebar({
 
   const [reloadFlag, setReloadFlag] = useState(0);
 
+  const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newMaxHours, setNewMaxHours] = useState("43");
 
@@ -164,10 +162,7 @@ export default function Sidebar({
     );
   }, [effectiveStationId, stations]);
 
-  function updateDraft(
-    employeeId: string,
-    patch: Partial<EmployeeDraft>
-  ) {
+  function updateDraft(employeeId: string, patch: Partial<EmployeeDraft>) {
     setEmployeeDrafts((current) => ({
       ...current,
       [employeeId]: {
@@ -194,17 +189,12 @@ export default function Sidebar({
     return absences
       .filter(
         (absence) =>
-          absence.employee_id === employeeId &&
-          absence.type === "vacation"
+          absence.employee_id === employeeId && absence.type === "vacation"
       )
       .reduce(
         (sum, absence) =>
           sum +
-          countVacationDaysInYear(
-            absence.start_date,
-            absence.end_date,
-            year
-          ),
+          countVacationDaysInYear(absence.start_date, absence.end_date, year),
         0
       );
   }
@@ -271,14 +261,12 @@ export default function Sidebar({
     }
 
     await reload();
-
     setReloadFlag((x) => x + 1);
     setSavingEmployeeId(null);
   }
 
   async function handleAddEmployee(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
     setErrorMsg(null);
 
     if (!effectiveStationId) {
@@ -294,6 +282,11 @@ export default function Sidebar({
     }
 
     const maxHours = Number(newMaxHours);
+
+    if (!Number.isFinite(maxHours) || maxHours < 0) {
+      setErrorMsg("Bitte eine gültige maximale Stundenzahl eingeben.");
+      return;
+    }
 
     setSaving(true);
 
@@ -317,29 +310,20 @@ export default function Sidebar({
 
     setNewName("");
     setNewMaxHours("43");
+    setShowAddEmployeeModal(false);
 
-    reload();
-
+    await reload();
     setReloadFlag((x) => x + 1);
     setSaving(false);
   }
 
-  async function handleDeleteEmployee(
-    id: string,
-    name?: string | null
-  ) {
+  async function handleDeleteEmployee(id: string, name?: string | null) {
     const displayName = name || "diesen Mitarbeiter";
 
-    const ok = confirm(
-      `Mitarbeiter "${displayName}" wirklich löschen?`
-    );
-
+    const ok = confirm(`Mitarbeiter "${displayName}" wirklich löschen?`);
     if (!ok) return;
 
-    const { error } = await supabase
-      .from("employees")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("employees").delete().eq("id", id);
 
     if (error) {
       console.error(error);
@@ -347,8 +331,7 @@ export default function Sidebar({
       return;
     }
 
-    reload();
-
+    await reload();
     setReloadFlag((x) => x + 1);
   }
 
@@ -386,30 +369,31 @@ export default function Sidebar({
         )}
       </div>
 
+      {canManageEmployees && effectiveStationId && (
+        <button
+          type="button"
+          className="add-employee-floating-btn"
+          onClick={() => setShowAddEmployeeModal(true)}
+        >
+          + Mitarbeiter hinzufügen
+        </button>
+      )}
+
       {showEmployeeList && (
         <div className="employee-list">
           {visibleEmployees.map((emp) => {
             const hours = hoursMap[emp.id] ?? 0;
             const max = emp.max_hours ?? 0;
-
             const remaining = max - hours;
-
             const employeeName = emp.name || "Ohne Namen";
-
             const draft = employeeDrafts[emp.id];
             const absenceDraft = absenceDrafts[emp.id];
-
             const vacationTotal = emp.vacation_days_total ?? 0;
-
             const vacationUsed = getVacationUsed(emp.id);
-
-            const vacationRemaining =
-              vacationTotal - vacationUsed;
-
+            const vacationRemaining = vacationTotal - vacationUsed;
             const employeeAbsences = absences.filter(
               (absence) => absence.employee_id === emp.id
             );
-
             const expanded = expandedEmployeeId === emp.id;
 
             return (
@@ -418,43 +402,35 @@ export default function Sidebar({
                 className="employee-item employee-item-expandable"
               >
                 <div
-  className="employee-header"
-  draggable={canManageEmployees}
-  onDragStart={(e) => {
-    if (!canManageEmployees) return;
+                  className="employee-header"
+                  draggable={canManageEmployees}
+                  onDragStart={(e) => {
+                    if (!canManageEmployees) return;
 
-    e.dataTransfer.setData(
-      "text/plain",
-      JSON.stringify({ employeeId: emp.id })
-    );
-  }}
-  onClick={() =>
-    setExpandedEmployeeId(
-      expanded ? null : emp.id
-    )
-  }
-
+                    e.dataTransfer.setData(
+                      "text/plain",
+                      JSON.stringify({ employeeId: emp.id })
+                    );
+                  }}
+                  onClick={() =>
+                    setExpandedEmployeeId(expanded ? null : emp.id)
+                  }
                 >
                   <div className="employee-avatar">
                     {employeeName.charAt(0).toUpperCase()}
                   </div>
 
                   <div className="employee-info">
-                    <div className="employee-name">
-                      {employeeName}
-                    </div>
+                    <div className="employee-name">{employeeName}</div>
 
                     <div className="employee-hours">
                       <span>
-                        {hours.toFixed(2)} /{" "}
-                        {max.toFixed(2)} Std
+                        {hours.toFixed(2)} / {max.toFixed(2)} Std
                       </span>
 
                       <span
                         className={
-                          remaining < 0
-                            ? "hours-over"
-                            : "hours-under"
+                          remaining < 0 ? "hours-over" : "hours-under"
                         }
                       >
                         {remaining.toFixed(2)} frei
@@ -501,8 +477,7 @@ export default function Sidebar({
                           value={draft.vacation_days_total}
                           onChange={(e) =>
                             updateDraft(emp.id, {
-                              vacation_days_total:
-                                e.target.value,
+                              vacation_days_total: e.target.value,
                             })
                           }
                         />
@@ -526,8 +501,7 @@ export default function Sidebar({
                           value={draft.vacation_note}
                           onChange={(e) =>
                             updateDraft(emp.id, {
-                              vacation_note:
-                                e.target.value,
+                              vacation_note: e.target.value,
                             })
                           }
                         />
@@ -536,16 +510,12 @@ export default function Sidebar({
                       <button
                         type="button"
                         className="add-employee-btn"
-                        disabled={
-                          savingEmployeeId === emp.id
-                        }
-                        onClick={() =>
-                          handleSaveEmployeeSettings(
-                            emp.id
-                          )
-                        }
+                        disabled={savingEmployeeId === emp.id}
+                        onClick={() => handleSaveEmployeeSettings(emp.id)}
                       >
-                        Speichern
+                        {savingEmployeeId === emp.id
+                          ? "Speichere…"
+                          : "Speichern"}
                       </button>
                     </div>
 
@@ -558,8 +528,7 @@ export default function Sidebar({
                           value={absenceDraft.start_date}
                           onChange={(e) =>
                             updateAbsenceDraft(emp.id, {
-                              start_date:
-                                e.target.value,
+                              start_date: e.target.value,
                             })
                           }
                         />
@@ -569,8 +538,7 @@ export default function Sidebar({
                           value={absenceDraft.end_date}
                           onChange={(e) =>
                             updateAbsenceDraft(emp.id, {
-                              end_date:
-                                e.target.value,
+                              end_date: e.target.value,
                             })
                           }
                         />
@@ -579,22 +547,13 @@ export default function Sidebar({
                           value={absenceDraft.type}
                           onChange={(e) =>
                             updateAbsenceDraft(emp.id, {
-                              type: e.target
-                                .value as any,
+                              type: e.target.value as AbsenceDraft["type"],
                             })
                           }
                         >
-                          <option value="vacation">
-                            Urlaub
-                          </option>
-
-                          <option value="sick">
-                            Krank
-                          </option>
-
-                          <option value="unavailable">
-                            Abwesend
-                          </option>
+                          <option value="vacation">Urlaub</option>
+                          <option value="sick">Krank</option>
+                          <option value="unavailable">Abwesend</option>
                         </select>
 
                         <input
@@ -612,9 +571,7 @@ export default function Sidebar({
                       <button
                         type="button"
                         className="add-employee-btn"
-                        onClick={() =>
-                          handleCreateAbsence(emp.id)
-                        }
+                        onClick={() => handleCreateAbsence(emp.id)}
                       >
                         Abwesenheit speichern
                       </button>
@@ -626,32 +583,19 @@ export default function Sidebar({
                             className={`absence-pill absence-${absence.type}`}
                           >
                             <div>
-                              <strong>
-                                {absenceLabel(
-                                  absence.type
-                                )}
-                              </strong>
+                              <strong>{absenceLabel(absence.type)}</strong>
 
                               <div>
-                                {absence.start_date} →{" "}
-                                {absence.end_date}
+                                {absence.start_date} → {absence.end_date}
                               </div>
 
-                              {absence.note && (
-                                <div>
-                                  {absence.note}
-                                </div>
-                              )}
+                              {absence.note && <div>{absence.note}</div>}
                             </div>
 
                             <button
                               type="button"
                               className="absence-delete-btn"
-                              onClick={() =>
-                                deleteAbsence(
-                                  absence.id
-                                )
-                              }
+                              onClick={() => deleteAbsence(absence.id)}
                             >
                               ×
                             </button>
@@ -663,12 +607,7 @@ export default function Sidebar({
                     <button
                       className="employee-delete-btn-inline"
                       type="button"
-                      onClick={() =>
-                        handleDeleteEmployee(
-                          emp.id,
-                          emp.name
-                        )
-                      }
+                      onClick={() => handleDeleteEmployee(emp.id, emp.name)}
                     >
                       Mitarbeiter löschen
                     </button>
@@ -680,53 +619,54 @@ export default function Sidebar({
         </div>
       )}
 
-      {canManageEmployees && effectiveStationId && (
-        <form
-          className="add-employee-form"
-          onSubmit={handleAddEmployee}
+      {showAddEmployeeModal && (
+        <div
+          className="add-employee-modal-backdrop"
+          onClick={() => setShowAddEmployeeModal(false)}
         >
-          <div className="add-employee-label">
-            Neuer Mitarbeiter
-          </div>
-
-          <input
-            type="text"
-            className="add-employee-input"
-            placeholder="Name"
-            value={newName}
-            onChange={(e) =>
-              setNewName(e.target.value)
-            }
-          />
-
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            className="add-employee-input"
-            placeholder="Max. Stunden/Monat"
-            value={newMaxHours}
-            onChange={(e) =>
-              setNewMaxHours(e.target.value)
-            }
-          />
-
-          {errorMsg && (
-            <div className="add-employee-error">
-              {errorMsg}
-            </div>
-          )}
-
-          <button
-            className="add-employee-btn"
-            type="submit"
-            disabled={saving}
+          <form
+            className="add-employee-modal"
+            onSubmit={handleAddEmployee}
+            onClick={(e) => e.stopPropagation()}
           >
-            {saving
-              ? "Speichere…"
-              : "+ Mitarbeiter hinzufügen"}
-          </button>
-        </form>
+            <div className="add-employee-modal-header">
+              <h3>Neuer Mitarbeiter</h3>
+
+              <button
+                type="button"
+                className="add-employee-modal-close"
+                onClick={() => setShowAddEmployeeModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <input
+              type="text"
+              className="add-employee-input"
+              placeholder="Name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              autoFocus
+            />
+
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              className="add-employee-input"
+              placeholder="Max. Stunden/Monat"
+              value={newMaxHours}
+              onChange={(e) => setNewMaxHours(e.target.value)}
+            />
+
+            {errorMsg && <div className="add-employee-error">{errorMsg}</div>}
+
+            <button className="add-employee-btn" type="submit" disabled={saving}>
+              {saving ? "Speichere…" : "Mitarbeiter speichern"}
+            </button>
+          </form>
+        </div>
       )}
     </aside>
   );
