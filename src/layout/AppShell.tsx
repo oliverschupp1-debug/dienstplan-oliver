@@ -39,7 +39,7 @@ export default function AppShell() {
   const { user, loading: authLoading, logout } = useAuth();
   const { stations, loading: stationsLoading } = useStations();
   const { mode, setMode } = useTheme();
-  const isMobile = true;
+  const isMobile = useIsMobile();
 
   const stationId = useAppStore((s) => s.stationId);
   const role = useAppStore((s) => s.role);
