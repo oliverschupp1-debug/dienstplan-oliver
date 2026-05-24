@@ -4,7 +4,6 @@ import { useAssignments } from "../useAssignments";
 import { useOverrides } from "../useOverrides";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
-import { useTouchNavigation } from "../useTouchNavigation";
 import "./MobileTodayView.css";
 
 type Employee = {
@@ -80,12 +79,7 @@ export default function MobileTodayViewAdmin({
     });
   }, [safeEmployees, search]);
 
-  useTouchNavigation({
-    onSwipeLeft: () => setCurrentDate((date) => addDays(date, 1)),
-    onSwipeRight: () => setCurrentDate((date) => addDays(date, -1)),
-    onSwipeUp: undefined,
-    onSwipeDown: undefined,
-  });
+ 
 
   function handleDragStart(employeeId: string) {
     setDragEmployee(employeeId);
