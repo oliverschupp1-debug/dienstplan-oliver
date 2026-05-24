@@ -60,12 +60,10 @@ export default function MobileRouter({
         </div>
       )}
 
-      {view === "today" && isAdmin && (
-        <MobileTodayViewAdmin
-  stationName={stationName}
-  onOpenMonth={() => setView("month")}
-/>
-      )}
+      
+    {view === "today" && isAdmin && (
+  <MobileTodayViewAdmin stationName={stationName} />
+)}
 
       {view === "today" && isPlanner && (
         <MobileTodayView
