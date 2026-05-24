@@ -8,6 +8,7 @@ import { getShiftModelForStation, type Shift } from "../shiftModelsDefault";
 import { supabase } from "../lib/supabaseClient";
 import { assignmentsChanged, onAssignmentsChanged } from "../events";
 import { useAppStore } from "../store/useAppStore";
+import { useAbsences } from "../hooks/useAbsences";
 
 import "./MonthCalendar.css";
 
@@ -66,6 +67,13 @@ function sortShifts(a: Shift, b: Shift) {
   return ia - ib;
 }
 
+function absenceLabel(type: string) {
+  if (type === "vacation") return "Urlaub";
+  if (type === "sick") return "Krank";
+  if (type === "unavailable") return "Abwesend";
+  return "Abwesend";
+}
+
 export default function MonthCalendar({
   stationName,
   year,
@@ -81,12 +89,11 @@ export default function MonthCalendar({
   const [overrideShifts, setOverrideShifts] = useState<OverrideShift[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
+  const { absences } = useAbsences(stationId);
+
   const calendar = useMemo(() => generateCalendar(year, month), [year, month]);
 
-  const model = useMemo(
-    () => getShiftModelForStation(stationId),
-    [stationId]
-  );
+  const model = useMemo(() => getShiftModelForStation(stationId), [stationId]);
 
   const overrideByDate = useMemo(() => {
     const map = new Map<string, DayOverride>();
@@ -263,8 +270,29 @@ export default function MonthCalendar({
     return employees.find((employee) => employee.id === id)?.name ?? "Unbekannt";
   }
 
+  function getAbsencesForDate(iso: string) {
+    return absences.filter(
+      (absence) => absence.start_date <= iso && absence.end_date >= iso
+    );
+  }
+
   async function assignEmployee(iso: string, shiftName: string, employeeId: string) {
     if (!stationId || role === "employee") return;
+
+    const absence = absences.find(
+      (item) =>
+        item.employee_id === employeeId &&
+        item.start_date <= iso &&
+        item.end_date >= iso
+    );
+
+    if (absence) {
+      const name = getEmployeeName(employeeId);
+      alert(
+        `${name} ist am ${iso} als "${absenceLabel(absence.type)}" markiert und kann nicht eingeplant werden.`
+      );
+      return;
+    }
 
     const { error } = await supabase.from("assignments").insert({
       station_id: stationId,
@@ -345,6 +373,7 @@ export default function MonthCalendar({
             {week.days.map((day) => {
               const shifts = getShiftsForDay(day);
               const dayOverride = overrideByDate.get(day.iso);
+              const dayAbsences = getAbsencesForDate(day.iso);
 
               return (
                 <div
@@ -352,7 +381,8 @@ export default function MonthCalendar({
                   className={
                     "calendar-cell" +
                     (day.isOutsideMonth ? " outside-month" : "") +
-                    (dayOverride ? " has-override" : "")
+                    (dayOverride ? " has-override" : "") +
+                    (dayAbsences.length > 0 ? " has-absence" : "")
                   }
                   onDoubleClick={() => openOverride(day.iso)}
                 >
@@ -374,6 +404,20 @@ export default function MonthCalendar({
 
                   {dayOverride?.note && (
                     <div className="override-note">{dayOverride.note}</div>
+                  )}
+
+                  {dayAbsences.length > 0 && (
+                    <div className="absence-list">
+                      {dayAbsences.map((absence) => (
+                        <div
+                          key={absence.id}
+                          className={`absence-badge absence-${absence.type}`}
+                        >
+                          {absenceLabel(absence.type)}:{" "}
+                          {getEmployeeName(absence.employee_id)}
+                        </div>
+                      ))}
+                    </div>
                   )}
 
                   <div className="shift-list">
