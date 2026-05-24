@@ -31,11 +31,14 @@ export default function MobileRouter({
   stations,
   onStationChange,
 }: Props) {
+  const today = new Date();
+
   const [view, setView] = useState<"today" | "month">("today");
   const [showEmployees, setShowEmployees] = useState(false);
   const [reloadFlag, setReloadFlag] = useState(0);
 
-  const today = new Date();
+  const [mobileYear, setMobileYear] = useState(today.getFullYear());
+  const [mobileMonth, setMobileMonth] = useState(today.getMonth());
 
   const { employees: allPanelEmployees } = useEmployees(stationName);
 
@@ -45,8 +48,8 @@ export default function MobileRouter({
 
   const { hoursMap } = useAllMonthlyHours(
     stationName,
-    today.getFullYear(),
-    today.getMonth(),
+    mobileYear,
+    mobileMonth,
     reloadFlag
   );
 
@@ -93,7 +96,9 @@ export default function MobileRouter({
 
       {showEmployees && (isAdmin || isPlanner) && (
         <div className="mobile-employee-panel">
-          <h3 className="mobile-employee-panel-title">Mitarbeiter</h3>
+          <h3 className="mobile-employee-panel-title">
+            Mitarbeiter · {mobileMonth + 1}/{mobileYear}
+          </h3>
 
           <div className="mobile-employee-panel-list">
             {panelEmployees.map((employee) => {
@@ -137,7 +142,15 @@ export default function MobileRouter({
       )}
 
       {view === "month" && (isAdmin || isPlanner) && (
-        <MobileMonthViewAdmin stationName={stationName} />
+        <MobileMonthViewAdmin
+          stationName={stationName}
+          year={mobileYear}
+          month={mobileMonth}
+          onMonthChange={(nextYear, nextMonth) => {
+            setMobileYear(nextYear);
+            setMobileMonth(nextMonth);
+          }}
+        />
       )}
 
       {view === "month" && isEmployee && (

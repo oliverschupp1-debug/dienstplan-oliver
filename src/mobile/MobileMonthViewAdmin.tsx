@@ -7,6 +7,9 @@ import "./MobileMonthView.css";
 
 type Props = {
   stationName: string;
+  year: number;
+  month: number;
+  onMonthChange: (year: number, month: number) => void;
 };
 
 type SelectedDay = {
@@ -32,11 +35,12 @@ function getStoredShiftName(date: Date, shiftName: string, holidayName?: string)
   return shiftName;
 }
 
-export default function MobileMonthViewAdmin({ stationName }: Props) {
-  const today = new Date();
-
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
+export default function MobileMonthViewAdmin({
+  stationName,
+  year,
+  month,
+  onMonthChange,
+}: Props) {
   const [search, setSearch] = useState("");
   const [selectedDay, setSelectedDay] = useState<SelectedDay | null>(null);
 
@@ -44,7 +48,9 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
   const shiftModel = getShiftModelForStation(stationId);
 
   const { employees } = useEmployees(stationId);
-  const safeEmployees = Array.isArray(employees) ? employees : [];
+  const safeEmployees = Array.isArray(employees)
+    ? employees.filter((employee) => employee.role !== "admin")
+    : [];
 
   const { assignments } = useAssignments(stationId);
 
@@ -84,26 +90,24 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
 
   function handlePreviousMonth() {
     setSelectedDay(null);
-    setMonth((currentMonth) => {
-      if (currentMonth === 0) {
-        setYear((currentYear) => currentYear - 1);
-        return 11;
-      }
 
-      return currentMonth - 1;
-    });
+    if (month === 0) {
+      onMonthChange(year - 1, 11);
+      return;
+    }
+
+    onMonthChange(year, month - 1);
   }
 
   function handleNextMonth() {
     setSelectedDay(null);
-    setMonth((currentMonth) => {
-      if (currentMonth === 11) {
-        setYear((currentYear) => currentYear + 1);
-        return 0;
-      }
 
-      return currentMonth + 1;
-    });
+    if (month === 11) {
+      onMonthChange(year + 1, 0);
+      return;
+    }
+
+    onMonthChange(year, month + 1);
   }
 
   function getShiftsForDay(date: Date, holidayName?: string) {
