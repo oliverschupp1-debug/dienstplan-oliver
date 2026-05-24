@@ -96,7 +96,7 @@ export default function MobileTodayViewAdmin({
 
     addAssignment({
       date: iso,
-      shift_name: shiftName,
+      shift_name: storedShiftName,
       employee_id: dragEmployee,
       station_id: stationId,
     });
@@ -206,12 +206,31 @@ export default function MobileTodayViewAdmin({
         )}
 
         {shiftList.map((shift) => {
-          const shiftAssignments = assignments.filter(
-            (assignment) =>
-              assignment.date === iso &&
-              assignment.shift_name === shift.name &&
-              assignment.station_id === stationId
-          );
+          
+        const storedShiftName = (() => {
+  const jsDay = currentDate.getDay();
+
+  if (holiday?.name) {
+    return `Feiertag ${shift.name}`;
+  }
+
+  if (jsDay === 0) {
+    return `Sonntag ${shift.name}`;
+  }
+
+  if (jsDay === 6) {
+    return `Samstag ${shift.name}`;
+  }
+
+  return shift.name;
+})();
+
+const shiftAssignments = assignments.filter(
+  (assignment) =>
+    assignment.date === iso &&
+    assignment.shift_name === storedShiftName &&
+    assignment.station_id === stationId
+);
 
           return (
             <div
