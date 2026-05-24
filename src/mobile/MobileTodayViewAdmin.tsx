@@ -29,6 +29,14 @@ function addIsoDays(iso: string, days: number): string {
   return getLocalISO(date);
 }
 
+function normalizeShiftName(name: string) {
+  return name
+    .replace(/^Feiertag\s+/i, "")
+    .replace(/^Samstag\s+/i, "")
+    .replace(/^Sonntag\s+/i, "")
+    .trim();
+}
+
 function getStoredShiftName(date: Date, shiftName: string, holidayName?: string) {
   const jsDay = date.getDay();
 
@@ -50,16 +58,16 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const currentDate = parseLocalISO(currentIso);
   const stationId = stationName;
   const iso = currentIso;
+  const currentDate = parseLocalISO(iso);
 
   const { employees } = useEmployees(stationId);
   const safeEmployees = Array.isArray(employees)
     ? employees.filter((employee) => employee.role !== "admin")
     : [];
 
-  const { assignments, addAssignment, removeAssignment } =
+  const { assignments, addAssignment, removeAssignment, reload } =
     useAssignments(stationId);
 
   const { overrides } = useOverrides(stationId);
@@ -96,6 +104,12 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
     });
   }, [safeEmployees, search]);
 
+  function goToIso(nextIso: string) {
+    setSelectedEmployeeId(null);
+    setCurrentIso(nextIso);
+    reload();
+  }
+
   function getEmployeeName(employeeId: string) {
     return (
       safeEmployees.find((employee) => employee.id === employeeId)?.name ??
@@ -129,7 +143,7 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
     );
   }
 
-  function handleShiftTap(shiftName: string) {
+  async function handleShiftTap(shiftName: string) {
     if (!selectedEmployeeId) return;
 
     const absence = getAbsenceForEmployee(selectedEmployeeId);
@@ -144,7 +158,7 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
       return;
     }
 
-    addAssignment({
+    await addAssignment({
       date: iso,
       shift_name: getStoredShiftName(currentDate, shiftName, holidayName),
       employee_id: selectedEmployeeId,
@@ -152,6 +166,12 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
     });
 
     setSelectedEmployeeId(null);
+    reload();
+  }
+
+  async function handleRemoveAssignment(id: string) {
+    await removeAssignment(id);
+    reload();
   }
 
   const weekdayNames = [
@@ -165,15 +185,12 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
   ];
 
   return (
-    <div className="mobile-root">
+    <div className="mobile-root" key={iso}>
       <div className="mobile-today-header">
         <button
           className="mobile-button small"
           type="button"
-          onClick={() => {
-            setSelectedEmployeeId(null);
-            setCurrentIso((value) => addIsoDays(value, -1));
-          }}
+          onClick={() => goToIso(addIsoDays(iso, -1))}
         >
           ←
         </button>
@@ -192,10 +209,7 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
         <button
           className="mobile-button small"
           type="button"
-          onClick={() => {
-            setSelectedEmployeeId(null);
-            setCurrentIso((value) => addIsoDays(value, 1));
-          }}
+          onClick={() => goToIso(addIsoDays(iso, 1))}
         >
           →
         </button>
@@ -205,10 +219,7 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
         <button
           className="mobile-button"
           type="button"
-          onClick={() => {
-            setSelectedEmployeeId(null);
-            setCurrentIso(getLocalISO(new Date()));
-          }}
+          onClick={() => goToIso(getLocalISO(new Date()))}
         >
           Heute
         </button>
@@ -263,8 +274,9 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
           const shiftAssignments = assignments.filter(
             (assignment) =>
               assignment.date === iso &&
-              assignment.shift_name === storedShiftName &&
-              assignment.station_id === stationId
+              assignment.station_id === stationId &&
+              normalizeShiftName(assignment.shift_name) ===
+                normalizeShiftName(storedShiftName)
           );
 
           return (
@@ -300,7 +312,7 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
                       }
                       onClick={(event) => {
                         event.stopPropagation();
-                        removeAssignment(assignment.id);
+                        handleRemoveAssignment(assignment.id);
                       }}
                     >
                       {getEmployeeName(assignment.employee_id)}
