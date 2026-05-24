@@ -644,23 +644,24 @@ export default function Sidebar({
         </div>
 
         <input
-          type="text"
-          className="add-employee-input"
-          placeholder="Name"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          autoFocus
-        />
+  type="text"
+  className="add-employee-input"
+  placeholder="Name"
+  value={newName}
+  onChange={(e) => setNewName(e.target.value)}
+  autoComplete="off"
+/>
 
         <input
-          type="number"
-          min="0"
-          step="0.5"
-          className="add-employee-input"
-          placeholder="Max. Stunden/Monat"
-          value={newMaxHours}
-          onChange={(e) => setNewMaxHours(e.target.value)}
-        />
+  type="number"
+  min="0"
+  step="0.5"
+  className="add-employee-input"
+  placeholder="Max. Stunden/Monat"
+  value={newMaxHours}
+  onChange={(e) => setNewMaxHours(e.target.value)}
+  autoComplete="off"
+/>
 
         {errorMsg && <div className="add-employee-error">{errorMsg}</div>}
 
