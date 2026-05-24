@@ -1,7 +1,7 @@
-// useAssignments.ts
-import { useEffect, useState } from "react";
+// src/useAssignments.ts
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "./lib/supabaseClient";
-import { assignmentsChanged } from "./events";
+import { assignmentsChanged, onAssignmentsChanged } from "./events";
 
 export type Assignment = {
   id: string;
@@ -15,7 +15,7 @@ export function useAssignments(stationId: string) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function loadAssignments() {
+  const loadAssignments = useCallback(async () => {
     if (!stationId) {
       setAssignments([]);
       setLoading(false);
@@ -27,15 +27,18 @@ export function useAssignments(stationId: string) {
     const { data, error } = await supabase
       .from("assignments")
       .select("*")
-      .eq("station_id", stationId.toLowerCase())
+      .eq("station_id", stationId)
       .order("date", { ascending: true });
 
-    if (!error && data) {
-      setAssignments(data);
+    if (error) {
+      console.error("Fehler beim Laden der Assignments:", error);
+      setAssignments([]);
+    } else {
+      setAssignments(data ?? []);
     }
 
     setLoading(false);
-  }
+  }, [stationId]);
 
   async function addAssignment(a: {
     date: string;
@@ -47,7 +50,7 @@ export function useAssignments(stationId: string) {
       .from("assignments")
       .insert([
         {
-          station_id: a.station_id.toLowerCase(),
+          station_id: a.station_id,
           date: a.date,
           shift_name: a.shift_name,
           employee_id: a.employee_id,
@@ -56,7 +59,12 @@ export function useAssignments(stationId: string) {
       .select()
       .single();
 
-    if (!error && data) {
+    if (error) {
+      console.error("Fehler beim Speichern des Assignments:", error);
+      return;
+    }
+
+    if (data) {
       setAssignments((prev) => [...prev, data]);
       assignmentsChanged();
     }
@@ -65,15 +73,28 @@ export function useAssignments(stationId: string) {
   async function removeAssignment(id: string) {
     const { error } = await supabase.from("assignments").delete().eq("id", id);
 
-    if (!error) {
-      setAssignments((prev) => prev.filter((a) => a.id !== id));
-      assignmentsChanged();
+    if (error) {
+      console.error("Fehler beim Löschen des Assignments:", error);
+      return;
     }
+
+    setAssignments((prev) => prev.filter((a) => a.id !== id));
+    assignmentsChanged();
   }
 
   useEffect(() => {
     loadAssignments();
-  }, [stationId]);
+  }, [loadAssignments]);
+
+  useEffect(() => {
+    const off = onAssignmentsChanged(() => {
+      loadAssignments();
+    });
+
+    return () => {
+      off();
+    };
+  }, [loadAssignments]);
 
   return {
     assignments,
