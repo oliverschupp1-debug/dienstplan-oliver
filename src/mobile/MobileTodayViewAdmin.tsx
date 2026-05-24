@@ -54,9 +54,13 @@ export default function MobileTodayViewAdmin({
   const weekdayIndex = (currentDate.getDay() + 6) % 7;
 
   const baseShifts = useMemo(() => {
-    if (holiday?.name && shiftModel.holiday.length > 0) return shiftModel.holiday;
+    if (holiday?.name && shiftModel.holiday.length > 0) {
+      return shiftModel.holiday;
+    }
+
     if (weekdayIndex === 6) return shiftModel.sunday;
     if (weekdayIndex === 5) return shiftModel.saturday;
+
     return shiftModel.weekdays;
   }, [holiday, weekdayIndex, shiftModel]);
 
@@ -79,7 +83,15 @@ export default function MobileTodayViewAdmin({
     });
   }, [safeEmployees, search]);
 
- 
+  function getStoredShiftName(shiftName: string): string {
+    const jsDay = currentDate.getDay();
+
+    if (holiday?.name) return `Feiertag ${shiftName}`;
+    if (jsDay === 0) return `Sonntag ${shiftName}`;
+    if (jsDay === 6) return `Samstag ${shiftName}`;
+
+    return shiftName;
+  }
 
   function handleDragStart(employeeId: string) {
     setDragEmployee(employeeId);
@@ -96,7 +108,7 @@ export default function MobileTodayViewAdmin({
 
     addAssignment({
       date: iso,
-      shift_name: storedShiftName,
+      shift_name: getStoredShiftName(shiftName),
       employee_id: dragEmployee,
       station_id: stationId,
     });
@@ -206,31 +218,14 @@ export default function MobileTodayViewAdmin({
         )}
 
         {shiftList.map((shift) => {
-          
-        const storedShiftName = (() => {
-  const jsDay = currentDate.getDay();
+          const storedShiftName = getStoredShiftName(shift.name);
 
-  if (holiday?.name) {
-    return `Feiertag ${shift.name}`;
-  }
-
-  if (jsDay === 0) {
-    return `Sonntag ${shift.name}`;
-  }
-
-  if (jsDay === 6) {
-    return `Samstag ${shift.name}`;
-  }
-
-  return shift.name;
-})();
-
-const shiftAssignments = assignments.filter(
-  (assignment) =>
-    assignment.date === iso &&
-    assignment.shift_name === storedShiftName &&
-    assignment.station_id === stationId
-);
+          const shiftAssignments = assignments.filter(
+            (assignment) =>
+              assignment.date === iso &&
+              assignment.shift_name === storedShiftName &&
+              assignment.station_id === stationId
+          );
 
           return (
             <div
