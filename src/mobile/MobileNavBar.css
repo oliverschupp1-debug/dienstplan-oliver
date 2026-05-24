@@ -53,3 +53,13 @@
 .admin-link {
   background: rgba(59,130,246,0.18);
 }
+.mobile-nav-select {
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0 10px;
+}

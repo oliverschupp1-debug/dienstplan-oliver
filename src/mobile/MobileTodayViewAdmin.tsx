@@ -1,13 +1,14 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useAssignments } from "../useAssignments";
 import { useEmployees } from "../hooks/useEmployees";
+import { useOverrides } from "../useOverrides";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
-import "./MobileMonthView.css";
+import "./MobileTodayView.css";
 
-interface Props {
+type Props = {
   stationName: string;
-}
+};
 
 function getLocalISO(date: Date): string {
   const y = date.getFullYear();
@@ -16,36 +17,58 @@ function getLocalISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function getStoredShiftName(
-  date: Date,
-  shiftName: string,
-  holidayName?: string
-) {
-  const jsDay = date.getDay();
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
 
+function getStoredShiftName(date: Date, shiftName: string, holidayName?: string) {
+  const jsDay = date.getDay();
   if (holidayName) return `Feiertag ${shiftName}`;
   if (jsDay === 0) return `Sonntag ${shiftName}`;
   if (jsDay === 6) return `Samstag ${shiftName}`;
-
   return shiftName;
 }
 
-export default function MobileMonthViewAdmin({ stationName }: Props) {
-  const today = new Date();
-
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
-  const [search, setSearch] = useState("");
+export default function MobileTodayViewAdmin({ stationName }: Props) {
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [dragEmployee, setDragEmployee] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const stationId = stationName;
-  const shiftModel = getShiftModelForStation(stationId);
+  const iso = getLocalISO(currentDate);
 
   const { employees } = useEmployees(stationId);
   const safeEmployees = Array.isArray(employees) ? employees : [];
 
   const { assignments, addAssignment, removeAssignment } =
     useAssignments(stationId);
+
+  const { overrides } = useOverrides(stationId);
+  const shiftModel = getShiftModelForStation(stationId);
+
+  const holiday = isHoliday(iso);
+  const holidayName = holiday?.name ?? undefined;
+
+  const weekdayIndex = (currentDate.getDay() + 6) % 7;
+  const overrideShifts = overrides[iso] ?? null;
+
+  const shiftList = useMemo(() => {
+    if (overrideShifts && overrideShifts.length > 0) {
+      return overrideShifts.map((shift) => ({
+        name: shift.name,
+        start: shift.start,
+        end: shift.end,
+      }));
+    }
+
+    if (holidayName && shiftModel.holiday.length > 0) return shiftModel.holiday;
+    if (weekdayIndex === 6) return shiftModel.sunday;
+    if (weekdayIndex === 5) return shiftModel.saturday;
+
+    return shiftModel.weekdays;
+  }, [overrideShifts, holidayName, shiftModel, weekdayIndex]);
 
   const filteredEmployees = useMemo(() => {
     return safeEmployees.filter((employee) => {
@@ -54,108 +77,19 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
     });
   }, [safeEmployees, search]);
 
-  const weeks = useMemo(() => {
-    const first = new Date(year, month, 1);
-    const start = new Date(first);
-    start.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+  function handleDrop(shiftName: string, event: React.DragEvent) {
+    event.currentTarget.classList.remove("mobile-drop-active");
 
-    const result: { days: any[] }[] = [];
-    const current = new Date(start);
-
-    for (let week = 0; week < 6; week++) {
-      const days: any[] = [];
-
-      for (let day = 0; day < 7; day++) {
-        const iso = getLocalISO(current);
-
-        days.push({
-          iso,
-          date: new Date(current),
-          day: current.getDate(),
-          outside: current.getMonth() !== month,
-        });
-
-        current.setDate(current.getDate() + 1);
-      }
-
-      result.push({ days });
-    }
-
-    return result;
-  }, [year, month]);
-
-  function handlePreviousMonth() {
-    setMonth((currentMonth) => {
-      if (currentMonth === 0) {
-        setYear((currentYear) => currentYear - 1);
-        return 11;
-      }
-
-      return currentMonth - 1;
-    });
-  }
-
-  function handleNextMonth() {
-    setMonth((currentMonth) => {
-      if (currentMonth === 11) {
-        setYear((currentYear) => currentYear + 1);
-        return 0;
-      }
-
-      return currentMonth + 1;
-    });
-  }
-
-  function handleDragStart(employeeId: string) {
-    setDragEmployee(employeeId);
-  }
-
-  function handleDragEnd() {
-    setDragEmployee(null);
-  }
-
-  function handleDrop(
-    date: Date,
-    iso: string,
-    shiftName: string,
-    holidayName?: string
-  ) {
     if (!dragEmployee) return;
-
-    const storedShiftName = getStoredShiftName(date, shiftName, holidayName);
-
-    const existing = assignments.find(
-      (assignment) =>
-        assignment.date === iso &&
-        assignment.shift_name === storedShiftName &&
-        assignment.station_id === stationId
-    );
-
-    if (existing) {
-      removeAssignment(existing.id);
-    }
 
     addAssignment({
       date: iso,
-      shift_name: storedShiftName,
+      shift_name: getStoredShiftName(currentDate, shiftName, holidayName),
       employee_id: dragEmployee,
       station_id: stationId,
     });
 
     setDragEmployee(null);
-  }
-
-  function getShiftsForDay(date: Date, holidayName?: string) {
-    const jsDay = date.getDay();
-
-    if (holidayName && shiftModel.holiday.length > 0) {
-      return shiftModel.holiday;
-    }
-
-    if (jsDay === 0) return shiftModel.sunday;
-    if (jsDay === 6) return shiftModel.saturday;
-
-    return shiftModel.weekdays;
   }
 
   function getEmployeeName(employeeId: string) {
@@ -165,42 +99,54 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
     );
   }
 
-  const monthNames = [
-    "Januar",
-    "Februar",
-    "März",
-    "April",
-    "Mai",
-    "Juni",
-    "Juli",
-    "August",
-    "September",
-    "Oktober",
-    "November",
-    "Dezember",
+  const weekdayNames = [
+    "Montag",
+    "Dienstag",
+    "Mittwoch",
+    "Donnerstag",
+    "Freitag",
+    "Samstag",
+    "Sonntag",
   ];
 
   return (
     <div className="mobile-root">
-      <div className="mobile-month-topbar">
+      <div className="mobile-today-header">
         <button
-          type="button"
           className="mobile-button small"
-          onClick={handlePreviousMonth}
+          type="button"
+          onClick={() => setCurrentDate((date) => addDays(date, -1))}
         >
           ←
         </button>
 
-        <h2 className="mobile-month-title">
-          {monthNames[month]} {year}
-        </h2>
+        <div>
+          <h2 className="mobile-today-title">
+            {weekdayNames[weekdayIndex]}, {currentDate.getDate()}.
+            {currentDate.getMonth() + 1}.{currentDate.getFullYear()}
+          </h2>
+
+          {holidayName && (
+            <div className="mobile-holiday-banner">{holidayName}</div>
+          )}
+        </div>
 
         <button
-          type="button"
           className="mobile-button small"
-          onClick={handleNextMonth}
+          type="button"
+          onClick={() => setCurrentDate((date) => addDays(date, 1))}
         >
           →
+        </button>
+      </div>
+
+      <div className="admin-override-row">
+        <button
+          className="mobile-button"
+          type="button"
+          onClick={() => setCurrentDate(new Date())}
+        >
+          Heute
         </button>
       </div>
 
@@ -213,126 +159,75 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
       />
 
       <div className="mobile-employee-list">
-        {filteredEmployees.map((employee) => {
-          const employeeName = employee.name ?? "Ohne Namen";
+        {filteredEmployees.map((employee) => (
+          <div
+            key={employee.id}
+            className="mobile-employee-pill"
+            draggable
+            onDragStart={() => setDragEmployee(employee.id)}
+            onDragEnd={() => setDragEmployee(null)}
+          >
+            {employee.name ?? "Ohne Namen"}
+          </div>
+        ))}
+      </div>
+
+      <div className="mobile-shift-list">
+        {shiftList.map((shift) => {
+          const storedShiftName = getStoredShiftName(
+            currentDate,
+            shift.name,
+            holidayName
+          );
+
+          const shiftAssignments = assignments.filter(
+            (assignment) =>
+              assignment.date === iso &&
+              assignment.shift_name === storedShiftName &&
+              assignment.station_id === stationId
+          );
 
           return (
             <div
-              key={employee.id}
-              className="mobile-month-emp-pill"
-              draggable
-              onDragStart={() => handleDragStart(employee.id)}
-              onDragEnd={handleDragEnd}
+              key={`${iso}-${shift.name}`}
+              className="mobile-shift-card"
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.currentTarget.classList.add("mobile-drop-active");
+              }}
+              onDragLeave={(event) =>
+                event.currentTarget.classList.remove("mobile-drop-active")
+              }
+              onDrop={(event) => handleDrop(shift.name, event)}
             >
-              {employeeName}
+              <div className="mobile-shift-title">
+                <strong>{shift.name}</strong>
+                <span>
+                  {shift.start} – {shift.end}
+                </span>
+              </div>
+
+              <div className="mobile-employee-list">
+                {shiftAssignments.length === 0 && (
+                  <div className="mobile-empty-hint">
+                    Mitarbeiter hier ablegen
+                  </div>
+                )}
+
+                {shiftAssignments.map((assignment) => (
+                  <button
+                    key={assignment.id}
+                    className="mobile-employee-pill"
+                    type="button"
+                    onClick={() => removeAssignment(assignment.id)}
+                  >
+                    {getEmployeeName(assignment.employee_id)}
+                  </button>
+                ))}
+              </div>
             </div>
           );
         })}
-      </div>
-
-      <div className="mobile-month-header-row">
-        <div>Mo</div>
-        <div>Di</div>
-        <div>Mi</div>
-        <div>Do</div>
-        <div>Fr</div>
-        <div>Sa</div>
-        <div>So</div>
-      </div>
-
-      <div className="mobile-month-grid">
-        {weeks.map((week) =>
-          week.days.map((day) => {
-            const holiday = isHoliday(day.iso);
-            const holidayName = holiday?.name ?? undefined;
-            const shifts = getShiftsForDay(day.date, holidayName);
-
-            return (
-              <div
-                key={day.iso}
-                className={`
-                  mobile-month-cell
-                  ${day.outside ? "mobile-month-outside" : ""}
-                  ${holidayName ? "mobile-month-holiday-bg" : ""}
-                `}
-              >
-                <div className="mobile-month-day">{day.day}</div>
-
-                {holidayName && (
-                  <div className="mobile-month-holiday">{holidayName}</div>
-                )}
-
-                <div className="mobile-month-shifts">
-                  {shifts.map((shift) => {
-                    const storedShiftName = getStoredShiftName(
-                      day.date,
-                      shift.name,
-                      holidayName
-                    );
-
-                    const shiftAssignments = assignments.filter(
-                      (assignment) =>
-                        assignment.date === day.iso &&
-                        assignment.shift_name === storedShiftName &&
-                        assignment.station_id === stationId
-                    );
-
-                    return (
-                      <div
-                        key={`${day.iso}-${shift.name}`}
-                        className="mobile-month-shift"
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          event.currentTarget.classList.add(
-                            "mobile-drop-active"
-                          );
-                        }}
-                        onDragLeave={(event) =>
-                          event.currentTarget.classList.remove(
-                            "mobile-drop-active"
-                          )
-                        }
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          event.currentTarget.classList.remove(
-                            "mobile-drop-active"
-                          );
-                          handleDrop(
-                            day.date,
-                            day.iso,
-                            shift.name,
-                            holidayName
-                          );
-                        }}
-                      >
-                        <div className="mobile-month-shift-name">
-                          {shift.name}
-                        </div>
-
-                        <div className="mobile-month-shift-time">
-                          {shift.start} – {shift.end}
-                        </div>
-
-                        <div className="mobile-month-emp-list">
-                          {shiftAssignments.map((assignment) => (
-                            <button
-                              key={assignment.id}
-                              className="mobile-month-emp-pill"
-                              type="button"
-                              onClick={() => removeAssignment(assignment.id)}
-                            >
-                              {getEmployeeName(assignment.employee_id)}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })
-        )}
       </div>
     </div>
   );

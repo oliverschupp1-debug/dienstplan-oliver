@@ -1,7 +1,7 @@
 .mobile-root {
   min-height: 100vh;
-  background: #0f172a;
-  color: #f8fafc;
+  background: var(--bg);
+  color: var(--text);
   box-sizing: border-box;
 }
 
@@ -10,6 +10,20 @@
   font-weight: 900;
   padding: 18px 16px 8px;
   margin: 0;
+  color: var(--text);
+}
+
+.mobile-month-topbar {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px 8px;
+}
+
+.mobile-month-topbar .mobile-month-title {
+  padding: 0;
+  text-align: center;
 }
 
 .mobile-month-header-row {
@@ -20,9 +34,9 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
 
-  background: #111827;
-  border-top: 1px solid #1e293b;
-  border-bottom: 1px solid #1e293b;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 
   padding: 10px 6px;
   margin-bottom: 6px;
@@ -30,6 +44,7 @@
   font-size: 13px;
   font-weight: 800;
   text-align: center;
+  color: var(--text);
 }
 
 .mobile-month-grid {
@@ -41,13 +56,12 @@
 
 .mobile-month-cell {
   min-height: 115px;
-
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 14px;
-
   padding: 6px;
   overflow: hidden;
+  color: var(--text);
 }
 
 .mobile-month-outside {
@@ -61,7 +75,7 @@
 }
 
 .mobile-month-holiday {
-  color: #f87171;
+  color: #ef4444;
   font-size: 9px;
   line-height: 1.1;
   margin-bottom: 4px;
@@ -75,15 +89,12 @@
 
 .mobile-month-emp-pill {
   background: #2563eb;
-  color: white;
-
+  color: #ffffff;
+  border: none;
   border-radius: 999px;
-
   padding: 3px 7px;
-
   font-size: 10px;
   font-weight: 700;
-
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -106,17 +117,5 @@
 }
 
 .mobile-month-holiday-bg {
-  border-color: #7f1d1d;
-}
-.mobile-month-topbar {
-  display: grid;
-  grid-template-columns: 48px 1fr 48px;
-  align-items: center;
-  gap: 12px;
-  padding: 18px 16px 8px;
-}
-
-.mobile-month-topbar .mobile-month-title {
-  padding: 0;
-  text-align: center;
+  border-color: #ef4444;
 }

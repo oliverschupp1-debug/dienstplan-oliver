@@ -1,8 +1,8 @@
 .mobile-today-root,
 .mobile-root {
   min-height: 100vh;
-  background: #0f172a;
-  color: #f8fafc;
+  background: var(--bg);
+  color: var(--text);
   box-sizing: border-box;
 }
 
@@ -20,6 +20,7 @@
   font-weight: 900;
   margin: 0;
   text-align: center;
+  color: var(--text);
 }
 
 .admin-override-row {
@@ -32,7 +33,7 @@
   border: 0;
   border-radius: 14px;
   background: #2563eb;
-  color: white;
+  color: #ffffff;
   font-weight: 800;
   padding: 12px 14px;
 }
@@ -49,9 +50,9 @@
   margin: 0 16px 12px;
   padding: 13px 14px;
   border-radius: 14px;
-  border: 1px solid #334155;
-  background: #1e293b;
-  color: #f8fafc;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
   font-size: 16px;
 }
 
@@ -66,7 +67,7 @@
   border: 0;
   border-radius: 999px;
   background: #2563eb;
-  color: #fff;
+  color: #ffffff;
   padding: 9px 13px;
   font-weight: 800;
   font-size: 14px;
@@ -80,8 +81,8 @@
 }
 
 .mobile-shift-card {
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 16px;
 }
@@ -93,19 +94,21 @@
   font-size: 17px;
   font-weight: 900;
   margin-bottom: 12px;
+  color: var(--text);
 }
 
 .mobile-empty-hint {
   width: 100%;
-  color: #94a3b8;
-  border: 1px dashed #475569;
+  color: var(--text-muted, var(--text));
+  border: 1px dashed var(--border);
   border-radius: 16px;
   padding: 14px;
   text-align: center;
   box-sizing: border-box;
+  opacity: 0.75;
 }
 
 .mobile-drop-active {
   outline: 2px dashed #60a5fa;
-  background: #172554;
+  background: rgba(37, 99, 235, 0.18);
 }

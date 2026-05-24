@@ -1,3 +1,4 @@
+import { useTheme } from "../theme/ThemeProvider";
 import "./MobileNavBar.css";
 
 type Props = {
@@ -13,6 +14,7 @@ export default function MobileNavBar({
   onViewChange,
   onToggleEmployees,
 }: Props) {
+  const { mode, setMode } = useTheme();
   const isStaff = role === "admin" || role === "planner";
 
   return (
@@ -42,6 +44,19 @@ export default function MobileNavBar({
           Mitarbeiter
         </button>
       )}
+
+      <select
+        className="mobile-nav-select"
+        value={mode}
+        onChange={(event) =>
+          setMode(event.target.value as "light" | "dark" | "system")
+        }
+        aria-label="Theme wählen"
+      >
+        <option value="light">Hell</option>
+        <option value="dark">Dunkel</option>
+        <option value="system">System</option>
+      </select>
     </nav>
   );
 }

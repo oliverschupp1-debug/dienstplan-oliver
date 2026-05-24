@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useEmployees } from "../hooks/useEmployees";
+import { useAllMonthlyHours } from "../hooks/useAllMonthlyHours";
 
 import MobileTodayView from "./MobileTodayView";
 import MobileTodayViewAdmin from "./MobileTodayViewAdmin";
@@ -34,6 +36,15 @@ export default function MobileRouter({
   const [view, setView] = useState<"today" | "month">("today");
   const [showEmployees, setShowEmployees] = useState(false);
 
+  const today = new Date();
+  const { employees: panelEmployees } = useEmployees(stationName);
+  const { hoursMap } = useAllMonthlyHours(
+    stationName,
+    today.getFullYear(),
+    today.getMonth(),
+    0
+  );
+
   const isAdmin = role === "admin";
   const isPlanner = role === "planner";
   const isEmployee = role === "employee";
@@ -50,11 +61,10 @@ export default function MobileRouter({
       {isAdmin && (
         <div className="mobile-station-select-wrap">
           <label className="mobile-station-label">Station</label>
-
           <select
             className="mobile-station-select"
             value={stationName}
-            onChange={(event) => onStationChange(event.target.value)}
+            onChange={(e) => onStationChange(e.target.value)}
           >
             {stations.map((station) => (
               <option key={station.id} value={station.id}>
@@ -70,11 +80,21 @@ export default function MobileRouter({
           <h3 className="mobile-employee-panel-title">Mitarbeiter</h3>
 
           <div className="mobile-employee-panel-list">
-            {employees.map((employee) => (
-              <div key={employee.id} className="mobile-employee-panel-item">
-                {employee.name}
-              </div>
-            ))}
+            {panelEmployees.map((employee) => {
+              const hours = hoursMap[employee.id] ?? 0;
+              const max = employee.max_hours ?? 0;
+              const remaining = max - hours;
+
+              return (
+                <div key={employee.id} className="mobile-employee-panel-item">
+                  <strong>{employee.name ?? "Ohne Namen"}</strong>
+                  <span>
+                    {hours.toFixed(2)} / {max} Std ·{" "}
+                    {remaining.toFixed(2)} frei
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           <button
@@ -116,10 +136,7 @@ export default function MobileRouter({
       )}
 
       {view === "month" && isEmployee && (
-        <MobileMonthViewEmployee
-          stationName={stationName}
-          employees={employees}
-        />
+        <MobileMonthViewEmployee stationName={stationName} employees={employees} />
       )}
     </div>
   );
