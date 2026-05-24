@@ -57,13 +57,15 @@ export default function AppShell() {
   const { employees } = useEmployees(stationId ?? null);
 
   if (authLoading) {
-  return <div className="app-loading">Lade Anmeldung…</div>;
-}
+    return <div className="app-loading">Lade Anmeldung…</div>;
+  }
 
-if (!user) return <LoginScreen />;
+  if (!user) return <LoginScreen />;
 
   const displayStation =
-    stations.find((s) => s.id === stationId)?.name ?? stationId ?? "";
+    stations.find((station) => station.id === stationId)?.name ??
+    stationId ??
+    "";
 
   const handleStationChange = (id: string) => {
     if (role === "employee") return;
@@ -77,16 +79,18 @@ if (!user) return <LoginScreen />;
 
   if (isMobile && role && stationId) {
     return (
-<MobileRouter
-  role={role}
-  stationName={stationId}
-  employees={employees.map((employee) => ({
-    id: employee.id,
-    name: employee.name ?? "Ohne Namen",
-  }))}
-/>
-);
-}
+      <MobileRouter
+        role={role}
+        stationName={stationId}
+        employees={employees.map((employee) => ({
+          id: employee.id,
+          name: employee.name ?? "Ohne Namen",
+        }))}
+        stations={stationsLoading ? [] : stations}
+        onStationChange={handleStationChange}
+      />
+    );
+  }
 
   return (
     <div className="app-shell">

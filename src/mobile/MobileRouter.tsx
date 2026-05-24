@@ -11,16 +11,25 @@ import MobileMonthViewEmployee from "./MobileMonthViewEmployee";
 import MobileNavBar from "./MobileNavBar";
 import "./MobileEmployeePanel.css";
 
+type Station = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   role: "admin" | "planner" | "employee";
   stationName: string;
   employees: { id: string; name: string }[];
+  stations: Station[];
+  onStationChange: (id: string) => void;
 };
 
 export default function MobileRouter({
   role,
   stationName,
   employees,
+  stations,
+  onStationChange,
 }: Props) {
   const [view, setView] = useState<"today" | "month">("today");
   const [showEmployees, setShowEmployees] = useState(false);
@@ -37,6 +46,24 @@ export default function MobileRouter({
         onViewChange={setView}
         onToggleEmployees={() => setShowEmployees((s) => !s)}
       />
+
+      {isAdmin && (
+        <div className="mobile-station-select-wrap">
+          <label className="mobile-station-label">Station</label>
+
+          <select
+            className="mobile-station-select"
+            value={stationName}
+            onChange={(event) => onStationChange(event.target.value)}
+          >
+            {stations.map((station) => (
+              <option key={station.id} value={station.id}>
+                {station.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {showEmployees && (isAdmin || isPlanner) && (
         <div className="mobile-employee-panel">
@@ -60,10 +87,9 @@ export default function MobileRouter({
         </div>
       )}
 
-      
-    {view === "today" && isAdmin && (
-  <MobileTodayViewAdmin stationName={stationName} />
-)}
+      {view === "today" && isAdmin && (
+        <MobileTodayViewAdmin stationName={stationName} />
+      )}
 
       {view === "today" && isPlanner && (
         <MobileTodayView
