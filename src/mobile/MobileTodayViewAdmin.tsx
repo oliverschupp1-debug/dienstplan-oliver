@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAssignments } from "../useAssignments";
 import { useEmployees } from "../hooks/useEmployees";
 import { useOverrides } from "../useOverrides";
@@ -25,15 +25,17 @@ function addDays(date: Date, days: number): Date {
 
 function getStoredShiftName(date: Date, shiftName: string, holidayName?: string) {
   const jsDay = date.getDay();
+
   if (holidayName) return `Feiertag ${shiftName}`;
   if (jsDay === 0) return `Sonntag ${shiftName}`;
   if (jsDay === 6) return `Samstag ${shiftName}`;
+
   return shiftName;
 }
 
 export default function MobileTodayViewAdmin({ stationName }: Props) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [dragEmployee, setDragEmployee] = useState<string | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   const stationId = stationName;
@@ -77,26 +79,24 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
     });
   }, [safeEmployees, search]);
 
-  function handleDrop(shiftName: string, event: React.DragEvent) {
-    event.currentTarget.classList.remove("mobile-drop-active");
-
-    if (!dragEmployee) return;
-
-    addAssignment({
-      date: iso,
-      shift_name: getStoredShiftName(currentDate, shiftName, holidayName),
-      employee_id: dragEmployee,
-      station_id: stationId,
-    });
-
-    setDragEmployee(null);
-  }
-
   function getEmployeeName(employeeId: string) {
     return (
       safeEmployees.find((employee) => employee.id === employeeId)?.name ??
       "Unbekannt"
     );
+  }
+
+  function handleShiftTap(shiftName: string) {
+    if (!selectedEmployeeId) return;
+
+    addAssignment({
+      date: iso,
+      shift_name: getStoredShiftName(currentDate, shiftName, holidayName),
+      employee_id: selectedEmployeeId,
+      station_id: stationId,
+    });
+
+    setSelectedEmployeeId(null);
   }
 
   const weekdayNames = [
@@ -159,18 +159,32 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
       />
 
       <div className="mobile-employee-list">
-        {filteredEmployees.map((employee) => (
-          <div
-            key={employee.id}
-            className="mobile-employee-pill"
-            draggable
-            onDragStart={() => setDragEmployee(employee.id)}
-            onDragEnd={() => setDragEmployee(null)}
-          >
-            {employee.name ?? "Ohne Namen"}
-          </div>
-        ))}
+        {filteredEmployees.map((employee) => {
+          const isSelected = selectedEmployeeId === employee.id;
+
+          return (
+            <button
+              key={employee.id}
+              type="button"
+              className={
+                "mobile-employee-pill" + (isSelected ? " selected" : "")
+              }
+              onClick={() =>
+                setSelectedEmployeeId(isSelected ? null : employee.id)
+              }
+            >
+              {employee.name ?? "Ohne Namen"}
+            </button>
+          );
+        })}
       </div>
+
+      {selectedEmployeeId && (
+        <div className="mobile-empty-hint">
+          Schicht antippen, um{" "}
+          <strong>{getEmployeeName(selectedEmployeeId)}</strong> einzuplanen.
+        </div>
+      )}
 
       <div className="mobile-shift-list">
         {shiftList.map((shift) => {
@@ -188,17 +202,11 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
           );
 
           return (
-            <div
+            <button
               key={`${iso}-${shift.name}`}
               className="mobile-shift-card"
-              onDragOver={(event) => {
-                event.preventDefault();
-                event.currentTarget.classList.add("mobile-drop-active");
-              }}
-              onDragLeave={(event) =>
-                event.currentTarget.classList.remove("mobile-drop-active")
-              }
-              onDrop={(event) => handleDrop(shift.name, event)}
+              type="button"
+              onClick={() => handleShiftTap(shift.name)}
             >
               <div className="mobile-shift-title">
                 <strong>{shift.name}</strong>
@@ -210,22 +218,24 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
               <div className="mobile-employee-list">
                 {shiftAssignments.length === 0 && (
                   <div className="mobile-empty-hint">
-                    Mitarbeiter hier ablegen
+                    Mitarbeiter antippen, dann diese Schicht antippen
                   </div>
                 )}
 
                 {shiftAssignments.map((assignment) => (
-                  <button
+                  <span
                     key={assignment.id}
                     className="mobile-employee-pill"
-                    type="button"
-                    onClick={() => removeAssignment(assignment.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      removeAssignment(assignment.id);
+                    }}
                   >
-                    {getEmployeeName(assignment.employee_id)}
-                  </button>
+                    {getEmployeeName(assignment.employee_id)} ×
+                  </span>
                 ))}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

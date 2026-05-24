@@ -18,9 +18,11 @@ function getLocalISO(date: Date): string {
 
 function getStoredShiftName(date: Date, shiftName: string, holidayName?: string) {
   const jsDay = date.getDay();
+
   if (holidayName) return `Feiertag ${shiftName}`;
   if (jsDay === 0) return `Sonntag ${shiftName}`;
   if (jsDay === 6) return `Samstag ${shiftName}`;
+
   return shiftName;
 }
 
@@ -162,9 +164,9 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
 
       <div className="mobile-employee-list">
         {filteredEmployees.map((employee) => (
-          <div key={employee.id} className="mobile-month-emp-pill">
+          <span key={employee.id} className="mobile-month-emp-pill">
             {employee.name ?? "Ohne Namen"}
-          </div>
+          </span>
         ))}
       </div>
 
@@ -203,8 +205,6 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
                   id: assignment.id,
                   employeeName: getEmployeeName(assignment.employee_id),
                   shiftName: shift.name,
-                  start: shift.start,
-                  end: shift.end,
                 }));
             });
 
@@ -227,12 +227,9 @@ export default function MobileMonthViewAdmin({ stationName }: Props) {
                   {dayAssignments.map((item) => (
                     <div key={item.id} className="mobile-month-assignment">
                       <strong>{item.shiftName}</strong>
-                      <span>
-                        {item.start} – {item.end}
-                      </span>
-                      <div className="mobile-month-emp-pill">
+                      <span className="mobile-month-emp-pill">
                         {item.employeeName}
-                      </div>
+                      </span>
                     </div>
                   ))}
                 </div>
