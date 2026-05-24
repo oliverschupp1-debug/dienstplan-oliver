@@ -35,22 +35,24 @@ export default function Sidebar({
     showEmployeeList ? effectiveStationId : null
   );
 
+  const visibleEmployees = employees.filter((emp) => emp.role !== "admin");
+
   const [reloadFlag, setReloadFlag] = useState(0);
   const [newName, setNewName] = useState("");
   const [newMaxHours, setNewMaxHours] = useState("43");
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-useEffect(() => {
-  const off = onAssignmentsChanged(() => {
-    setReloadFlag((x) => x + 1);
-    reload();
-  });
+  useEffect(() => {
+    const off = onAssignmentsChanged(() => {
+      setReloadFlag((x) => x + 1);
+      reload();
+    });
 
-  return () => {
-    off();
-  };
-}, [reload]);
+    return () => {
+      off();
+    };
+  }, [reload]);
 
   const { hoursMap, loading: hoursLoading } = useAllMonthlyHours(
     showEmployeeList ? effectiveStationId : null,
@@ -186,11 +188,11 @@ useEffect(() => {
 
       {showEmployeeList && effectiveStationId && !loading && (
         <div className="employee-list">
-          {employees.length === 0 && (
+          {visibleEmployees.length === 0 && (
             <div className="loading">Keine Mitarbeiter gefunden.</div>
           )}
 
-          {employees.map((emp) => {
+          {visibleEmployees.map((emp) => {
             const hours = hoursMap[emp.id] ?? 0;
             const max = emp.max_hours ?? 0;
             const remaining = max - hours;
@@ -221,7 +223,7 @@ useEffect(() => {
                   ) : (
                     <div className="employee-hours">
                       <span>
-                        {hours.toFixed(2)} / {max} Std/Monat
+                        {hours.toFixed(2)} / {max.toFixed(2)} Std/Monat
                       </span>
 
                       <span
@@ -291,4 +293,4 @@ useEffect(() => {
       )}
     </aside>
   );
-  }
+}
