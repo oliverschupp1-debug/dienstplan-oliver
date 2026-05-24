@@ -135,8 +135,15 @@ export default function MonthCalendar({
         return;
       }
 
-      const firstDay = new Date(year, month, 1).toISOString().slice(0, 10);
-      const lastDay = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+      function localDateString(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+const firstDay = localDateString(new Date(year, month, 1));
+const lastDay = localDateString(new Date(year, month + 1, 0));
 
       const { data: aData } = await supabase
         .from("assignments")
