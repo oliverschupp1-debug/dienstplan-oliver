@@ -77,7 +77,7 @@ if (!user) return <LoginScreen />;
 
   if (isMobile && role && stationId) {
     return (
-      <MobileRouter
+<MobileRouter
   role={role}
   stationName={stationId}
   employees={employees.map((employee) => ({
@@ -85,6 +85,8 @@ if (!user) return <LoginScreen />;
     name: employee.name ?? "Ohne Namen",
   }))}
 />
+);
+}
 
   return (
     <div className="app-shell">
