@@ -78,19 +78,13 @@ if (!user) return <LoginScreen />;
   if (isMobile && role && stationId) {
     return (
       <MobileRouter
-        role={role}
-        stationName={stationId}
-        employees={employees.map((employee) => ({
-          id: employee.id,
-          name: employee.name ?? "Ohne Namen",
-        }))}
-        onOpenMonth={() => {
-          window.history.pushState({}, "", "/month");
-          window.dispatchEvent(new PopStateEvent("popstate"));
-        }}
-      />
-    );
-  }
+  role={role}
+  stationName={stationId}
+  employees={employees.map((employee) => ({
+    id: employee.id,
+    name: employee.name ?? "Ohne Namen",
+  }))}
+/>
 
   return (
     <div className="app-shell">

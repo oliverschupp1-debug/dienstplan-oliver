@@ -15,7 +15,6 @@ type Props = {
   role: "admin" | "planner" | "employee";
   stationName: string;
   employees: { id: string; name: string }[];
-  onOpenMonth?: () => void;
 };
 
 export default function MobileRouter({
@@ -63,10 +62,9 @@ export default function MobileRouter({
 
       {view === "today" && isAdmin && (
         <MobileTodayViewAdmin
-          stationName={stationName}
-          employees={employees}
-          onOpenMonth={() => setView("month")}
-        />
+  stationName={stationName}
+  onOpenMonth={() => setView("month")}
+/>
       )}
 
       {view === "today" && isPlanner && (
