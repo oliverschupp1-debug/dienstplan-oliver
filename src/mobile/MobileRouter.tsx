@@ -25,21 +25,31 @@ type Props = {
   onStationChange: (id: string) => void;
 };
 
+type AbsenceDraft = {
+  start_date: string;
+  end_date: string;
+  type: "vacation" | "sick" | "unavailable";
+  note: string;
+};
+
 function absenceLabel(type: string) {
   if (type === "vacation") return "Urlaub";
   if (type === "sick") return "Krank";
   return "Abwesend";
 }
 
-function countVacationDays(start: string, end: string) {
+function countVacationDaysInYear(start: string, end: string, year: number) {
   const startDate = new Date(start);
   const endDate = new Date(end);
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year, 11, 31);
+
+  const current = startDate > yearStart ? new Date(startDate) : new Date(yearStart);
+  const last = endDate < yearEnd ? new Date(endDate) : new Date(yearEnd);
 
   let count = 0;
 
-  const current = new Date(startDate);
-
-  while (current <= endDate) {
+  while (current <= last) {
     count += 1;
     current.setDate(current.getDate() + 1);
   }
@@ -68,25 +78,16 @@ export default function MobileRouter({
   );
 
   const [absenceDrafts, setAbsenceDrafts] = useState<
-    Record<
-      string,
-      {
-        start_date: string;
-        end_date: string;
-        type: "vacation" | "sick" | "unavailable";
-        note: string;
-      }
-    >
+    Record<string, AbsenceDraft>
   >({});
 
   const { employees: allPanelEmployees } = useEmployees(stationName);
+  const { absences, createAbsence, deleteAbsence } = useAbsences(stationName);
 
-  const panelEmployees = allPanelEmployees.filter(
-    (employee) => employee.role !== "admin"
+  const panelEmployees = useMemo(
+    () => allPanelEmployees.filter((employee) => employee.role !== "admin"),
+    [allPanelEmployees]
   );
-
-  const { absences, createAbsence, deleteAbsence } =
-    useAbsences(stationName);
 
   const { hoursMap } = useAllMonthlyHours(
     stationName,
@@ -96,18 +97,10 @@ export default function MobileRouter({
   );
 
   useEffect(() => {
-    const nextDrafts: Record<
-      string,
-      {
-        start_date: string;
-        end_date: string;
-        type: "vacation" | "sick" | "unavailable";
-        note: string;
-      }
-    > = {};
+    const nextDrafts: Record<string, AbsenceDraft> = {};
 
     for (const employee of panelEmployees) {
-      nextDrafts[employee.id] = {
+      nextDrafts[employee.id] = absenceDrafts[employee.id] ?? {
         start_date: "",
         end_date: "",
         type: "vacation",
@@ -132,21 +125,9 @@ export default function MobileRouter({
   const isPlanner = role === "planner";
   const isEmployee = role === "employee";
 
-  const currentYearAbsences = useMemo(() => {
-    return absences.filter((absence) => {
-      const year = new Date(absence.start_date).getFullYear();
-      return year === mobileYear;
-    });
-  }, [absences, mobileYear]);
-
   function updateAbsenceDraft(
     employeeId: string,
-    patch: Partial<{
-      start_date: string;
-      end_date: string;
-      type: "vacation" | "sick" | "unavailable";
-      note: string;
-    }>
+    patch: Partial<AbsenceDraft>
   ) {
     setAbsenceDrafts((current) => ({
       ...current,
@@ -189,6 +170,14 @@ export default function MobileRouter({
     }
   }
 
+  async function handleDeleteAbsence(id: string) {
+    try {
+      await deleteAbsence(id);
+    } catch {
+      alert("Abwesenheit konnte nicht gelöscht werden.");
+    }
+  }
+
   return (
     <div className="mobile-root">
       <MobileNavBar
@@ -228,31 +217,27 @@ export default function MobileRouter({
               const max = employee.max_hours ?? 0;
               const remaining = max - hours;
 
-              const employeeAbsences = currentYearAbsences.filter(
+              const employeeAbsences = absences.filter(
                 (absence) => absence.employee_id === employee.id
               );
 
-              const vacationTotal =
-                employee.vacation_days_total ?? 0;
+              const vacationTotal = employee.vacation_days_total ?? 0;
 
               const vacationUsed = employeeAbsences
                 .filter((absence) => absence.type === "vacation")
                 .reduce(
                   (sum, absence) =>
                     sum +
-                    countVacationDays(
+                    countVacationDaysInYear(
                       absence.start_date,
-                      absence.end_date
+                      absence.end_date,
+                      mobileYear
                     ),
                   0
                 );
 
-              const vacationRemaining =
-                vacationTotal - vacationUsed;
-
-              const expanded =
-                expandedEmployeeId === employee.id;
-
+              const vacationRemaining = vacationTotal - vacationUsed;
+              const expanded = expandedEmployeeId === employee.id;
               const draft = absenceDrafts[employee.id];
 
               return (
@@ -264,28 +249,27 @@ export default function MobileRouter({
                     className="mobile-employee-main"
                     onClick={() =>
                       setExpandedEmployeeId((current) =>
-                        current === employee.id
-                          ? null
-                          : employee.id
+                        current === employee.id ? null : employee.id
                       )
                     }
                   >
                     <div>
-                      <strong>
-                        {employee.name ?? "Ohne Namen"}
-                      </strong>
+                      <strong>{employee.name ?? "Ohne Namen"}</strong>
 
                       <span>
-                        {hours.toFixed(2)} /{" "}
-                        {max.toFixed(2)} Std ·{" "}
+                        Stunden: {hours.toFixed(2)} / {max.toFixed(2)} ·{" "}
                         {remaining.toFixed(2)} frei
                       </span>
 
                       <span>
-                        Urlaub: {vacationUsed} /{" "}
-                        {vacationTotal} · offen:{" "}
-                        {vacationRemaining}
+                        Urlaub: {vacationUsed.toFixed(1)} /{" "}
+                        {vacationTotal.toFixed(1)} ·{" "}
+                        {vacationRemaining.toFixed(1)} offen
                       </span>
+
+                      {employee.remarks && (
+                        <span>Bemerkung: {employee.remarks}</span>
+                      )}
                     </div>
 
                     <div className="mobile-employee-expand-icon">
@@ -295,13 +279,19 @@ export default function MobileRouter({
 
                   {expanded && draft && (
                     <div className="mobile-employee-expanded">
+                      {employee.vacation_note && (
+                        <div className="mobile-employee-note">
+                          Urlaub: {employee.vacation_note}
+                        </div>
+                      )}
+
                       <div className="mobile-absence-form">
                         <input
                           type="date"
                           value={draft.start_date}
-                          onChange={(e) =>
+                          onChange={(event) =>
                             updateAbsenceDraft(employee.id, {
-                              start_date: e.target.value,
+                              start_date: event.target.value,
                             })
                           }
                         />
@@ -309,42 +299,33 @@ export default function MobileRouter({
                         <input
                           type="date"
                           value={draft.end_date}
-                          onChange={(e) =>
+                          onChange={(event) =>
                             updateAbsenceDraft(employee.id, {
-                              end_date: e.target.value,
+                              end_date: event.target.value,
                             })
                           }
                         />
 
                         <select
                           value={draft.type}
-                          onChange={(e) =>
+                          onChange={(event) =>
                             updateAbsenceDraft(employee.id, {
-                              type: e.target
-                                .value as any,
+                              type: event.target.value as AbsenceDraft["type"],
                             })
                           }
                         >
-                          <option value="vacation">
-                            Urlaub
-                          </option>
-
-                          <option value="sick">
-                            Krank
-                          </option>
-
-                          <option value="unavailable">
-                            Abwesend
-                          </option>
+                          <option value="vacation">Urlaub</option>
+                          <option value="sick">Krank</option>
+                          <option value="unavailable">Abwesend</option>
                         </select>
 
                         <input
                           type="text"
                           placeholder="Notiz"
                           value={draft.note}
-                          onChange={(e) =>
+                          onChange={(event) =>
                             updateAbsenceDraft(employee.id, {
-                              note: e.target.value,
+                              note: event.target.value,
                             })
                           }
                         />
@@ -352,11 +333,9 @@ export default function MobileRouter({
                         <button
                           type="button"
                           className="mobile-employee-save-btn"
-                          onClick={() =>
-                            handleCreateAbsence(employee.id)
-                          }
+                          onClick={() => handleCreateAbsence(employee.id)}
                         >
-                          Speichern
+                          Abwesenheit speichern
                         </button>
                       </div>
 
@@ -367,26 +346,17 @@ export default function MobileRouter({
                             className={`mobile-absence-pill mobile-absence-${absence.type}`}
                           >
                             <div>
-                              <strong>
-                                {absenceLabel(absence.type)}
-                              </strong>
-
+                              <strong>{absenceLabel(absence.type)}</strong>
                               <div>
-                                {absence.start_date} →{" "}
-                                {absence.end_date}
+                                {absence.start_date} → {absence.end_date}
                               </div>
-
-                              {absence.note && (
-                                <div>{absence.note}</div>
-                              )}
+                              {absence.note && <div>{absence.note}</div>}
                             </div>
 
                             <button
                               type="button"
                               className="mobile-absence-delete"
-                              onClick={() =>
-                                deleteAbsence(absence.id)
-                              }
+                              onClick={() => handleDeleteAbsence(absence.id)}
                             >
                               ×
                             </button>
