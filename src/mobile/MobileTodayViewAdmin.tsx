@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useAssignments } from "../useAssignments";
 import { useEmployees } from "../hooks/useEmployees";
 import { useOverrides } from "../useOverrides";
+import { useAbsences } from "../hooks/useAbsences";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import "./MobileTodayView.css";
@@ -33,9 +34,17 @@ function getStoredShiftName(date: Date, shiftName: string, holidayName?: string)
   return shiftName;
 }
 
+function absenceLabel(type: string) {
+  if (type === "vacation") return "Urlaub";
+  if (type === "sick") return "Krank";
+  return "Abwesend";
+}
+
 export default function MobileTodayViewAdmin({ stationName }: Props) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(
+    null
+  );
   const [search, setSearch] = useState("");
 
   const stationId = stationName;
@@ -43,13 +52,15 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
 
   const { employees } = useEmployees(stationId);
   const safeEmployees = Array.isArray(employees)
-  ? employees.filter((employee) => employee.role !== "admin")
-  : [];
+    ? employees.filter((employee) => employee.role !== "admin")
+    : [];
 
   const { assignments, addAssignment, removeAssignment } =
     useAssignments(stationId);
 
   const { overrides } = useOverrides(stationId);
+  const { absences } = useAbsences(stationId);
+
   const shiftModel = getShiftModelForStation(stationId);
 
   const holiday = isHoliday(iso);
@@ -88,8 +99,46 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
     );
   }
 
+  function getAbsenceForEmployee(employeeId: string) {
+    return absences.find(
+      (absence) =>
+        absence.employee_id === employeeId &&
+        absence.start_date <= iso &&
+        absence.end_date >= iso
+    );
+  }
+
+  function handleEmployeeTap(employeeId: string) {
+    const absence = getAbsenceForEmployee(employeeId);
+
+    if (absence) {
+      alert(
+        `${getEmployeeName(employeeId)} ist am ${iso} als "${absenceLabel(
+          absence.type
+        )}" markiert.`
+      );
+      return;
+    }
+
+    setSelectedEmployeeId((current) =>
+      current === employeeId ? null : employeeId
+    );
+  }
+
   function handleShiftTap(shiftName: string) {
     if (!selectedEmployeeId) return;
+
+    const absence = getAbsenceForEmployee(selectedEmployeeId);
+
+    if (absence) {
+      alert(
+        `${getEmployeeName(selectedEmployeeId)} ist am ${iso} als "${absenceLabel(
+          absence.type
+        )}" markiert und kann nicht eingeplant werden.`
+      );
+      setSelectedEmployeeId(null);
+      return;
+    }
 
     addAssignment({
       date: iso,
@@ -117,7 +166,10 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
         <button
           className="mobile-button small"
           type="button"
-          onClick={() => setCurrentDate((date) => addDays(date, -1))}
+          onClick={() => {
+            setSelectedEmployeeId(null);
+            setCurrentDate((date) => addDays(date, -1));
+          }}
         >
           ←
         </button>
@@ -136,7 +188,10 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
         <button
           className="mobile-button small"
           type="button"
-          onClick={() => setCurrentDate((date) => addDays(date, 1))}
+          onClick={() => {
+            setSelectedEmployeeId(null);
+            setCurrentDate((date) => addDays(date, 1));
+          }}
         >
           →
         </button>
@@ -146,7 +201,10 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
         <button
           className="mobile-button"
           type="button"
-          onClick={() => setCurrentDate(new Date())}
+          onClick={() => {
+            setSelectedEmployeeId(null);
+            setCurrentDate(new Date());
+          }}
         >
           Heute
         </button>
@@ -163,19 +221,22 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
       <div className="mobile-employee-list">
         {filteredEmployees.map((employee) => {
           const isSelected = selectedEmployeeId === employee.id;
+          const absence = getAbsenceForEmployee(employee.id);
 
           return (
             <button
               key={employee.id}
               type="button"
               className={
-                "mobile-employee-pill" + (isSelected ? " selected" : "")
+                "mobile-employee-pill" +
+                (isSelected ? " selected" : "") +
+                (absence ? " mobile-employee-pill-absent" : "")
               }
-              onClick={() =>
-                setSelectedEmployeeId(isSelected ? null : employee.id)
-              }
+              onClick={() => handleEmployeeTap(employee.id)}
+              title={absence ? absenceLabel(absence.type) : undefined}
             >
               {employee.name ?? "Ohne Namen"}
+              {absence ? ` · ${absenceLabel(absence.type)}` : ""}
             </button>
           );
         })}
@@ -224,18 +285,26 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
                   </div>
                 )}
 
-                {shiftAssignments.map((assignment) => (
-                  <span
-                    key={assignment.id}
-                    className="mobile-employee-pill"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      removeAssignment(assignment.id);
-                    }}
-                  >
-                    {getEmployeeName(assignment.employee_id)} ×
-                  </span>
-                ))}
+                {shiftAssignments.map((assignment) => {
+                  const absence = getAbsenceForEmployee(assignment.employee_id);
+
+                  return (
+                    <span
+                      key={assignment.id}
+                      className={
+                        "mobile-employee-pill" +
+                        (absence ? " mobile-employee-pill-absent" : "")
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeAssignment(assignment.id);
+                      }}
+                    >
+                      {getEmployeeName(assignment.employee_id)}
+                      {absence ? ` · ${absenceLabel(absence.type)}` : ""} ×
+                    </span>
+                  );
+                })}
               </div>
             </button>
           );

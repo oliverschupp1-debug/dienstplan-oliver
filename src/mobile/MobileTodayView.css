@@ -112,3 +112,12 @@
   outline: 2px dashed #60a5fa;
   background: rgba(37, 99, 235, 0.18);
 }
+.mobile-employee-pill.selected {
+  outline: 3px solid #facc15;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.25);
+}
+
+.mobile-employee-pill-absent {
+  background: #7f1d1d !important;
+  color: #fecaca !important;
+}
