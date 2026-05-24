@@ -6,6 +6,7 @@ import { useAbsences } from "../../hooks/useAbsences";
 import { supabase } from "../../lib/supabaseClient";
 import { onAssignmentsChanged } from "../../events";
 import { useAppStore } from "../../store/useAppStore";
+import { createPortal } from "react-dom";
 import "./Sidebar.css";
 
 interface SidebarProps {
@@ -619,55 +620,74 @@ export default function Sidebar({
         </div>
       )}
 
-      {showAddEmployeeModal && (
-        <div
-          className="add-employee-modal-backdrop"
-          onClick={() => setShowAddEmployeeModal(false)}
-        >
-          <form
-            className="add-employee-modal"
-            onSubmit={handleAddEmployee}
-            onClick={(e) => e.stopPropagation()}
+{showAddEmployeeModal &&
+  createPortal(
+    <div
+      className="add-employee-modal-backdrop"
+      onClick={() => setShowAddEmployeeModal(false)}
+    >
+      <form
+        className="add-employee-modal"
+        onSubmit={handleAddEmployee}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="add-employee-modal-header">
+          <h3>Neuer Mitarbeiter</h3>
+
+          <button
+            type="button"
+            className="add-employee-modal-close"
+            onClick={() => setShowAddEmployeeModal(false)}
           >
-            <div className="add-employee-modal-header">
-              <h3>Neuer Mitarbeiter</h3>
-
-              <button
-                type="button"
-                className="add-employee-modal-close"
-                onClick={() => setShowAddEmployeeModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <input
-              type="text"
-              className="add-employee-input"
-              placeholder="Name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              autoFocus
-            />
-
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              className="add-employee-input"
-              placeholder="Max. Stunden/Monat"
-              value={newMaxHours}
-              onChange={(e) => setNewMaxHours(e.target.value)}
-            />
-
-            {errorMsg && <div className="add-employee-error">{errorMsg}</div>}
-
-            <button className="add-employee-btn" type="submit" disabled={saving}>
-              {saving ? "Speichere…" : "Mitarbeiter speichern"}
-            </button>
-          </form>
+            ×
+          </button>
         </div>
-      )}
+
+        <input
+          type="text"
+          className="add-employee-input"
+          placeholder="Name"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          autoFocus
+        />
+
+        <input
+          type="number"
+          min="0"
+          step="0.5"
+          className="add-employee-input"
+          placeholder="Max. Stunden/Monat"
+          value={newMaxHours}
+          onChange={(e) => setNewMaxHours(e.target.value)}
+        />
+
+        {errorMsg && <div className="add-employee-error">{errorMsg}</div>}
+
+        <button className="add-employee-btn" type="submit" disabled={saving}>
+          {saving ? "Speichere…" : "Mitarbeiter speichern"}
+        </button>
+      </form>
+    </div>,
+    document.body
+    )}
+          {showAddEmployeeModal &&
+        createPortal(
+          <div
+            className="add-employee-modal-backdrop"
+            onClick={() => setShowAddEmployeeModal(false)}
+          >
+            <form
+              className="add-employee-modal"
+              onSubmit={handleAddEmployee}
+              onClick={(e) => e.stopPropagation()}
+            >
+              ...
+            </form>
+          </div>,
+          document.body
+        )}
+
     </aside>
   );
 }
