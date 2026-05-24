@@ -23,7 +23,12 @@ type EmployeeDraft = {
   vacation_note: string;
 };
 
-
+type AbsenceDraft = {
+  start_date: string;
+  end_date: string;
+  type: "vacation" | "sick" | "unavailable";
+  note: string;
+};
 
 function countVacationDaysInYear(
   startDate: string,
@@ -52,6 +57,12 @@ function countVacationDaysInYear(
   return count;
 }
 
+function absenceLabel(type: string) {
+  if (type === "vacation") return "Urlaub";
+  if (type === "sick") return "Krank";
+  return "Abwesend";
+}
+
 export default function Sidebar({
   stationId,
   stations,
@@ -68,24 +79,43 @@ export default function Sidebar({
 
   const effectiveStationId = stationId || null;
 
-  const { employees, loading, reload } = useEmployees(
+  const { employees, reload } = useEmployees(
     showEmployeeList ? effectiveStationId : null
   );
 
-  const { absences } = useAbsences(effectiveStationId);
+  const {
+    absences,
+    createAbsence,
+    deleteAbsence,
+  } = useAbsences(effectiveStationId);
 
   const visibleEmployees = employees.filter((emp) => emp.role !== "admin");
 
+  const [expandedEmployeeId, setExpandedEmployeeId] = useState<string | null>(
+    null
+  );
+
   const [reloadFlag, setReloadFlag] = useState(0);
+
   const [newName, setNewName] = useState("");
   const [newMaxHours, setNewMaxHours] = useState("43");
+
   const [saving, setSaving] = useState(false);
   const [savingEmployeeId, setSavingEmployeeId] = useState<string | null>(null);
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [employeeDrafts, setEmployeeDrafts] = useState<Record<string, EmployeeDraft>>({});
+
+  const [employeeDrafts, setEmployeeDrafts] = useState<
+    Record<string, EmployeeDraft>
+  >({});
+
+  const [absenceDrafts, setAbsenceDrafts] = useState<
+    Record<string, AbsenceDraft>
+  >({});
 
   useEffect(() => {
     const nextDrafts: Record<string, EmployeeDraft> = {};
+    const nextAbsenceDrafts: Record<string, AbsenceDraft> = {};
 
     for (const emp of visibleEmployees) {
       nextDrafts[emp.id] = {
@@ -94,9 +124,17 @@ export default function Sidebar({
         vacation_days_total: String(emp.vacation_days_total ?? 0),
         vacation_note: emp.vacation_note ?? "",
       };
+
+      nextAbsenceDrafts[emp.id] = {
+        start_date: "",
+        end_date: "",
+        type: "vacation",
+        note: "",
+      };
     }
 
     setEmployeeDrafts(nextDrafts);
+    setAbsenceDrafts(nextAbsenceDrafts);
   }, [employees]);
 
   useEffect(() => {
@@ -110,7 +148,7 @@ export default function Sidebar({
     };
   }, [reload]);
 
-  const { hoursMap, loading: hoursLoading } = useAllMonthlyHours(
+  const { hoursMap } = useAllMonthlyHours(
     showEmployeeList ? effectiveStationId : null,
     year,
     month,
@@ -119,14 +157,31 @@ export default function Sidebar({
 
   const selectedStationName = useMemo(() => {
     if (!effectiveStationId) return "";
+
     return (
       stations.find((station) => station.id === effectiveStationId)?.name ??
       effectiveStationId
     );
   }, [effectiveStationId, stations]);
 
-  function updateDraft(employeeId: string, patch: Partial<EmployeeDraft>) {
+  function updateDraft(
+    employeeId: string,
+    patch: Partial<EmployeeDraft>
+  ) {
     setEmployeeDrafts((current) => ({
+      ...current,
+      [employeeId]: {
+        ...current[employeeId],
+        ...patch,
+      },
+    }));
+  }
+
+  function updateAbsenceDraft(
+    employeeId: string,
+    patch: Partial<AbsenceDraft>
+  ) {
+    setAbsenceDrafts((current) => ({
       ...current,
       [employeeId]: {
         ...current[employeeId],
@@ -139,7 +194,8 @@ export default function Sidebar({
     return absences
       .filter(
         (absence) =>
-          absence.employee_id === employeeId && absence.type === "vacation"
+          absence.employee_id === employeeId &&
+          absence.type === "vacation"
       )
       .reduce(
         (sum, absence) =>
@@ -153,22 +209,47 @@ export default function Sidebar({
       );
   }
 
+  async function handleCreateAbsence(employeeId: string) {
+    const draft = absenceDrafts[employeeId];
+    if (!draft) return;
+
+    if (!draft.start_date || !draft.end_date) {
+      alert("Bitte Start- und Enddatum auswählen.");
+      return;
+    }
+
+    if (!effectiveStationId) return;
+
+    try {
+      await createAbsence({
+        employee_id: employeeId,
+        station_id: effectiveStationId,
+        start_date: draft.start_date,
+        end_date: draft.end_date,
+        type: draft.type,
+        note: draft.note,
+      });
+
+      setAbsenceDrafts((current) => ({
+        ...current,
+        [employeeId]: {
+          start_date: "",
+          end_date: "",
+          type: "vacation",
+          note: "",
+        },
+      }));
+    } catch {
+      alert("Abwesenheit konnte nicht gespeichert werden.");
+    }
+  }
+
   async function handleSaveEmployeeSettings(employeeId: string) {
     const draft = employeeDrafts[employeeId];
     if (!draft) return;
 
     const maxHours = Number(draft.max_hours);
     const vacationDaysTotal = Number(draft.vacation_days_total);
-
-    if (!Number.isFinite(maxHours) || maxHours < 0) {
-      alert("Bitte eine gültige maximale Stundenzahl eingeben.");
-      return;
-    }
-
-    if (!Number.isFinite(vacationDaysTotal) || vacationDaysTotal < 0) {
-      alert("Bitte eine gültige Urlaubszahl eingeben.");
-      return;
-    }
 
     setSavingEmployeeId(employeeId);
 
@@ -183,22 +264,22 @@ export default function Sidebar({
       .eq("id", employeeId);
 
     if (error) {
-      console.error("Fehler beim Speichern:", error);
+      console.error(error);
       alert("Mitarbeiterdaten konnten nicht gespeichert werden.");
       setSavingEmployeeId(null);
       return;
     }
 
     await reload();
+
     setReloadFlag((x) => x + 1);
     setSavingEmployeeId(null);
   }
 
   async function handleAddEmployee(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setErrorMsg(null);
 
-    if (!canManageEmployees) return;
+    setErrorMsg(null);
 
     if (!effectiveStationId) {
       setErrorMsg("Keine Station ausgewählt.");
@@ -214,11 +295,6 @@ export default function Sidebar({
 
     const maxHours = Number(newMaxHours);
 
-    if (!Number.isFinite(maxHours) || maxHours < 0) {
-      setErrorMsg("Bitte eine gültige maximale Stundenzahl eingeben.");
-      return;
-    }
-
     setSaving(true);
 
     const { error } = await supabase.from("employees").insert({
@@ -233,7 +309,7 @@ export default function Sidebar({
     });
 
     if (error) {
-      console.error("Fehler beim Anlegen des Mitarbeiters:", error);
+      console.error(error);
       setErrorMsg("Mitarbeiter konnte nicht gespeichert werden.");
       setSaving(false);
       return;
@@ -241,27 +317,38 @@ export default function Sidebar({
 
     setNewName("");
     setNewMaxHours("43");
+
     reload();
+
     setReloadFlag((x) => x + 1);
     setSaving(false);
   }
 
-  async function handleDeleteEmployee(id: string, name?: string | null) {
-    if (!canManageEmployees) return;
-
+  async function handleDeleteEmployee(
+    id: string,
+    name?: string | null
+  ) {
     const displayName = name || "diesen Mitarbeiter";
-    const ok = confirm(`Mitarbeiter "${displayName}" wirklich löschen?`);
+
+    const ok = confirm(
+      `Mitarbeiter "${displayName}" wirklich löschen?`
+    );
+
     if (!ok) return;
 
-    const { error } = await supabase.from("employees").delete().eq("id", id);
+    const { error } = await supabase
+      .from("employees")
+      .delete()
+      .eq("id", id);
 
     if (error) {
-      console.error("Fehler beim Löschen:", error);
+      console.error(error);
       alert("Fehler beim Löschen.");
       return;
     }
 
     reload();
+
     setReloadFlag((x) => x + 1);
   }
 
@@ -299,116 +386,95 @@ export default function Sidebar({
         )}
       </div>
 
-      {role === "employee" && (
-        <div className="employee-sidebar-note">
-          Du siehst nur deine eigene Station und deinen Dienstplan.
-        </div>
-      )}
-
-      {showEmployeeList && !effectiveStationId && (
-        <div className="loading">Bitte zuerst eine Station auswählen.</div>
-      )}
-
-      {showEmployeeList && effectiveStationId && loading && (
-        <div className="loading">Lade Mitarbeiter…</div>
-      )}
-
-      {showEmployeeList && effectiveStationId && !loading && (
+      {showEmployeeList && (
         <div className="employee-list">
-          {visibleEmployees.length === 0 && (
-            <div className="loading">Keine Mitarbeiter gefunden.</div>
-          )}
-
           {visibleEmployees.map((emp) => {
             const hours = hoursMap[emp.id] ?? 0;
             const max = emp.max_hours ?? 0;
+
             const remaining = max - hours;
+
             const employeeName = emp.name || "Ohne Namen";
+
             const draft = employeeDrafts[emp.id];
+            const absenceDraft = absenceDrafts[emp.id];
 
             const vacationTotal = emp.vacation_days_total ?? 0;
+
             const vacationUsed = getVacationUsed(emp.id);
-            const vacationRemaining = vacationTotal - vacationUsed;
+
+            const vacationRemaining =
+              vacationTotal - vacationUsed;
+
+            const employeeAbsences = absences.filter(
+              (absence) => absence.employee_id === emp.id
+            );
+
+            const expanded = expandedEmployeeId === emp.id;
 
             return (
               <div
                 key={emp.id}
-                className="employee-item"
-                draggable={canManageEmployees}
-                onDragStart={(e) => {
-                  if (!canManageEmployees) return;
-                  e.dataTransfer.setData(
-                    "text/plain",
-                    JSON.stringify({ employeeId: emp.id })
-                  );
-                }}
+                className="employee-item employee-item-expandable"
               >
-                <div className="employee-avatar">
-                  {employeeName.charAt(0).toUpperCase()}
-                </div>
+                <div
+                  className="employee-header"
+                  onClick={() =>
+                    setExpandedEmployeeId(
+                      expanded ? null : emp.id
+                    )
+                  }
+                >
+                  <div className="employee-avatar">
+                    {employeeName.charAt(0).toUpperCase()}
+                  </div>
 
-                <div className="employee-info">
-                  <div className="employee-name">{employeeName}</div>
+                  <div className="employee-info">
+                    <div className="employee-name">
+                      {employeeName}
+                    </div>
 
-                  {hoursLoading ? (
-                    <div className="employee-hours">Berechne…</div>
-                  ) : (
                     <div className="employee-hours">
                       <span>
-                        {hours.toFixed(2)} / {max.toFixed(2)} Std/Monat
+                        {hours.toFixed(2)} /{" "}
+                        {max.toFixed(2)} Std
                       </span>
 
                       <span
                         className={
                           remaining < 0
                             ? "hours-over"
-                            : remaining > 0
-                            ? "hours-under"
-                            : "hours-neutral"
+                            : "hours-under"
                         }
                       >
-                        {remaining >= 0
-                          ? `${remaining.toFixed(2)} frei`
-                          : `${Math.abs(remaining).toFixed(2)} drüber`}
+                        {remaining.toFixed(2)} frei
                       </span>
                     </div>
-                  )}
 
-                  <div className="employee-hours">
-                    <span>
-                      Urlaub: {vacationUsed.toFixed(2)} /{" "}
-                      {vacationTotal.toFixed(2)} Tage
-                    </span>
+                    <div className="employee-hours">
+                      <span>
+                        Urlaub: {vacationUsed.toFixed(1)} /{" "}
+                        {vacationTotal.toFixed(1)}
+                      </span>
 
-                    <span
-                      className={
-                        vacationRemaining < 0 ? "hours-over" : "hours-under"
-                      }
-                    >
-                      {vacationRemaining >= 0
-                        ? `${vacationRemaining.toFixed(2)} offen`
-                        : `${Math.abs(vacationRemaining).toFixed(2)} drüber`}
-                    </span>
+                      <span className="hours-under">
+                        {vacationRemaining.toFixed(1)} offen
+                      </span>
+                    </div>
                   </div>
 
-                  {emp.remarks && (
-                    <div className="employee-remarks">{emp.remarks}</div>
-                  )}
+                  <div className="employee-expand-indicator">
+                    {expanded ? "−" : "+"}
+                  </div>
+                </div>
 
-                  {emp.vacation_note && (
-                    <div className="employee-remarks">
-                      Urlaub: {emp.vacation_note}
-                    </div>
-                  )}
-
-                  {canManageEmployees && draft && (
+                {expanded && draft && absenceDraft && (
+                  <div className="employee-expanded-content">
                     <div className="employee-edit-box">
                       <label>
                         Max. Stunden
                         <input
                           type="number"
-                          min="0"
-                          step="0.25"
                           value={draft.max_hours}
                           onChange={(e) =>
                             updateDraft(emp.id, {
@@ -422,12 +488,11 @@ export default function Sidebar({
                         Jahresurlaub
                         <input
                           type="number"
-                          min="0"
-                          step="0.5"
                           value={draft.vacation_days_total}
                           onChange={(e) =>
                             updateDraft(emp.id, {
-                              vacation_days_total: e.target.value,
+                              vacation_days_total:
+                                e.target.value,
                             })
                           }
                         />
@@ -442,7 +507,6 @@ export default function Sidebar({
                               remarks: e.target.value,
                             })
                           }
-                          placeholder="z. B. gerade Wochen: Mo/Mi, ungerade Wochen: Di/Do"
                         />
                       </label>
 
@@ -452,39 +516,153 @@ export default function Sidebar({
                           value={draft.vacation_note}
                           onChange={(e) =>
                             updateDraft(emp.id, {
-                              vacation_note: e.target.value,
+                              vacation_note:
+                                e.target.value,
                             })
                           }
-                          placeholder="z. B. Minijob: 2 Arbeitstage/Woche = 8 Tage/Jahr"
                         />
                       </label>
 
                       <button
                         type="button"
                         className="add-employee-btn"
-                        disabled={savingEmployeeId === emp.id}
-                        onClick={() => handleSaveEmployeeSettings(emp.id)}
+                        disabled={
+                          savingEmployeeId === emp.id
+                        }
+                        onClick={() =>
+                          handleSaveEmployeeSettings(
+                            emp.id
+                          )
+                        }
                       >
-                        {savingEmployeeId === emp.id
-                          ? "Speichere…"
-                          : "Änderungen speichern"}
+                        Speichern
                       </button>
                     </div>
-                  )}
-                </div>
 
-                {canManageEmployees && (
-                  <button
-                    className="employee-delete-btn"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteEmployee(emp.id, emp.name);
-                    }}
-                    aria-label={`${employeeName} löschen`}
-                  >
-                    ✕
-                  </button>
+                    <div className="absence-box">
+                      <h4>Abwesenheit eintragen</h4>
+
+                      <div className="absence-form-grid">
+                        <input
+                          type="date"
+                          value={absenceDraft.start_date}
+                          onChange={(e) =>
+                            updateAbsenceDraft(emp.id, {
+                              start_date:
+                                e.target.value,
+                            })
+                          }
+                        />
+
+                        <input
+                          type="date"
+                          value={absenceDraft.end_date}
+                          onChange={(e) =>
+                            updateAbsenceDraft(emp.id, {
+                              end_date:
+                                e.target.value,
+                            })
+                          }
+                        />
+
+                        <select
+                          value={absenceDraft.type}
+                          onChange={(e) =>
+                            updateAbsenceDraft(emp.id, {
+                              type: e.target
+                                .value as any,
+                            })
+                          }
+                        >
+                          <option value="vacation">
+                            Urlaub
+                          </option>
+
+                          <option value="sick">
+                            Krank
+                          </option>
+
+                          <option value="unavailable">
+                            Abwesend
+                          </option>
+                        </select>
+
+                        <input
+                          type="text"
+                          placeholder="Notiz"
+                          value={absenceDraft.note}
+                          onChange={(e) =>
+                            updateAbsenceDraft(emp.id, {
+                              note: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        className="add-employee-btn"
+                        onClick={() =>
+                          handleCreateAbsence(emp.id)
+                        }
+                      >
+                        Abwesenheit speichern
+                      </button>
+
+                      <div className="absence-list-sidebar">
+                        {employeeAbsences.map((absence) => (
+                          <div
+                            key={absence.id}
+                            className={`absence-pill absence-${absence.type}`}
+                          >
+                            <div>
+                              <strong>
+                                {absenceLabel(
+                                  absence.type
+                                )}
+                              </strong>
+
+                              <div>
+                                {absence.start_date} →{" "}
+                                {absence.end_date}
+                              </div>
+
+                              {absence.note && (
+                                <div>
+                                  {absence.note}
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              className="absence-delete-btn"
+                              onClick={() =>
+                                deleteAbsence(
+                                  absence.id
+                                )
+                              }
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      className="employee-delete-btn-inline"
+                      type="button"
+                      onClick={() =>
+                        handleDeleteEmployee(
+                          emp.id,
+                          emp.name
+                        )
+                      }
+                    >
+                      Mitarbeiter löschen
+                    </button>
+                  </div>
                 )}
               </div>
             );
@@ -493,15 +671,22 @@ export default function Sidebar({
       )}
 
       {canManageEmployees && effectiveStationId && (
-        <form className="add-employee-form" onSubmit={handleAddEmployee}>
-          <div className="add-employee-label">Neuer Mitarbeiter</div>
+        <form
+          className="add-employee-form"
+          onSubmit={handleAddEmployee}
+        >
+          <div className="add-employee-label">
+            Neuer Mitarbeiter
+          </div>
 
           <input
             type="text"
             className="add-employee-input"
             placeholder="Name"
             value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            onChange={(e) =>
+              setNewName(e.target.value)
+            }
           />
 
           <input
@@ -511,13 +696,25 @@ export default function Sidebar({
             className="add-employee-input"
             placeholder="Max. Stunden/Monat"
             value={newMaxHours}
-            onChange={(e) => setNewMaxHours(e.target.value)}
+            onChange={(e) =>
+              setNewMaxHours(e.target.value)
+            }
           />
 
-          {errorMsg && <div className="add-employee-error">{errorMsg}</div>}
+          {errorMsg && (
+            <div className="add-employee-error">
+              {errorMsg}
+            </div>
+          )}
 
-          <button className="add-employee-btn" type="submit" disabled={saving}>
-            {saving ? "Speichere…" : "+ Mitarbeiter hinzufügen"}
+          <button
+            className="add-employee-btn"
+            type="submit"
+            disabled={saving}
+          >
+            {saving
+              ? "Speichere…"
+              : "+ Mitarbeiter hinzufügen"}
           </button>
         </form>
       )}

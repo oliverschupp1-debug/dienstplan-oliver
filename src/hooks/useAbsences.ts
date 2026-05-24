@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export type AbsenceType =
@@ -22,44 +22,36 @@ export type EmployeeAbsence = {
 
 export function useAbsences(stationId: string | null) {
   const [absences, setAbsences] = useState<EmployeeAbsence[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!stationId) {
       setAbsences([]);
       setLoading(false);
       return;
     }
 
-    let mounted = true;
+    setLoading(true);
 
-    async function load() {
-      setLoading(true);
+    const { data, error } = await supabase
+      .from("employee_absences")
+      .select("*")
+      .eq("station_id", stationId)
+      .order("start_date", { ascending: true });
 
-      const { data, error } = await supabase
-        .from("employee_absences")
-        .select("*")
-        .eq("station_id", stationId)
-        .order("start_date", { ascending: true });
-
-      if (!mounted) return;
-
-      if (error) {
-        console.error(error);
-        setAbsences([]);
-      } else {
-        setAbsences(data ?? []);
-      }
-
-      setLoading(false);
+    if (error) {
+      console.error("Fehler beim Laden der Abwesenheiten:", error);
+      setAbsences([]);
+    } else {
+      setAbsences(data ?? []);
     }
 
-    load();
-
-    return () => {
-      mounted = false;
-    };
+    setLoading(false);
   }, [stationId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function createAbsence(input: {
     employee_id: string;
@@ -81,9 +73,11 @@ export function useAbsences(stationId: string | null) {
       });
 
     if (error) {
-      console.error(error);
+      console.error("Fehler beim Speichern der Abwesenheit:", error);
       throw error;
     }
+
+    await load();
   }
 
   async function deleteAbsence(id: string) {
@@ -93,14 +87,17 @@ export function useAbsences(stationId: string | null) {
       .eq("id", id);
 
     if (error) {
-      console.error(error);
+      console.error("Fehler beim Löschen:", error);
       throw error;
     }
+
+    await load();
   }
 
   return {
     absences,
     loading,
+    reload: load,
     createAbsence,
     deleteAbsence,
   };
