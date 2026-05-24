@@ -18,10 +18,15 @@ function getLocalISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
+function parseLocalISO(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function addIsoDays(iso: string, days: number): string {
+  const date = parseLocalISO(iso);
+  date.setDate(date.getDate() + days);
+  return getLocalISO(date);
 }
 
 function getStoredShiftName(date: Date, shiftName: string, holidayName?: string) {
@@ -41,14 +46,13 @@ function absenceLabel(type: string) {
 }
 
 export default function MobileTodayViewAdmin({ stationName }: Props) {
-  const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(
-    null
-  );
+  const [currentIso, setCurrentIso] = useState(() => getLocalISO(new Date()));
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
+  const currentDate = parseLocalISO(currentIso);
   const stationId = stationName;
-  const iso = getLocalISO(currentDate);
+  const iso = currentIso;
 
   const { employees } = useEmployees(stationId);
   const safeEmployees = Array.isArray(employees)
@@ -168,7 +172,7 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
           type="button"
           onClick={() => {
             setSelectedEmployeeId(null);
-            setCurrentDate((date) => addDays(date, -1));
+            setCurrentIso((value) => addIsoDays(value, -1));
           }}
         >
           ←
@@ -190,7 +194,7 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
           type="button"
           onClick={() => {
             setSelectedEmployeeId(null);
-            setCurrentDate((date) => addDays(date, 1));
+            setCurrentIso((value) => addIsoDays(value, 1));
           }}
         >
           →
@@ -203,7 +207,7 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
           type="button"
           onClick={() => {
             setSelectedEmployeeId(null);
-            setCurrentDate(new Date());
+            setCurrentIso(getLocalISO(new Date()));
           }}
         >
           Heute
@@ -233,7 +237,6 @@ export default function MobileTodayViewAdmin({ stationName }: Props) {
                 (absence ? " mobile-employee-pill-absent" : "")
               }
               onClick={() => handleEmployeeTap(employee.id)}
-              title={absence ? absenceLabel(absence.type) : undefined}
             >
               {employee.name ?? "Ohne Namen"}
               {absence ? ` · ${absenceLabel(absence.type)}` : ""}
