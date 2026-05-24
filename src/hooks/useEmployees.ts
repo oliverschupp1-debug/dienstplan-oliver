@@ -7,9 +7,11 @@ export type Employee = {
   name: string | null;
   station_id: string | null;
   max_hours: number | null;
-  remarks?: string | null;
-  auth_user_id?: string | null;
-  role?: "admin" | "planner" | "employee" | null;
+  remarks: string | null;
+  auth_user_id: string | null;
+  role: "admin" | "planner" | "employee" | null;
+  vacation_days_total: number | null;
+  vacation_note: string | null;
 };
 
 export function useEmployees(stationId: string | null) {
@@ -28,7 +30,7 @@ export function useEmployees(stationId: string | null) {
     const { data, error } = await supabase
       .from("employees")
       .select(
-        "id, name, station_id, max_hours, remarks, auth_user_id, role"
+        "id, name, station_id, max_hours, remarks, auth_user_id, role, vacation_days_total, vacation_note"
       )
       .eq("station_id", stationId)
       .order("name", { ascending: true });
@@ -36,11 +38,10 @@ export function useEmployees(stationId: string | null) {
     if (error) {
       console.error("Fehler beim Laden der Mitarbeiter:", error);
       setEmployees([]);
-      setLoading(false);
-      return;
+    } else {
+      setEmployees(data ?? []);
     }
 
-    setEmployees(data ?? []);
     setLoading(false);
   }, [stationId]);
 
@@ -59,7 +60,7 @@ export function useEmployees(stationId: string | null) {
       const { data, error } = await supabase
         .from("employees")
         .select(
-          "id, name, station_id, max_hours, remarks, auth_user_id, role"
+          "id, name, station_id, max_hours, remarks, auth_user_id, role, vacation_days_total, vacation_note"
         )
         .eq("station_id", stationId)
         .order("name", { ascending: true });

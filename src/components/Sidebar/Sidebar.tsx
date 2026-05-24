@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useEmployees } from "../../hooks/useEmployees";
 import { useAllMonthlyHours } from "../../hooks/useAllMonthlyHours";
+import { useAbsences } from "../../hooks/useAbsences";
 import { supabase } from "../../lib/supabaseClient";
 import { onAssignmentsChanged } from "../../events";
 import { useAppStore } from "../../store/useAppStore";
@@ -13,6 +14,47 @@ interface SidebarProps {
   onStationChange: (id: string) => void;
   year: number;
   month: number;
+}
+
+type EmployeeDraft = {
+  max_hours: string;
+  remarks: string;
+  vacation_days_total: string;
+  vacation_note: string;
+};
+
+function getLocalISO(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function countVacationDaysInYear(
+  startDate: string,
+  endDate: string,
+  targetYear: number
+): number {
+  const yearStart = new Date(targetYear, 0, 1);
+  const yearEnd = new Date(targetYear, 11, 31);
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  const clippedStart = start > yearStart ? start : yearStart;
+  const clippedEnd = end < yearEnd ? end : yearEnd;
+
+  if (clippedEnd < clippedStart) return 0;
+
+  let count = 0;
+  const current = new Date(clippedStart);
+
+  while (current <= clippedEnd) {
+    count += 1;
+    current.setDate(current.getDate() + 1);
+  }
+
+  return count;
 }
 
 export default function Sidebar({
@@ -35,13 +77,32 @@ export default function Sidebar({
     showEmployeeList ? effectiveStationId : null
   );
 
+  const { absences } = useAbsences(effectiveStationId);
+
   const visibleEmployees = employees.filter((emp) => emp.role !== "admin");
 
   const [reloadFlag, setReloadFlag] = useState(0);
   const [newName, setNewName] = useState("");
   const [newMaxHours, setNewMaxHours] = useState("43");
   const [saving, setSaving] = useState(false);
+  const [savingEmployeeId, setSavingEmployeeId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [employeeDrafts, setEmployeeDrafts] = useState<Record<string, EmployeeDraft>>({});
+
+  useEffect(() => {
+    const nextDrafts: Record<string, EmployeeDraft> = {};
+
+    for (const emp of visibleEmployees) {
+      nextDrafts[emp.id] = {
+        max_hours: String(emp.max_hours ?? 0),
+        remarks: emp.remarks ?? "",
+        vacation_days_total: String(emp.vacation_days_total ?? 0),
+        vacation_note: emp.vacation_note ?? "",
+      };
+    }
+
+    setEmployeeDrafts(nextDrafts);
+  }, [employees]);
 
   useEffect(() => {
     const off = onAssignmentsChanged(() => {
@@ -68,6 +129,75 @@ export default function Sidebar({
       effectiveStationId
     );
   }, [effectiveStationId, stations]);
+
+  function updateDraft(employeeId: string, patch: Partial<EmployeeDraft>) {
+    setEmployeeDrafts((current) => ({
+      ...current,
+      [employeeId]: {
+        ...current[employeeId],
+        ...patch,
+      },
+    }));
+  }
+
+  function getVacationUsed(employeeId: string) {
+    return absences
+      .filter(
+        (absence) =>
+          absence.employee_id === employeeId && absence.type === "vacation"
+      )
+      .reduce(
+        (sum, absence) =>
+          sum +
+          countVacationDaysInYear(
+            absence.start_date,
+            absence.end_date,
+            year
+          ),
+        0
+      );
+  }
+
+  async function handleSaveEmployeeSettings(employeeId: string) {
+    const draft = employeeDrafts[employeeId];
+    if (!draft) return;
+
+    const maxHours = Number(draft.max_hours);
+    const vacationDaysTotal = Number(draft.vacation_days_total);
+
+    if (!Number.isFinite(maxHours) || maxHours < 0) {
+      alert("Bitte eine gültige maximale Stundenzahl eingeben.");
+      return;
+    }
+
+    if (!Number.isFinite(vacationDaysTotal) || vacationDaysTotal < 0) {
+      alert("Bitte eine gültige Urlaubszahl eingeben.");
+      return;
+    }
+
+    setSavingEmployeeId(employeeId);
+
+    const { error } = await supabase
+      .from("employees")
+      .update({
+        max_hours: maxHours,
+        remarks: draft.remarks.trim() || null,
+        vacation_days_total: vacationDaysTotal,
+        vacation_note: draft.vacation_note.trim() || null,
+      })
+      .eq("id", employeeId);
+
+    if (error) {
+      console.error("Fehler beim Speichern:", error);
+      alert("Mitarbeiterdaten konnten nicht gespeichert werden.");
+      setSavingEmployeeId(null);
+      return;
+    }
+
+    await reload();
+    setReloadFlag((x) => x + 1);
+    setSavingEmployeeId(null);
+  }
 
   async function handleAddEmployee(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -101,6 +231,8 @@ export default function Sidebar({
       station_id: effectiveStationId,
       max_hours: maxHours,
       remarks: null,
+      vacation_days_total: 0,
+      vacation_note: null,
       auth_user_id: null,
       role: "employee",
     });
@@ -197,6 +329,11 @@ export default function Sidebar({
             const max = emp.max_hours ?? 0;
             const remaining = max - hours;
             const employeeName = emp.name || "Ohne Namen";
+            const draft = employeeDrafts[emp.id];
+
+            const vacationTotal = emp.vacation_days_total ?? 0;
+            const vacationUsed = getVacationUsed(emp.id);
+            const vacationRemaining = vacationTotal - vacationUsed;
 
             return (
               <div
@@ -239,6 +376,104 @@ export default function Sidebar({
                           ? `${remaining.toFixed(2)} frei`
                           : `${Math.abs(remaining).toFixed(2)} drüber`}
                       </span>
+                    </div>
+                  )}
+
+                  <div className="employee-hours">
+                    <span>
+                      Urlaub: {vacationUsed.toFixed(2)} /{" "}
+                      {vacationTotal.toFixed(2)} Tage
+                    </span>
+
+                    <span
+                      className={
+                        vacationRemaining < 0 ? "hours-over" : "hours-under"
+                      }
+                    >
+                      {vacationRemaining >= 0
+                        ? `${vacationRemaining.toFixed(2)} offen`
+                        : `${Math.abs(vacationRemaining).toFixed(2)} drüber`}
+                    </span>
+                  </div>
+
+                  {emp.remarks && (
+                    <div className="employee-remarks">{emp.remarks}</div>
+                  )}
+
+                  {emp.vacation_note && (
+                    <div className="employee-remarks">
+                      Urlaub: {emp.vacation_note}
+                    </div>
+                  )}
+
+                  {canManageEmployees && draft && (
+                    <div className="employee-edit-box">
+                      <label>
+                        Max. Stunden
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.25"
+                          value={draft.max_hours}
+                          onChange={(e) =>
+                            updateDraft(emp.id, {
+                              max_hours: e.target.value,
+                            })
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        Jahresurlaub
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={draft.vacation_days_total}
+                          onChange={(e) =>
+                            updateDraft(emp.id, {
+                              vacation_days_total: e.target.value,
+                            })
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        Bemerkungen / Verfügbarkeit
+                        <textarea
+                          value={draft.remarks}
+                          onChange={(e) =>
+                            updateDraft(emp.id, {
+                              remarks: e.target.value,
+                            })
+                          }
+                          placeholder="z. B. gerade Wochen: Mo/Mi, ungerade Wochen: Di/Do"
+                        />
+                      </label>
+
+                      <label>
+                        Urlaubsnotiz
+                        <textarea
+                          value={draft.vacation_note}
+                          onChange={(e) =>
+                            updateDraft(emp.id, {
+                              vacation_note: e.target.value,
+                            })
+                          }
+                          placeholder="z. B. Minijob: 2 Arbeitstage/Woche = 8 Tage/Jahr"
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        className="add-employee-btn"
+                        disabled={savingEmployeeId === emp.id}
+                        onClick={() => handleSaveEmployeeSettings(emp.id)}
+                      >
+                        {savingEmployeeId === emp.id
+                          ? "Speichere…"
+                          : "Änderungen speichern"}
+                      </button>
                     </div>
                   )}
                 </div>
