@@ -672,22 +672,7 @@ export default function Sidebar({
     </div>,
     document.body
     )}
-          {showAddEmployeeModal &&
-        createPortal(
-          <div
-            className="add-employee-modal-backdrop"
-            onClick={() => setShowAddEmployeeModal(false)}
-          >
-            <form
-              className="add-employee-modal"
-              onSubmit={handleAddEmployee}
-              onClick={(e) => e.stopPropagation()}
-            >
-              ...
-            </form>
-          </div>,
-          document.body
-        )}
+        
 
     </aside>
   );
