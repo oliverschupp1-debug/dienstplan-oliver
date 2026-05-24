@@ -2,11 +2,9 @@ import { useState } from "react";
 import { useEmployees } from "../hooks/useEmployees";
 import { useAllMonthlyHours } from "../hooks/useAllMonthlyHours";
 
-import MobileTodayView from "./MobileTodayView";
 import MobileTodayViewAdmin from "./MobileTodayViewAdmin";
 import MobileTodayViewEmployee from "./MobileTodayViewEmployee";
 
-import MobileMonthView from "./MobileMonthView";
 import MobileMonthViewAdmin from "./MobileMonthViewAdmin";
 import MobileMonthViewEmployee from "./MobileMonthViewEmployee";
 
@@ -37,7 +35,9 @@ export default function MobileRouter({
   const [showEmployees, setShowEmployees] = useState(false);
 
   const today = new Date();
+
   const { employees: panelEmployees } = useEmployees(stationName);
+
   const { hoursMap } = useAllMonthlyHours(
     stationName,
     today.getFullYear(),
@@ -55,16 +55,17 @@ export default function MobileRouter({
         role={role}
         activeView={view}
         onViewChange={setView}
-        onToggleEmployees={() => setShowEmployees((s) => !s)}
+        onToggleEmployees={() => setShowEmployees((current) => !current)}
       />
 
       {isAdmin && (
         <div className="mobile-station-select-wrap">
           <label className="mobile-station-label">Station</label>
+
           <select
             className="mobile-station-select"
             value={stationName}
-            onChange={(e) => onStationChange(e.target.value)}
+            onChange={(event) => onStationChange(event.target.value)}
           >
             {stations.map((station) => (
               <option key={station.id} value={station.id}>
@@ -88,6 +89,7 @@ export default function MobileRouter({
               return (
                 <div key={employee.id} className="mobile-employee-panel-item">
                   <strong>{employee.name ?? "Ohne Namen"}</strong>
+
                   <span>
                     {hours.toFixed(2)} / {max} Std ·{" "}
                     {remaining.toFixed(2)} frei
@@ -107,16 +109,8 @@ export default function MobileRouter({
         </div>
       )}
 
-      {view === "today" && isAdmin && (
+      {view === "today" && (isAdmin || isPlanner) && (
         <MobileTodayViewAdmin stationName={stationName} />
-      )}
-
-      {view === "today" && isPlanner && (
-        <MobileTodayView
-          stationName={stationName}
-          employees={employees}
-          onOpenMonth={() => setView("month")}
-        />
       )}
 
       {view === "today" && isEmployee && (
@@ -127,16 +121,15 @@ export default function MobileRouter({
         />
       )}
 
-      {view === "month" && isAdmin && (
+      {view === "month" && (isAdmin || isPlanner) && (
         <MobileMonthViewAdmin stationName={stationName} />
       )}
 
-      {view === "month" && isPlanner && (
-        <MobileMonthView stationName={stationName} employees={employees} />
-      )}
-
       {view === "month" && isEmployee && (
-        <MobileMonthViewEmployee stationName={stationName} employees={employees} />
+        <MobileMonthViewEmployee
+          stationName={stationName}
+          employees={employees}
+        />
       )}
     </div>
   );
