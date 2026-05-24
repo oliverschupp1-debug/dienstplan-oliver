@@ -673,7 +673,6 @@ export default function Sidebar({
     document.body
     )}
         
-
     </aside>
   );
 }
