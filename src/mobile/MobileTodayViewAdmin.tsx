@@ -36,9 +36,7 @@ export default function MobileTodayViewAdmin({
   employees,
   onOpenMonth,
 }: Props) {
-  const today = new Date();
-
-  const [currentDate, setCurrentDate] = useState(today);
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [dragEmployee, setDragEmployee] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -54,11 +52,10 @@ export default function MobileTodayViewAdmin({
   const holiday = isHoliday(iso);
   const overrideShifts = overrides[iso] ?? null;
   const hasOverride = Boolean(overrideShifts && overrideShifts.length > 0);
-
   const weekdayIndex = (currentDate.getDay() + 6) % 7;
 
   const baseShifts = useMemo(() => {
-    if (holiday?.name) return shiftModel.holiday;
+    if (holiday?.name && shiftModel.holiday.length > 0) return shiftModel.holiday;
     if (weekdayIndex === 6) return shiftModel.sunday;
     if (weekdayIndex === 5) return shiftModel.saturday;
     return shiftModel.weekdays;
@@ -86,8 +83,8 @@ export default function MobileTodayViewAdmin({
   useTouchNavigation({
     onSwipeLeft: () => setCurrentDate((date) => addDays(date, 1)),
     onSwipeRight: () => setCurrentDate((date) => addDays(date, -1)),
-    onSwipeUp: onOpenMonth,
-    onSwipeDown: () => setCurrentDate(new Date()),
+    onSwipeUp: undefined,
+    onSwipeDown: undefined,
   });
 
   function handleDragStart(employeeId: string) {
@@ -111,10 +108,6 @@ export default function MobileTodayViewAdmin({
     });
 
     setDragEmployee(null);
-  }
-
-  function handleRemoveAssignment(id: string) {
-    removeAssignment(id);
   }
 
   function getEmployeeName(employeeId: string) {
@@ -212,6 +205,12 @@ export default function MobileTodayViewAdmin({
       </div>
 
       <div className="mobile-shift-list">
+        {shiftList.length === 0 && (
+          <div className="mobile-empty-hint">
+            Für diesen Tag sind keine Standardschichten hinterlegt.
+          </div>
+        )}
+
         {shiftList.map((shift) => {
           const shiftAssignments = assignments.filter(
             (assignment) =>
@@ -252,7 +251,7 @@ export default function MobileTodayViewAdmin({
                     key={assignment.id}
                     className="mobile-employee-pill"
                     type="button"
-                    onClick={() => handleRemoveAssignment(assignment.id)}
+                    onClick={() => removeAssignment(assignment.id)}
                     title="Antippen zum Entfernen"
                   >
                     {getEmployeeName(assignment.employee_id)}
