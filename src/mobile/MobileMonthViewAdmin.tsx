@@ -153,11 +153,11 @@ export default function MobileMonthViewAdmin({
     const shifts = getShiftsForDay(day.date, day.iso, holidayName);
 
     return shifts.map((shift) => {
-      const storedShiftName = getStoredShiftName(
-        day.date,
-        shift.name,
-        holidayName
-      );
+      const hasOverride = Boolean(overrides[day.iso]?.length);
+
+const storedShiftName = hasOverride
+  ? shift.name
+  : getStoredShiftName(day.date, shift.name, holidayName);
 
       const shiftAssignments = assignments
         .filter(
