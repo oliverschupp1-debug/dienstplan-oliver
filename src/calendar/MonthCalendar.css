@@ -336,7 +336,7 @@
   .print-grid {
     display: grid;
     grid-template-columns: 7mm repeat(7, 1fr);
-    grid-auto-rows: 26mm;
+    grid-auto-rows: 30mm;
     border-left: 1px solid #222;
   }
 
@@ -412,12 +412,12 @@
     display: flex;
     justify-content: space-between;
     gap: 1mm;
-    font-size: 4.9px;
+    font-size: 5.6px;
     line-height: 1.1;
   }
 
   .print-shift-head strong {
-    font-size: 5.1px;
+    font-size: 5.8px;
   }
 
   .print-shift-head span {
@@ -425,7 +425,7 @@
   }
 
   .print-people {
-    font-size: 5px;
+    font-size: 5.7px;
     font-weight: 700;
     line-height: 1.08;
     margin-top: 0.3mm;
