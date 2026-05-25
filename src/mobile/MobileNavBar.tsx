@@ -1,3 +1,4 @@
+import { supabase } from "../lib/supabaseClient";
 import { useTheme } from "../theme/ThemeProvider";
 import "./MobileNavBar.css";
 
@@ -15,13 +16,21 @@ export default function MobileNavBar({
   onToggleEmployees,
 }: Props) {
   const { mode, setMode } = useTheme();
+
   const isStaff = role === "admin" || role === "planner";
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.reload();
+  }
 
   return (
     <nav className="mobile-nav">
       <button
         type="button"
-        className={"mobile-nav-item" + (activeView === "today" ? " active" : "")}
+        className={
+          "mobile-nav-item" + (activeView === "today" ? " active" : "")
+        }
         onClick={() => onViewChange("today")}
       >
         Heute
@@ -29,7 +38,9 @@ export default function MobileNavBar({
 
       <button
         type="button"
-        className={"mobile-nav-item" + (activeView === "month" ? " active" : "")}
+        className={
+          "mobile-nav-item" + (activeView === "month" ? " active" : "")
+        }
         onClick={() => onViewChange("month")}
       >
         Monat
@@ -57,6 +68,14 @@ export default function MobileNavBar({
         <option value="dark">Dunkel</option>
         <option value="system">System</option>
       </select>
+
+      <button
+        type="button"
+        className="mobile-nav-item mobile-logout-btn"
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
     </nav>
   );
 }
