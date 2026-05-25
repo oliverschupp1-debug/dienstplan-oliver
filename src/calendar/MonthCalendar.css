@@ -436,3 +436,24 @@
     text-shadow: none !important;
   }
 }
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .month-root {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .print-calendar,
+  .print-month,
+  .print-grid {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+}
