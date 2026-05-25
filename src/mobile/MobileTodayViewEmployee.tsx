@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useAssignments } from "../useAssignments";
+import { useOverrides } from "../useOverrides";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { isHoliday } from "../calendar/holidays";
 import "./MobileTodayView.css";
@@ -50,19 +51,41 @@ export default function MobileTodayViewEmployee({
 
   const stationId = stationName;
   const { assignments } = useAssignments(stationId);
+  const { overrides } = useOverrides(stationId);
 
   const model = getShiftModelForStation(stationId);
   const holiday = isHoliday(iso);
   const holidayName = holiday?.name ?? undefined;
 
   const weekdayIndex = (today.getDay() + 6) % 7;
+  const overrideShifts = overrides[iso];
 
   const shiftList = useMemo(() => {
-    if (holidayName && model.holiday.length > 0) return model.holiday;
-    if (weekdayIndex === 6) return model.sunday;
-    if (weekdayIndex === 5) return model.saturday;
-    return model.weekdays;
-  }, [holidayName, weekdayIndex, model]);
+    if (overrideShifts && overrideShifts.length > 0) {
+      return overrideShifts.map((shift) => ({
+        name: shift.name,
+        start: shift.start,
+        end: shift.end,
+        employee: shift.employee ?? null,
+        isOverride: true,
+      }));
+    }
+
+    const baseShifts =
+      holidayName && model.holiday.length > 0
+        ? model.holiday
+        : weekdayIndex === 6
+        ? model.sunday
+        : weekdayIndex === 5
+        ? model.saturday
+        : model.weekdays;
+
+    return baseShifts.map((shift) => ({
+      ...shift,
+      employee: null,
+      isOverride: false,
+    }));
+  }, [overrideShifts, holidayName, weekdayIndex, model]);
 
   function getEmployeeName(employeeId: string) {
     return (
@@ -108,22 +131,40 @@ export default function MobileTodayViewEmployee({
 
       <div className="mobile-shift-list">
         {shiftList.map((shift) => {
-          const storedShiftName = getStoredShiftName(
-            today,
-            shift.name,
-            holidayName
-          );
+          const storedShiftName = shift.isOverride
+            ? shift.name
+            : getStoredShiftName(today, shift.name, holidayName);
 
-          const shiftAssignments = assignments.filter(
-            (assignment) =>
-              assignment.date === iso &&
-              assignment.station_id === stationId &&
-              normalizeShiftName(assignment.shift_name) ===
-                normalizeShiftName(storedShiftName)
-          );
+          const assignmentPeople = assignments
+            .filter(
+              (assignment) =>
+                assignment.date === iso &&
+                assignment.station_id === stationId &&
+                normalizeShiftName(assignment.shift_name) ===
+                  normalizeShiftName(storedShiftName)
+            )
+            .map((assignment) => ({
+              id: assignment.id,
+              employeeName: getEmployeeName(assignment.employee_id),
+            }));
+
+          const overridePeople =
+            shift.employee && shift.employee.trim() !== ""
+              ? [
+                  {
+                    id: `${iso}-${shift.name}-${shift.employee}`,
+                    employeeName: shift.employee,
+                  },
+                ]
+              : [];
+
+          const shiftAssignments = [...assignmentPeople, ...overridePeople];
 
           return (
-            <div key={`${iso}-${shift.name}`} className="mobile-shift-card">
+            <div
+              key={`${iso}-${shift.name}-${shift.start}-${shift.end}`}
+              className="mobile-shift-card"
+            >
               <div className="mobile-shift-title">
                 <strong>{shift.name}</strong>
                 <span>
@@ -138,7 +179,7 @@ export default function MobileTodayViewEmployee({
 
                 {shiftAssignments.map((assignment) => (
                   <span key={assignment.id} className="mobile-employee-pill">
-                    {getEmployeeName(assignment.employee_id)}
+                    {assignment.employeeName}
                   </span>
                 ))}
               </div>

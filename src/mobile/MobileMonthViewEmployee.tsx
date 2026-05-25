@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAssignments } from "../useAssignments";
+import { useOverrides } from "../useOverrides";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import "./MobileMonthView.css";
@@ -58,6 +59,7 @@ export default function MobileMonthViewEmployee({
   const stationId = stationName;
   const shiftModel = getShiftModelForStation(stationId);
   const { assignments } = useAssignments(stationId);
+  const { overrides } = useOverrides(stationId);
 
   const weeks = useMemo(() => {
     const first = new Date(year, month, 1);
@@ -110,14 +112,35 @@ export default function MobileMonthViewEmployee({
     setMonth((value) => value + 1);
   }
 
-  function getShiftsForDay(date: Date, holidayName?: string) {
+  function getShiftsForDay(date: Date, iso: string, holidayName?: string) {
+    const overrideShifts = overrides[iso];
+
+    if (overrideShifts && overrideShifts.length > 0) {
+      return overrideShifts.map((shift) => ({
+        name: shift.name,
+        start: shift.start,
+        end: shift.end,
+        employee: shift.employee ?? null,
+        isOverride: true,
+      }));
+    }
+
     const jsDay = date.getDay();
 
-    if (holidayName && shiftModel.holiday.length > 0) return shiftModel.holiday;
-    if (jsDay === 0) return shiftModel.sunday;
-    if (jsDay === 6) return shiftModel.saturday;
+    const baseShifts =
+      holidayName && shiftModel.holiday.length > 0
+        ? shiftModel.holiday
+        : jsDay === 0
+        ? shiftModel.sunday
+        : jsDay === 6
+        ? shiftModel.saturday
+        : shiftModel.weekdays;
 
-    return shiftModel.weekdays;
+    return baseShifts.map((shift) => ({
+      ...shift,
+      employee: null,
+      isOverride: false,
+    }));
   }
 
   function getEmployeeName(employeeId: string) {
@@ -130,16 +153,14 @@ export default function MobileMonthViewEmployee({
   function getDayAssignments(day: SelectedDay) {
     const holiday = isHoliday(day.iso);
     const holidayName = holiday?.name ?? undefined;
-    const shifts = getShiftsForDay(day.date, holidayName);
+    const shifts = getShiftsForDay(day.date, day.iso, holidayName);
 
     return shifts.map((shift) => {
-      const storedShiftName = getStoredShiftName(
-        day.date,
-        shift.name,
-        holidayName
-      );
+      const storedShiftName = shift.isOverride
+        ? shift.name
+        : getStoredShiftName(day.date, shift.name, holidayName);
 
-      const shiftAssignments = assignments
+      const assignmentPeople = assignments
         .filter(
           (assignment) =>
             assignment.date === day.iso &&
@@ -152,11 +173,21 @@ export default function MobileMonthViewEmployee({
           employeeName: getEmployeeName(assignment.employee_id),
         }));
 
+      const overridePeople =
+        shift.employee && shift.employee.trim() !== ""
+          ? [
+              {
+                id: `${day.iso}-${shift.name}-${shift.employee}`,
+                employeeName: shift.employee,
+              },
+            ]
+          : [];
+
       return {
         shiftName: shift.name,
         start: shift.start,
         end: shift.end,
-        assignments: shiftAssignments,
+        assignments: [...assignmentPeople, ...overridePeople],
       };
     });
   }
@@ -310,7 +341,7 @@ export default function MobileMonthViewEmployee({
             <div className="mobile-day-detail-shifts">
               {getDayAssignments(selectedDay).map((shift) => (
                 <div
-                  key={`${selectedDay.iso}-${shift.shiftName}`}
+                  key={`${selectedDay.iso}-${shift.shiftName}-${shift.start}-${shift.end}`}
                   className="mobile-day-detail-shift"
                 >
                   <div className="mobile-day-detail-shift-head">
