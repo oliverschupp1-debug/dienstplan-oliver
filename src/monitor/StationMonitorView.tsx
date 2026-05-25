@@ -112,7 +112,9 @@ export default function StationMonitorView() {
       <header className="monitor-header">
         <div>
           <div className="monitor-kicker">Stationsmonitor</div>
-          <h1>{stationId}</h1>
+          <h1>
+  {stationId.charAt(0).toUpperCase() + stationId.slice(1)}
+</h1>
         </div>
 
         <div className="monitor-date">
