@@ -219,6 +219,7 @@
   font-size: 0.85rem;
   opacity: 0.8;
 }
+
 .absence-list {
   display: flex;
   flex-direction: column;
@@ -251,164 +252,187 @@
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.35);
 }
-/* PRINT OPTIMIZATION */
+
+.print-calendar {
+  display: none;
+}
+
+/* PRINT LAYOUT: eigener, nicht-interaktiver Ausdruck */
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 5mm;
+  }
+
   html,
   body {
     width: 297mm;
-    height: 210mm;
-    margin: 0;
-    padding: 0;
+    min-height: 210mm;
+    margin: 0 !important;
+    padding: 0 !important;
     background: white !important;
     color: black !important;
-    overflow: hidden !important;
   }
 
-  @page {
-    size: A4 landscape;
-    margin: 6mm;
+  body {
+    overflow: visible !important;
   }
 
+  .topbar,
+  .sidebar,
+  .no-print,
+  .calendar-header,
+  .calendar-weekdays,
+  .calendar-grid,
+  .override-backdrop {
+    display: none !important;
+  }
+
+  .app-shell,
+  .main-layout,
+  .calendar-container,
   .month-root {
-    width: 100%;
-    height: auto;
-    gap: 4px;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
     background: white !important;
     color: black !important;
+  }
+
+  .print-calendar {
+    display: block !important;
+    width: 100%;
+    color: black !important;
+    background: white !important;
     font-family: Arial, sans-serif;
   }
 
-  .calendar-header {
-    padding: 4px 8px;
-    border-radius: 0;
-    background: white !important;
-    border: none;
+  .print-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    margin: 0 0 2mm;
   }
 
-  .calendar-title {
-    font-size: 16px;
-    color: black !important;
+  .print-weekdays {
+    display: grid;
+    grid-template-columns: 7mm repeat(7, 1fr);
+    border-top: 1px solid #222;
+    border-left: 1px solid #222;
+    font-size: 6px;
+    font-weight: 800;
+    text-align: center;
   }
 
-  .nav-btn {
-    display: none !important;
+  .print-weekdays > div {
+    border-right: 1px solid #222;
+    border-bottom: 1px solid #222;
+    padding: 1mm 0;
   }
 
-  .calendar-weekdays {
-    grid-template-columns: 28px repeat(7, 1fr);
-    padding: 3px 0;
-    border-radius: 0;
-    background: white !important;
-    border: 1px solid #999;
-    font-size: 9px;
+  .print-grid {
+    display: grid;
+    grid-template-columns: 7mm repeat(7, 1fr);
+    grid-auto-rows: 26mm;
+    border-left: 1px solid #222;
   }
 
-  .calendar-grid {
-    grid-template-columns: 28px repeat(7, 1fr);
-    gap: 2px;
+  .print-weeknumber,
+  .print-cell {
+    border-right: 1px solid #222;
+    border-bottom: 1px solid #222;
+    box-sizing: border-box;
   }
 
-  .calendar-weeknumber {
-    font-size: 8px;
-    padding-top: 4px;
-    color: #555 !important;
+  .print-weeknumber {
+    font-size: 5px;
+    padding-top: 1mm;
+    text-align: center;
+    color: #333 !important;
   }
 
-  .calendar-cell {
-    min-height: 0;
-    height: 25mm;
-    padding: 3px;
-    border-radius: 0;
-    background: white !important;
-    border: 1px solid #999;
-    color: black !important;
+  .print-cell {
+    padding: 1mm;
     overflow: hidden;
-    page-break-inside: avoid;
+    color: black !important;
+    background: white !important;
   }
 
-  .calendar-cell.outside-month {
+  .print-outside-month {
     opacity: 0.25;
   }
 
-  .calendar-date {
-    font-size: 9px;
-    color: black !important;
-    margin-bottom: 2px;
-  }
-
-  .holiday-badge {
+  .print-date {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1mm;
     font-size: 6px;
-    color: #000 !important;
+    line-height: 1.05;
+    margin-bottom: 0.6mm;
   }
 
-  .override-note {
-    display: none !important;
-  }
-
-  .absence-list {
-    gap: 1px;
-    margin: 1px 0 2px;
-  }
-
-  .absence-badge {
-    padding: 1px 3px;
-    font-size: 6px;
-    border-radius: 0;
-    background: white !important;
-    color: black !important;
-    border: 1px solid #aaa;
-  }
-
-  .shift-list {
-    margin-top: 2px;
-    gap: 2px;
-  }
-
-  .shift-row {
-    padding: 2px 3px;
-    gap: 1px;
-    border-radius: 0;
-    background: white !important;
-    border: 1px solid #ccc;
-  }
-
-  .shift-row:has(.shift-dropzone) {
-    display: none !important;
-  }
-
-  .shift-header {
-    gap: 3px;
-  }
-
-  .shift-name {
-    font-size: 7px;
-    color: black !important;
-  }
-
-  .shift-time {
-    font-size: 6px;
-    color: black !important;
-    opacity: 0.8;
-  }
-
-  .shift-employees-dark {
-    gap: 1px;
-  }
-
-  .shift-employee-item-dark {
-    padding: 1px 3px;
-    border-radius: 0;
-    border: none;
-    background: white !important;
+  .print-date strong {
     font-size: 7px;
   }
 
-  .shift-employee-name-dark {
-    color: black !important;
+  .print-date span {
+    font-size: 4.8px;
+    font-weight: 700;
+    text-align: right;
   }
 
-  .shift-employee-remove-dark,
-  .shift-dropzone {
-    display: none !important;
+  .print-note {
+    font-size: 4.8px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.6mm;
+  }
+
+  .print-absence {
+    font-size: 4.7px;
+    font-weight: 700;
+    line-height: 1.1;
+    border: 0.4px solid #666;
+    padding: 0.3mm 0.5mm;
+    margin-bottom: 0.5mm;
+  }
+
+  .print-shift {
+    border: 0.4px solid #777;
+    padding: 0.4mm 0.6mm;
+    margin-bottom: 0.5mm;
+    break-inside: avoid;
+  }
+
+  .print-shift-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1mm;
+    font-size: 4.9px;
+    line-height: 1.1;
+  }
+
+  .print-shift-head strong {
+    font-size: 5.1px;
+  }
+
+  .print-shift-head span {
+    white-space: nowrap;
+  }
+
+  .print-people {
+    font-size: 5px;
+    font-weight: 700;
+    line-height: 1.08;
+    margin-top: 0.3mm;
+  }
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 }

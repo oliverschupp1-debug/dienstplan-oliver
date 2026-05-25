@@ -46,6 +46,13 @@ type OverrideShift = {
   employee: string | null;
 };
 
+type PrintableShift = {
+  name: string;
+  start: string;
+  end: string;
+  people: string[];
+};
+
 const ORDER = ["Früh", "Früh 2", "Mittel", "Spät", "Sonstige"];
 
 function normalizeShiftName(name: string) {
@@ -72,6 +79,13 @@ function absenceLabel(type: string) {
   if (type === "sick") return "Krank";
   if (type === "unavailable") return "Abwesend";
   return "Abwesend";
+}
+
+function localDateString(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export default function MonthCalendar({
@@ -119,8 +133,18 @@ export default function MonthCalendar({
   }, [dayOverrides, overrideShifts]);
 
   const monthNames = [
-    "Januar", "Februar", "März", "April", "Mai", "Juni",
-    "Juli", "August", "September", "Oktober", "November", "Dezember",
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
   ];
 
   useEffect(() => {
@@ -135,15 +159,8 @@ export default function MonthCalendar({
         return;
       }
 
-      function localDateString(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-const firstDay = localDateString(new Date(year, month, 1));
-const lastDay = localDateString(new Date(year, month + 1, 0));
+      const firstDay = localDateString(new Date(year, month, 1));
+      const lastDay = localDateString(new Date(year, month + 1, 0));
 
       const { data: aData } = await supabase
         .from("assignments")
@@ -236,13 +253,18 @@ const lastDay = localDateString(new Date(year, month + 1, 0));
     const merged: Shift[] = baseShifts.map((baseShift) => {
       const override = overrideByName.get(normalizeShiftName(baseShift.name));
       return override
-        ? { name: baseShift.name, start: override.start_time, end: override.end_time }
+        ? {
+            name: baseShift.name,
+            start: override.start_time,
+            end: override.end_time,
+          }
         : baseShift;
     });
 
     for (const override of overridesForDay) {
       const exists = merged.some(
-        (shift) => normalizeShiftName(shift.name) === normalizeShiftName(override.name)
+        (shift) =>
+          normalizeShiftName(shift.name) === normalizeShiftName(override.name)
       );
 
       if (!exists) {
@@ -283,6 +305,32 @@ const lastDay = localDateString(new Date(year, month + 1, 0));
     );
   }
 
+  function getPrintableShiftsForDay(day: any): PrintableShift[] {
+    return getShiftsForDay(day)
+      .map((shift) => {
+        const assignedPeople = getAssignmentsForDayAndShift(day.iso, shift.name)
+          .map((assignment) => getEmployeeName(assignment.employee_id))
+          .filter(Boolean);
+
+        const overridePeople = getOverrideEmployeesForDayAndShift(
+          day.iso,
+          shift.name
+        )
+          .map((overrideShift) => overrideShift.employee ?? "")
+          .filter((name) => name.trim() !== "");
+
+        const people = [...assignedPeople, ...overridePeople];
+
+        return {
+          name: shift.name,
+          start: shift.start,
+          end: shift.end,
+          people,
+        };
+      })
+      .filter((shift) => shift.people.length > 0);
+  }
+
   async function assignEmployee(iso: string, shiftName: string, employeeId: string) {
     if (!stationId || role === "employee") return;
 
@@ -296,7 +344,9 @@ const lastDay = localDateString(new Date(year, month + 1, 0));
     if (absence) {
       const name = getEmployeeName(employeeId);
       alert(
-        `${name} ist am ${iso} als "${absenceLabel(absence.type)}" markiert und kann nicht eingeplant werden.`
+        `${name} ist am ${iso} als "${absenceLabel(
+          absence.type
+        )}" markiert und kann nicht eingeplant werden.`
       );
       return;
     }
@@ -491,6 +541,90 @@ const lastDay = localDateString(new Date(year, month + 1, 0));
             })}
           </React.Fragment>
         ))}
+      </div>
+
+      <div className="print-calendar">
+        <div className="print-title">
+          {monthNames[month]} {year}
+        </div>
+
+        <div className="print-weekdays">
+          <div>KW</div>
+          <div>Mo</div>
+          <div>Di</div>
+          <div>Mi</div>
+          <div>Do</div>
+          <div>Fr</div>
+          <div>Sa</div>
+          <div>So</div>
+        </div>
+
+        <div className="print-grid">
+          {calendar.map((week) => (
+            <React.Fragment key={`print-${week.weekNumber}`}>
+              <div className="print-weeknumber">{week.weekNumber}</div>
+
+              {week.days.map((day) => {
+                const dayOverride = overrideByDate.get(day.iso);
+                const dayAbsences = getAbsencesForDate(day.iso);
+                const printShifts = getPrintableShiftsForDay(day);
+
+                return (
+                  <div
+                    key={`print-${day.iso}`}
+                    className={
+                      "print-cell" +
+                      (day.isOutsideMonth ? " print-outside-month" : "") +
+                      (day.isHoliday ? " print-holiday" : "")
+                    }
+                  >
+                    <div className="print-date">
+                      <strong>{day.day}</strong>
+
+                      {day.isHoliday && (
+                        <span>{day.holidayName ?? "Feiertag"}</span>
+                      )}
+
+                      {dayOverride && <span>*</span>}
+                    </div>
+
+                    {dayOverride?.note && (
+                      <div className="print-note">{dayOverride.note}</div>
+                    )}
+
+                    {dayAbsences.map((absence) => (
+                      <div
+                        key={`print-absence-${absence.id}`}
+                        className="print-absence"
+                      >
+                        {absenceLabel(absence.type)}:{" "}
+                        {getEmployeeName(absence.employee_id)}
+                      </div>
+                    ))}
+
+                    {printShifts.map((shift) => (
+                      <div
+                        key={`print-${day.iso}-${shift.name}-${shift.start}-${shift.end}`}
+                        className="print-shift"
+                      >
+                        <div className="print-shift-head">
+                          <strong>{shift.name}</strong>
+                          <span>
+                            {shift.start} - {shift.end}
+                          </span>
+                        </div>
+
+                        <div className="print-people">
+                          {shift.people.join(", ")}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
 
       {selectedDate && role !== "employee" && (
