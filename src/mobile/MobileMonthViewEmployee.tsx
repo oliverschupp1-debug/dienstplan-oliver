@@ -27,6 +27,14 @@ function getLocalISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+function normalizeShiftName(name: string) {
+  return name
+    .replace(/^Feiertag\s+/i, "")
+    .replace(/^Samstag\s+/i, "")
+    .replace(/^Sonntag\s+/i, "")
+    .trim();
+}
+
 function getStoredShiftName(date: Date, shiftName: string, holidayName?: string) {
   const jsDay = date.getDay();
 
@@ -113,7 +121,10 @@ export default function MobileMonthViewEmployee({
   }
 
   function getEmployeeName(employeeId: string) {
-    return employees.find((employee) => employee.id === employeeId)?.name ?? "Unbekannt";
+    return (
+      employees.find((employee) => employee.id === employeeId)?.name ??
+      "Unbekannt"
+    );
   }
 
   function getDayAssignments(day: SelectedDay) {
@@ -132,8 +143,9 @@ export default function MobileMonthViewEmployee({
         .filter(
           (assignment) =>
             assignment.date === day.iso &&
-            assignment.shift_name === storedShiftName &&
-            assignment.station_id === stationId
+            assignment.station_id === stationId &&
+            normalizeShiftName(assignment.shift_name) ===
+              normalizeShiftName(storedShiftName)
         )
         .map((assignment) => ({
           id: assignment.id,

@@ -22,6 +22,14 @@ function getLocalISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+function normalizeShiftName(name: string) {
+  return name
+    .replace(/^Feiertag\s+/i, "")
+    .replace(/^Samstag\s+/i, "")
+    .replace(/^Sonntag\s+/i, "")
+    .trim();
+}
+
 function getStoredShiftName(date: Date, shiftName: string, holidayName?: string) {
   const jsDay = date.getDay();
 
@@ -57,7 +65,10 @@ export default function MobileTodayViewEmployee({
   }, [holidayName, weekdayIndex, model]);
 
   function getEmployeeName(employeeId: string) {
-    return employees.find((employee) => employee.id === employeeId)?.name ?? "Unbekannt";
+    return (
+      employees.find((employee) => employee.id === employeeId)?.name ??
+      "Unbekannt"
+    );
   }
 
   const weekdayNames = [
@@ -106,8 +117,9 @@ export default function MobileTodayViewEmployee({
           const shiftAssignments = assignments.filter(
             (assignment) =>
               assignment.date === iso &&
-              assignment.shift_name === storedShiftName &&
-              assignment.station_id === stationId
+              assignment.station_id === stationId &&
+              normalizeShiftName(assignment.shift_name) ===
+                normalizeShiftName(storedShiftName)
           );
 
           return (
