@@ -1,10 +1,11 @@
 // src/AppRouter.tsx
 import { useEffect, useState } from "react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { useAppStore } from "./store/useAppStore";
 import AppShell from "./layout/AppShell";
 import LoginScreen from "./auth/LoginScreen";
+import StationMonitorView from "./monitor/StationMonitorView";
 import { supabase } from "./lib/supabaseClient";
 
 type AppRole = "admin" | "planner" | "employee";
@@ -84,34 +85,20 @@ export default function AppRouter() {
     return () => {
       cancelled = true;
     };
-  }, [
-    user,
-    resetStore,
-    setEmployeeId,
-    setRole,
-    setStationId,
-    setUserName,
-  ]);
+  }, [user, resetStore, setEmployeeId, setRole, setStationId, setUserName]);
 
-  if (authLoading) {
-    return <div className="app-loading">Lade Anmeldung…</div>;
-  }
-
-  if (!user) {
-    return <LoginScreen />;
-  }
-
-  if (profileLoading) {
-    return <div className="app-loading">Lade Benutzerprofil…</div>;
-  }
-
-  if (profileError) {
-    return <div className="app-error">{profileError}</div>;
-  }
+  if (authLoading) return <div className="app-loading">Lade Anmeldung…</div>;
+  if (!user) return <LoginScreen />;
+  if (profileLoading) return <div className="app-loading">Lade Benutzerprofil…</div>;
+  if (profileError) return <div className="app-error">{profileError}</div>;
 
   return (
     <BrowserRouter>
-      <AppShell />
+      <Routes>
+        <Route path="/" element={<AppShell />} />
+        <Route path="/monitor" element={<StationMonitorView />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 }
