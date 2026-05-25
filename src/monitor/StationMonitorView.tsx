@@ -32,6 +32,19 @@ function getStoredShiftName(date: Date, shiftName: string, holidayName?: string)
   return shiftName;
 }
 
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getWeekMonday(date: Date) {
+  const monday = new Date(date);
+  const diff = (monday.getDay() + 6) % 7;
+  monday.setDate(monday.getDate() - diff);
+  return monday;
+}
+
 export default function StationMonitorView() {
   const stationId = useAppStore((s) => s.stationId);
   const userName = useAppStore((s) => s.userName);
@@ -53,12 +66,21 @@ export default function StationMonitorView() {
   }, [reload]);
 
   const model = getShiftModelForStation(stationId ?? "");
-  const holiday = isHoliday(iso);
-  const holidayName = holiday?.name ?? undefined;
-  const weekdayIndex = (now.getDay() + 6) % 7;
-  const overrideShifts = overrides[iso];
 
-  const shifts = useMemo(() => {
+  function getEmployeeName(employeeId: string) {
+    return (
+      employees.find((employee) => employee.id === employeeId)?.name ??
+      "Unbekannt"
+    );
+  }
+
+  function getShiftsForDate(date: Date) {
+    const dayIso = getLocalISO(date);
+    const holiday = isHoliday(dayIso);
+    const holidayName = holiday?.name ?? undefined;
+    const weekdayIndex = (date.getDay() + 6) % 7;
+    const overrideShifts = overrides[dayIso];
+
     if (overrideShifts && overrideShifts.length > 0) {
       return overrideShifts.map((shift) => ({
         name: shift.name,
@@ -66,6 +88,7 @@ export default function StationMonitorView() {
         end: shift.end,
         employee: shift.employee ?? null,
         isOverride: true,
+        holidayName,
       }));
     }
 
@@ -82,12 +105,50 @@ export default function StationMonitorView() {
       ...shift,
       employee: null,
       isOverride: false,
+      holidayName,
     }));
-  }, [overrideShifts, holidayName, weekdayIndex, model]);
-
-  function getEmployeeName(employeeId: string) {
-    return employees.find((employee) => employee.id === employeeId)?.name ?? "Unbekannt";
   }
+
+  function getPeopleForShift(date: Date, shift: ReturnType<typeof getShiftsForDate>[number]) {
+    const dayIso = getLocalISO(date);
+
+    const storedShiftName = shift.isOverride
+      ? shift.name
+      : getStoredShiftName(date, shift.name, shift.holidayName);
+
+    const assignmentPeople = assignments
+      .filter(
+        (assignment) =>
+          assignment.date === dayIso &&
+          assignment.station_id === stationId &&
+          normalizeShiftName(assignment.shift_name) ===
+            normalizeShiftName(storedShiftName)
+      )
+      .map((assignment) => getEmployeeName(assignment.employee_id));
+
+    const overridePeople =
+      shift.employee && shift.employee.trim() !== "" ? [shift.employee] : [];
+
+    return [...assignmentPeople, ...overridePeople];
+  }
+
+  const todayShifts = useMemo(() => getShiftsForDate(now), [now, overrides, model, assignments]);
+
+  const weekDays = useMemo(() => {
+    const monday = getWeekMonday(now);
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = addDays(monday, index);
+      return {
+        date,
+        iso: getLocalISO(date),
+      };
+    });
+  }, [now]);
+
+  const holiday = isHoliday(iso);
+  const holidayName = holiday?.name ?? undefined;
+  const weekdayIndex = (now.getDay() + 6) % 7;
 
   const weekdayNames = [
     "Montag",
@@ -98,6 +159,8 @@ export default function StationMonitorView() {
     "Samstag",
     "Sonntag",
   ];
+
+  const shortWeekdayNames = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
   if (!stationId) {
     return (
@@ -112,9 +175,7 @@ export default function StationMonitorView() {
       <header className="monitor-header">
         <div>
           <div className="monitor-kicker">Stationsmonitor</div>
-          <h1>
-  {stationId.charAt(0).toUpperCase() + stationId.slice(1)}
-</h1>
+          <h1>{stationId.charAt(0).toUpperCase() + stationId.slice(1)}</h1>
         </div>
 
         <div className="monitor-date">
@@ -134,28 +195,11 @@ export default function StationMonitorView() {
       {holidayName && <div className="monitor-holiday">{holidayName}</div>}
 
       <main className="monitor-shifts">
-        {shifts.map((shift) => {
-          const storedShiftName = shift.isOverride
-            ? shift.name
-            : getStoredShiftName(now, shift.name, holidayName);
+        {todayShifts.map((shift) => {
+          const people = getPeopleForShift(now, shift);
 
-          const assignmentPeople = assignments
-            .filter(
-              (assignment) =>
-                assignment.date === iso &&
-                assignment.station_id === stationId &&
-                normalizeShiftName(assignment.shift_name) ===
-                  normalizeShiftName(storedShiftName)
-            )
-            .map((assignment) => getEmployeeName(assignment.employee_id));
+          if (people.length === 0) return null;
 
-          const overridePeople =
-            shift.employee && shift.employee.trim() !== "" ? [shift.employee] : [];
-
-          const people = [...assignmentPeople, ...overridePeople];
-if (people.length === 0) {
-  return null;
-}
           return (
             <section
               key={`${iso}-${shift.name}-${shift.start}-${shift.end}`}
@@ -168,24 +212,80 @@ if (people.length === 0) {
                 </span>
               </div>
 
-              {people.length === 0 ? (
-                <div className="monitor-unassigned">Nicht besetzt</div>
-              ) : (
-                <div className="monitor-people">
-                  {people.map((name, index) => (
-                    <div key={`${name}-${index}`} className="monitor-person">
-                      {name}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="monitor-people">
+                {people.map((name, index) => (
+                  <div key={`${name}-${index}`} className="monitor-person">
+                    {name}
+                  </div>
+                ))}
+              </div>
             </section>
           );
         })}
       </main>
 
+      <section className="monitor-week">
+        <h2>Diese Woche</h2>
+
+        <div className="monitor-week-grid">
+          {weekDays.map((day, dayIndex) => {
+            const dayHoliday = isHoliday(day.iso);
+            const dayShifts = getShiftsForDate(day.date)
+              .map((shift) => ({
+                shift,
+                people: getPeopleForShift(day.date, shift),
+              }))
+              .filter((entry) => entry.people.length > 0);
+
+            const isToday = day.iso === iso;
+
+            return (
+              <div
+                key={day.iso}
+                className={
+                  "monitor-week-day" + (isToday ? " monitor-week-today" : "")
+                }
+              >
+                <div className="monitor-week-day-head">
+                  <strong>{shortWeekdayNames[dayIndex]}</strong>
+                  <span>
+                    {day.date.getDate()}.{day.date.getMonth() + 1}.
+                  </span>
+                </div>
+
+                {dayHoliday?.name && (
+                  <div className="monitor-week-holiday">{dayHoliday.name}</div>
+                )}
+
+                <div className="monitor-week-shifts">
+                  {dayShifts.length === 0 ? (
+                    <div className="monitor-week-empty">–</div>
+                  ) : (
+                    dayShifts.map(({ shift, people }) => (
+                      <div
+                        key={`${day.iso}-${shift.name}-${shift.start}-${shift.end}`}
+                        className="monitor-week-shift"
+                      >
+                        <div className="monitor-week-shift-name">
+                          {shift.name}
+                        </div>
+
+                        <div className="monitor-week-people">
+                          {people.join(", ")}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       <footer className="monitor-footer">
-        Angemeldet als {userName || "Benutzer"} · Aktualisierung automatisch jede Minute
+        Angemeldet als {userName || "Benutzer"} · Aktualisierung automatisch jede
+        Minute
       </footer>
     </div>
   );
