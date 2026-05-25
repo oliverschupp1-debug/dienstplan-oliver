@@ -1,20 +1,27 @@
-// useOverrides.ts
+// src/useOverrides.ts
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "./lib/supabaseClient";
 import { onAssignmentsChanged } from "./events";
 
+type OverrideDayRow = {
+  id: number;
+  date: string;
+};
+
 type OverrideShiftRow = {
   id: string;
-  override_id: string;
+  override_id: number;
   name: string;
   start_time: string;
   end_time: string;
+  employee: string | null;
 };
 
 export type OverrideShift = {
   name: string;
   start: string;
   end: string;
+  employee: string | null;
 };
 
 export function useOverrides(stationId: string) {
@@ -24,10 +31,9 @@ export function useOverrides(stationId: string) {
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
-    const safeStation = stationId; // NICHT lowercased, NICHT verändert
-
-    if (!safeStation) {
+    if (!stationId) {
       setOverrides({});
+      setLoading(false);
       return;
     }
 
@@ -35,8 +41,8 @@ export function useOverrides(stationId: string) {
 
     const { data: days, error: dayError } = await supabase
       .from("day_overrides")
-      .select("*")
-      .eq("station_id", safeStation);
+      .select("id, date")
+      .eq("station_id", stationId);
 
     if (dayError || !days || days.length === 0) {
       setOverrides({});
@@ -44,14 +50,16 @@ export function useOverrides(stationId: string) {
       return;
     }
 
-    const ids = days.map((d) => d.id as string);
+    const overrideDays = days as OverrideDayRow[];
+    const ids = overrideDays.map((day) => day.id);
 
     const { data: shifts, error: shiftError } = await supabase
       .from("override_shifts")
-      .select("*")
+      .select("id, override_id, name, start_time, end_time, employee")
       .in("override_id", ids);
 
     if (shiftError) {
+      console.error("Fehler beim Laden der Override-Schichten:", shiftError);
       setOverrides({});
       setLoading(false);
       return;
@@ -59,18 +67,19 @@ export function useOverrides(stationId: string) {
 
     const map: Record<string, OverrideShift[]> = {};
 
-    for (const d of days) {
-      map[d.date] = [];
+    for (const day of overrideDays) {
+      map[day.date] = [];
     }
 
-    for (const s of (shifts ?? []) as OverrideShiftRow[]) {
-      const day = days.find((d) => d.id === s.override_id);
+    for (const shift of (shifts ?? []) as OverrideShiftRow[]) {
+      const day = overrideDays.find((entry) => entry.id === shift.override_id);
       if (!day) continue;
 
       map[day.date].push({
-        name: s.name,
-        start: s.start_time,
-        end: s.end_time,
+        name: shift.name,
+        start: shift.start_time,
+        end: shift.end_time,
+        employee: shift.employee ?? null,
       });
     }
 
@@ -84,14 +93,14 @@ export function useOverrides(stationId: string) {
 
   useEffect(() => {
     const off = onAssignmentsChanged(() => load());
+
     return () => {
       off();
     };
   }, [load]);
 
   async function saveOverride(date: string, shifts: OverrideShift[] | null) {
-    const safeStation = stationId; // NICHT lowercased, NICHT verändert
-    if (!safeStation) return;
+    if (!stationId) return;
 
     const iso = date.split("T")[0];
 
@@ -99,7 +108,7 @@ export function useOverrides(stationId: string) {
       const { data: day } = await supabase
         .from("day_overrides")
         .select("id")
-        .eq("station_id", safeStation)
+        .eq("station_id", stationId)
         .eq("date", iso)
         .maybeSingle();
 
@@ -113,20 +122,25 @@ export function useOverrides(stationId: string) {
       await supabase
         .from("day_overrides")
         .delete()
-        .eq("station_id", safeStation)
+        .eq("station_id", stationId)
         .eq("date", iso);
 
-      load();
+      await load();
       return;
     }
 
-    const { data: day } = await supabase
+    const { data: day, error: dayError } = await supabase
       .from("day_overrides")
-      .upsert({ station_id: safeStation, date: iso, note: "" })
+      .upsert({ station_id: stationId, date: iso, note: "" })
       .select()
       .single();
 
-    const overrideId = day.id as string;
+    if (dayError || !day) {
+      console.error("Override konnte nicht gespeichert werden:", dayError);
+      return;
+    }
+
+    const overrideId = day.id as number;
 
     await supabase
       .from("override_shifts")
@@ -134,18 +148,19 @@ export function useOverrides(stationId: string) {
       .eq("override_id", overrideId);
 
     const rows =
-      shifts?.map((s) => ({
+      shifts.map((shift) => ({
         override_id: overrideId,
-        name: s.name,
-        start_time: s.start,
-        end_time: s.end,
+        name: shift.name,
+        start_time: shift.start,
+        end_time: shift.end,
+        employee: shift.employee ?? null,
       })) ?? [];
 
     if (rows.length > 0) {
       await supabase.from("override_shifts").insert(rows);
     }
 
-    load();
+    await load();
   }
 
   return { overrides, loading, reload: load, saveOverride };

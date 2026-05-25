@@ -121,24 +121,35 @@ export default function MobileMonthViewAdmin({
   }
 
   function getShiftsForDay(date: Date, iso: string, holidayName?: string) {
-  const overrideShifts = overrides[iso];
+    const overrideShifts = overrides[iso];
 
-  if (overrideShifts && overrideShifts.length > 0) {
-    return overrideShifts.map((shift) => ({
-      name: shift.name,
-      start: shift.start,
-      end: shift.end,
+    if (overrideShifts && overrideShifts.length > 0) {
+      return overrideShifts.map((shift) => ({
+        name: shift.name,
+        start: shift.start,
+        end: shift.end,
+        employee: shift.employee ?? null,
+        isOverride: true,
+      }));
+    }
+
+    const jsDay = date.getDay();
+
+    const baseShifts =
+      holidayName && shiftModel.holiday.length > 0
+        ? shiftModel.holiday
+        : jsDay === 0
+        ? shiftModel.sunday
+        : jsDay === 6
+        ? shiftModel.saturday
+        : shiftModel.weekdays;
+
+    return baseShifts.map((shift) => ({
+      ...shift,
+      employee: null,
+      isOverride: false,
     }));
   }
-
-  const jsDay = date.getDay();
-
-  if (holidayName && shiftModel.holiday.length > 0) return shiftModel.holiday;
-  if (jsDay === 0) return shiftModel.sunday;
-  if (jsDay === 6) return shiftModel.saturday;
-
-  return shiftModel.weekdays;
-}
 
   function getEmployeeName(employeeId: string) {
     return (
@@ -153,13 +164,11 @@ export default function MobileMonthViewAdmin({
     const shifts = getShiftsForDay(day.date, day.iso, holidayName);
 
     return shifts.map((shift) => {
-      const hasOverride = Boolean(overrides[day.iso]?.length);
+      const storedShiftName = shift.isOverride
+        ? shift.name
+        : getStoredShiftName(day.date, shift.name, holidayName);
 
-const storedShiftName = hasOverride
-  ? shift.name
-  : getStoredShiftName(day.date, shift.name, holidayName);
-
-      const shiftAssignments = assignments
+      const assignmentPeople = assignments
         .filter(
           (assignment) =>
             assignment.date === day.iso &&
@@ -172,11 +181,21 @@ const storedShiftName = hasOverride
           employeeName: getEmployeeName(assignment.employee_id),
         }));
 
+      const overridePeople =
+        shift.employee && shift.employee.trim() !== ""
+          ? [
+              {
+                id: `${day.iso}-${shift.name}-${shift.employee}`,
+                employeeName: shift.employee,
+              },
+            ]
+          : [];
+
       return {
         shiftName: shift.name,
         start: shift.start,
         end: shift.end,
-        assignments: shiftAssignments,
+        assignments: [...assignmentPeople, ...overridePeople],
       };
     });
   }
@@ -346,7 +365,7 @@ const storedShiftName = hasOverride
             <div className="mobile-day-detail-shifts">
               {getDayAssignments(selectedDay).map((shift) => (
                 <div
-                  key={`${selectedDay.iso}-${shift.shiftName}`}
+                  key={`${selectedDay.iso}-${shift.shiftName}-${shift.start}-${shift.end}`}
                   className="mobile-day-detail-shift"
                 >
                   <div className="mobile-day-detail-shift-head">
