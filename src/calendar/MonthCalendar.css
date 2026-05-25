@@ -372,9 +372,9 @@
     border: 1px solid #ccc;
   }
 
-  .shift-row:has(.shift-dropzone) {
-    display: none !important;
-  }
+  .shift-row:not(:has(.shift-employee-item-dark)) {
+  display: none !important;
+}
 
   .shift-header {
     gap: 3px;
@@ -411,4 +411,35 @@
   .shift-dropzone {
     display: none !important;
   }
+}
+.topbar,
+.sidebar,
+.no-print,
+.shift-employee-remove-dark,
+.nav-btn,
+.shift-dropzone,
+.drop-hint {
+  display: none !important;
+}
+
+.calendar-container {
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+.main-layout {
+  display: block !important;
+}
+
+.calendar-cell {
+  height: 23mm !important;
+}
+
+.shift-row {
+  break-inside: avoid;
+}
+
+* {
+  box-shadow: none !important;
 }
