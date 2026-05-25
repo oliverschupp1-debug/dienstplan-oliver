@@ -258,16 +258,13 @@ export default function MobileMonthViewEmployee({
             const holidayName = holiday?.name ?? undefined;
             const outside = day.date.getMonth() !== month;
 
-            const compactAssignments = getDayAssignments(day)
-              .flatMap((shift) =>
-                shift.assignments.map((assignment) => ({
-                  id: assignment.id,
-                  shiftName: shift.shiftName,
-                  employeeName: assignment.employeeName,
-                }))
-              )
-              .slice(0, 3);
-
+            const compactAssignments = getDayAssignments(day).flatMap((shift) =>
+  shift.assignments.map((assignment) => ({
+    id: assignment.id,
+    shiftName: shift.shiftName,
+    employeeName: assignment.employeeName,
+  }))
+);
             return (
               <button
                 key={day.iso}

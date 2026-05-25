@@ -260,9 +260,9 @@
 /* PRINT LAYOUT: eigener, nicht-interaktiver Ausdruck */
 @media print {
   @page {
-    size: A4 landscape;
-    margin: 5mm;
-  }
+  size: A4 landscape;
+  margin: 26mm 5mm 5mm 5mm;
+}
 
   html,
   body {
@@ -308,21 +308,25 @@
     color: black !important;
     background: white !important;
     font-family: Arial, sans-serif;
+    
   }
+  .print-calendar {
+  padding-top: 8mm;
+}
 
   .print-title {
-    text-align: center;
-    font-size: 13px;
+    text-align: right;
+    font-size: 16px;
     font-weight: 800;
     margin: 0 0 2mm;
   }
 
   .print-weekdays {
     display: grid;
-    grid-template-columns: 7mm repeat(7, 1fr);
+    grid-template-columns: 8mm repeat(7, 1fr);
     border-top: 1px solid #222;
     border-left: 1px solid #222;
-    font-size: 6px;
+    font-size: 8.7px;
     font-weight: 800;
     text-align: center;
   }
@@ -335,8 +339,8 @@
 
   .print-grid {
     display: grid;
-    grid-template-columns: 7mm repeat(7, 1fr);
-    grid-auto-rows: 30mm;
+    grid-template-columns: 8mm repeat(7, 1fr);
+    grid-auto-rows: 35mm;
     border-left: 1px solid #222;
   }
 
@@ -348,7 +352,7 @@
   }
 
   .print-weeknumber {
-    font-size: 5px;
+    font-size: 8px;
     padding-top: 1mm;
     text-align: center;
     color: #333 !important;
@@ -370,17 +374,17 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 1mm;
-    font-size: 6px;
+    font-size: 10px;
     line-height: 1.05;
     margin-bottom: 0.6mm;
   }
 
   .print-date strong {
-    font-size: 7px;
+    font-size: 10px;
   }
 
   .print-date span {
-    font-size: 4.8px;
+    font-size: 9.7px;
     font-weight: 700;
     text-align: right;
   }
@@ -393,7 +397,7 @@
   }
 
   .print-absence {
-    font-size: 4.7px;
+    font-size: 8.7px;
     font-weight: 700;
     line-height: 1.1;
     border: 0.4px solid #666;
@@ -412,12 +416,12 @@
     display: flex;
     justify-content: space-between;
     gap: 1mm;
-    font-size: 5.6px;
+    font-size: 8.6px;
     line-height: 1.1;
   }
 
   .print-shift-head strong {
-    font-size: 5.8px;
+    font-size: 8.8px;
   }
 
   .print-shift-head span {
@@ -425,7 +429,7 @@
   }
 
   .print-people {
-    font-size: 5.7px;
+    font-size: 8.7px;
     font-weight: 700;
     line-height: 1.08;
     margin-top: 0.3mm;
