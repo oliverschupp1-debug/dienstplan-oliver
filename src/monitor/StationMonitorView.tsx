@@ -95,18 +95,6 @@ const stationId = searchParams.get("station") ?? storedStationId;
         reload();
       }
     )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "employee_absences",
-        filter: `station_id=eq.${stationId}`,
-      },
-      () => {
-        reload();
-      }
-    )
     .subscribe();
 
   return () => {
