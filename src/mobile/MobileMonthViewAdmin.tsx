@@ -25,6 +25,14 @@ function getLocalISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+function normalizeShiftName(name: string) {
+  return name
+    .replace(/^Feiertag\s+/i, "")
+    .replace(/^Samstag\s+/i, "")
+    .replace(/^Sonntag\s+/i, "")
+    .trim();
+}
+
 function getStoredShiftName(date: Date, shiftName: string, holidayName?: string) {
   const jsDay = date.getDay();
 
@@ -143,8 +151,9 @@ export default function MobileMonthViewAdmin({
         .filter(
           (assignment) =>
             assignment.date === day.iso &&
-            assignment.shift_name === storedShiftName &&
-            assignment.station_id === stationId
+            assignment.station_id === stationId &&
+            normalizeShiftName(assignment.shift_name) ===
+              normalizeShiftName(storedShiftName)
         )
         .map((assignment) => ({
           id: assignment.id,
@@ -241,6 +250,7 @@ export default function MobileMonthViewAdmin({
             const holiday = isHoliday(day.iso);
             const holidayName = holiday?.name ?? undefined;
             const outside = day.date.getMonth() !== month;
+
             const compactAssignments = getDayAssignments(day)
               .flatMap((shift) =>
                 shift.assignments.map((assignment) => ({
@@ -335,9 +345,7 @@ export default function MobileMonthViewAdmin({
                   </div>
 
                   {shift.assignments.length === 0 ? (
-                    <div className="mobile-day-detail-empty">
-                      Nicht besetzt
-                    </div>
+                    <div className="mobile-day-detail-empty">Nicht besetzt</div>
                   ) : (
                     <div className="mobile-day-detail-people">
                       {shift.assignments.map((assignment) => (
