@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import { useAssignments } from "../useAssignments";
 import { useEmployees } from "../hooks/useEmployees";
@@ -46,8 +47,11 @@ function getWeekMonday(date: Date) {
 }
 
 export default function StationMonitorView() {
-  const stationId = useAppStore((s) => s.stationId);
-  const userName = useAppStore((s) => s.userName);
+  const storedStationId = useAppStore((s) => s.stationId);
+const userName = useAppStore((s) => s.userName);
+const [searchParams] = useSearchParams();
+
+const stationId = searchParams.get("station") ?? storedStationId;
 
   const [now, setNow] = useState(() => new Date());
   const iso = getLocalISO(now);
