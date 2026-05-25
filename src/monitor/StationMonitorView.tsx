@@ -34,6 +34,21 @@ function getStoredShiftName(date: Date, shiftName: string, holidayName?: string)
   return shiftName;
 }
 
+function timeToMinutes(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function getShiftStatus(start: string, end: string, now: Date) {
+  const current = now.getHours() * 60 + now.getMinutes();
+  const startMin = timeToMinutes(start);
+  const endMin = timeToMinutes(end);
+
+  if (current >= startMin && current <= endMin) return "active";
+  if (current < startMin) return "next";
+  return "past";
+}
+
 function addDays(date: Date, days: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
@@ -49,61 +64,74 @@ function getWeekMonday(date: Date) {
 
 export default function StationMonitorView() {
   const storedStationId = useAppStore((s) => s.stationId);
-const userName = useAppStore((s) => s.userName);
-const [searchParams] = useSearchParams();
+  const userName = useAppStore((s) => s.userName);
+  const [searchParams] = useSearchParams();
 
-const stationId = searchParams.get("station") ?? storedStationId;
+  const stationId = searchParams.get("station") ?? storedStationId;
 
   const [now, setNow] = useState(() => new Date());
   const iso = getLocalISO(now);
 
   const { assignments, reload } = useAssignments(stationId ?? "");
   const { employees } = useEmployees(stationId ?? null);
-  const { overrides } = useOverrides(stationId ?? "");
+  const { overrides, reload: reloadOverrides } = useOverrides(stationId ?? "");
 
   useEffect(() => {
     const timer = window.setInterval(() => {
       setNow(new Date());
       reload();
+      reloadOverrides();
     }, 60_000);
-    useEffect(() => {
-  if (!stationId) return;
-
-  const channel = supabase
-    .channel(`monitor-sync-${stationId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "assignments",
-        filter: `station_id=eq.${stationId}`,
-      },
-      () => {
-        reload();
-      }
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "day_overrides",
-        filter: `station_id=eq.${stationId}`,
-      },
-      () => {
-        reload();
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [stationId, reload]);
 
     return () => window.clearInterval(timer);
-  }, [reload]);
+  }, [reload, reloadOverrides]);
+
+  useEffect(() => {
+    if (!stationId) return;
+
+    const channel = supabase
+      .channel(`monitor-sync-${stationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "assignments",
+          filter: `station_id=eq.${stationId}`,
+        },
+        () => {
+          reload();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "day_overrides",
+          filter: `station_id=eq.${stationId}`,
+        },
+        () => {
+          reloadOverrides();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "override_shifts",
+        },
+        () => {
+          reloadOverrides();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [stationId, reload, reloadOverrides]);
 
   const model = getShiftModelForStation(stationId ?? "");
 
@@ -149,30 +177,15 @@ const stationId = searchParams.get("station") ?? storedStationId;
     }));
   }
 
-  function timeToMinutes(time: string) {
-  const [h, m] = time.split(":").map(Number);
-  return h * 60 + m;
-}
+  function getPeopleForShift(
+    date: Date,
+    shift: ReturnType<typeof getShiftsForDate>[number]
+  ) {
+    const dayIso = getLocalISO(date);
 
-function getShiftStatus(start: string, end: string, now: Date) {
-  const current = now.getHours() * 60 + now.getMinutes();
-  const startMin = timeToMinutes(start);
-  const endMin = timeToMinutes(end);
-
-  if (current >= startMin && current <= endMin) return "active";
-  if (current < startMin) return "next";
-  return "past";
-}
-
-function getPeopleForShift(
-  date: Date,
-  shift: ReturnType<typeof getShiftsForDate>[number]
-) {
-  const dayIso = getLocalISO(date);
-
-  const storedShiftName = shift.isOverride
-    ? shift.name
-    : getStoredShiftName(date, shift.name, shift.holidayName);
+    const storedShiftName = shift.isOverride
+      ? shift.name
+      : getStoredShiftName(date, shift.name, shift.holidayName);
 
     const assignmentPeople = assignments
       .filter(
@@ -190,7 +203,10 @@ function getPeopleForShift(
     return [...assignmentPeople, ...overridePeople];
   }
 
-  const todayShifts = useMemo(() => getShiftsForDate(now), [now, overrides, model, assignments]);
+  const todayShifts = useMemo(
+    () => getShiftsForDate(now),
+    [now, overrides, model]
+  );
 
   const weekDays = useMemo(() => {
     const monday = getWeekMonday(now);
@@ -238,8 +254,8 @@ function getPeopleForShift(
 
         <div className="monitor-date">
           <strong>
-            {weekdayNames[weekdayIndex]}, {now.getDate()}.{now.getMonth() + 1}.
-            {now.getFullYear()}
+            {weekdayNames[weekdayIndex]}, {now.getDate()}.
+            {now.getMonth() + 1}.{now.getFullYear()}
           </strong>
           <span>
             {now.toLocaleTimeString("de-DE", {
