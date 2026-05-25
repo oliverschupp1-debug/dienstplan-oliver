@@ -208,3 +208,36 @@
   font-weight: 800;
   font-size: 13px;
 }
+.mobile-day-detail-absences {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mobile-absence-item {
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: white;
+}
+
+.mobile-absence-item.vacation {
+  background: #2563eb;
+}
+
+.mobile-absence-item.sick {
+  background: #dc2626;
+}
+
+.mobile-absence-item.unavailable {
+  background: #6b7280;
+}
+
+.mobile-absence-note {
+  font-size: 13px;
+  opacity: 0.9;
+  line-height: 1.3;
+}

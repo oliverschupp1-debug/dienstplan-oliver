@@ -4,6 +4,7 @@ import { useEmployees } from "../hooks/useEmployees";
 import { useOverrides } from "../useOverrides";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
+import { useAbsences } from "../hooks/useAbsences";
 import "./MobileMonthView.css";
 
 type Props = {
@@ -62,7 +63,17 @@ export default function MobileMonthViewAdmin({
     : [];
 
   const { assignments } = useAssignments(stationId);
+  const { absences } = useAbsences(stationId);
   const { overrides } = useOverrides(stationId);
+  const selectedDayAbsences =
+  selectedDay == null
+    ? []
+    : absences.filter((absence) => {
+        return (
+          selectedDay.iso >= absence.start_date &&
+          selectedDay.iso <= absence.end_date
+        );
+      });
 
   const filteredEmployees = useMemo(() => {
     return safeEmployees.filter((employee) => {
@@ -361,7 +372,30 @@ export default function MobileMonthViewAdmin({
                 ×
               </button>
             </div>
+{selectedDayAbsences.length > 0 && (
+  <div className="mobile-day-detail-absences">
+    {selectedDayAbsences.map((absence) => (
+      <div
+        key={absence.id}
+        className={`mobile-absence-item ${absence.type}`}
+      >
+        <strong>{getEmployeeName(absence.employee_id)}</strong>
 
+        <span>
+          {absence.type === "vacation" && "Urlaub"}
+          {absence.type === "sick" && "Krank"}
+          {absence.type === "unavailable" && "Abwesend"}
+        </span>
+
+        {absence.note && (
+          <div className="mobile-absence-note">
+            {absence.note}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+)}
             <div className="mobile-day-detail-shifts">
               {getDayAssignments(selectedDay).map((shift) => (
                 <div
