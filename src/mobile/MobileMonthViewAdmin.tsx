@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useAssignments } from "../useAssignments";
 import { useEmployees } from "../hooks/useEmployees";
+import { useOverrides } from "../useOverrides";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import "./MobileMonthView.css";
@@ -61,6 +62,7 @@ export default function MobileMonthViewAdmin({
     : [];
 
   const { assignments } = useAssignments(stationId);
+  const { overrides } = useOverrides(stationId);
 
   const filteredEmployees = useMemo(() => {
     return safeEmployees.filter((employee) => {
@@ -118,15 +120,25 @@ export default function MobileMonthViewAdmin({
     onMonthChange(year, month + 1);
   }
 
-  function getShiftsForDay(date: Date, holidayName?: string) {
-    const jsDay = date.getDay();
+  function getShiftsForDay(date: Date, iso: string, holidayName?: string) {
+  const overrideShifts = overrides[iso];
 
-    if (holidayName && shiftModel.holiday.length > 0) return shiftModel.holiday;
-    if (jsDay === 0) return shiftModel.sunday;
-    if (jsDay === 6) return shiftModel.saturday;
-
-    return shiftModel.weekdays;
+  if (overrideShifts && overrideShifts.length > 0) {
+    return overrideShifts.map((shift) => ({
+      name: shift.name,
+      start: shift.start,
+      end: shift.end,
+    }));
   }
+
+  const jsDay = date.getDay();
+
+  if (holidayName && shiftModel.holiday.length > 0) return shiftModel.holiday;
+  if (jsDay === 0) return shiftModel.sunday;
+  if (jsDay === 6) return shiftModel.saturday;
+
+  return shiftModel.weekdays;
+}
 
   function getEmployeeName(employeeId: string) {
     return (
@@ -138,7 +150,7 @@ export default function MobileMonthViewAdmin({
   function getDayAssignments(day: SelectedDay) {
     const holiday = isHoliday(day.iso);
     const holidayName = holiday?.name ?? undefined;
-    const shifts = getShiftsForDay(day.date, holidayName);
+    const shifts = getShiftsForDay(day.date, day.iso, holidayName);
 
     return shifts.map((shift) => {
       const storedShiftName = getStoredShiftName(
