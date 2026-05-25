@@ -151,7 +151,9 @@ export default function StationMonitorView() {
             shift.employee && shift.employee.trim() !== "" ? [shift.employee] : [];
 
           const people = [...assignmentPeople, ...overridePeople];
-
+if (people.length === 0) {
+  return null;
+}
           return (
             <section
               key={`${iso}-${shift.name}-${shift.start}-${shift.end}`}
