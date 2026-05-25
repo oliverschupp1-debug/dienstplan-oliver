@@ -113,12 +113,30 @@ const stationId = searchParams.get("station") ?? storedStationId;
     }));
   }
 
-  function getPeopleForShift(date: Date, shift: ReturnType<typeof getShiftsForDate>[number]) {
-    const dayIso = getLocalISO(date);
+  function timeToMinutes(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
 
-    const storedShiftName = shift.isOverride
-      ? shift.name
-      : getStoredShiftName(date, shift.name, shift.holidayName);
+function getShiftStatus(start: string, end: string, now: Date) {
+  const current = now.getHours() * 60 + now.getMinutes();
+  const startMin = timeToMinutes(start);
+  const endMin = timeToMinutes(end);
+
+  if (current >= startMin && current <= endMin) return "active";
+  if (current < startMin) return "next";
+  return "past";
+}
+
+function getPeopleForShift(
+  date: Date,
+  shift: ReturnType<typeof getShiftsForDate>[number]
+) {
+  const dayIso = getLocalISO(date);
+
+  const storedShiftName = shift.isOverride
+    ? shift.name
+    : getStoredShiftName(date, shift.name, shift.holidayName);
 
     const assignmentPeople = assignments
       .filter(
@@ -201,13 +219,14 @@ const stationId = searchParams.get("station") ?? storedStationId;
       <main className="monitor-shifts">
         {todayShifts.map((shift) => {
           const people = getPeopleForShift(now, shift);
+          const status = getShiftStatus(shift.start, shift.end, now);
 
           if (people.length === 0) return null;
 
           return (
             <section
               key={`${iso}-${shift.name}-${shift.start}-${shift.end}`}
-              className="monitor-shift-card"
+              className={`monitor-shift-card monitor-shift-${status}`}
             >
               <div className="monitor-shift-head">
                 <h2>{shift.name}</h2>
