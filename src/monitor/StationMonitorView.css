@@ -2,10 +2,11 @@
   min-height: 100vh;
   background: #0f172a;
   color: #f8fafc;
-  padding: 32px;
+  padding: 28px 32px;
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
     sans-serif;
+  overflow: hidden;
 }
 
 .monitor-header {
@@ -13,38 +14,39 @@
   justify-content: space-between;
   gap: 32px;
   align-items: flex-start;
-  margin-bottom: 28px;
+  margin-bottom: 22px;
 }
 
 .monitor-kicker {
   color: #93c5fd;
   font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-weight: 900;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .monitor-header h1 {
   margin: 6px 0 0;
-  font-size: 58px;
-  line-height: 1;
+  font-size: clamp(52px, 5vw, 84px);
+  line-height: 0.95;
 }
 
 .monitor-date {
   text-align: right;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .monitor-date strong {
-  font-size: 28px;
+  font-size: clamp(26px, 2.4vw, 42px);
 }
 
 .monitor-date span {
-  font-size: 52px;
-  font-weight: 900;
+  font-size: clamp(58px, 5vw, 88px);
+  font-weight: 950;
   color: #60a5fa;
+  line-height: 1;
 }
 
 .monitor-holiday {
@@ -52,75 +54,73 @@
   color: #fecaca;
   border: 1px solid #ef4444;
   border-radius: 20px;
-  padding: 18px 22px;
-  font-size: 30px;
-  font-weight: 900;
-  margin-bottom: 24px;
+  padding: 18px 24px;
+  font-size: clamp(30px, 3vw, 52px);
+  font-weight: 950;
+  margin-bottom: 22px;
 }
 
 .monitor-shifts {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 24px;
 }
 
 .monitor-shift-card {
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 26px;
-  padding: 24px;
-  min-height: 190px;
+  border-radius: 28px;
+  padding: 30px;
+  min-height: 240px;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
 }
 
 .monitor-shift-head {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   align-items: baseline;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .monitor-shift-head h2 {
   margin: 0;
-  font-size: 42px;
+  font-size: clamp(48px, 4.5vw, 78px);
+  line-height: 1;
 }
 
 .monitor-shift-head span {
-  font-size: 26px;
+  font-size: clamp(28px, 2.4vw, 42px);
   color: #cbd5e1;
-  font-weight: 800;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .monitor-people {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .monitor-person {
   background: #2563eb;
   color: white;
   border-radius: 999px;
-  padding: 14px 20px;
-  font-size: 34px;
-  font-weight: 900;
+  padding: 18px 26px;
+  font-size: clamp(38px, 3.8vw, 68px);
+  font-weight: 950;
+  line-height: 1.05;
 }
 
 .monitor-unassigned {
-  border: 2px dashed #475569;
-  color: #94a3b8;
-  border-radius: 18px;
-  padding: 22px;
-  text-align: center;
-  font-size: 28px;
-  font-weight: 800;
+  display: none;
 }
 
 .monitor-footer {
-  margin-top: 28px;
+  margin-top: 22px;
   color: #94a3b8;
-  font-size: 16px;
+  font-size: 14px;
+  opacity: 0.7;
 }
 
 .monitor-empty {
@@ -129,4 +129,22 @@
   place-items: center;
   font-size: 34px;
   font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .monitor-root {
+    padding: 22px;
+  }
+
+  .monitor-header {
+    flex-direction: column;
+  }
+
+  .monitor-date {
+    text-align: left;
+  }
+
+  .monitor-shifts {
+    grid-template-columns: 1fr;
+  }
 }
