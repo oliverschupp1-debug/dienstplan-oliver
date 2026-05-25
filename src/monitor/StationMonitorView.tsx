@@ -6,6 +6,7 @@ import { useEmployees } from "../hooks/useEmployees";
 import { useOverrides } from "../useOverrides";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
+import { supabase } from "../lib/supabaseClient";
 import "./StationMonitorView.css";
 
 function getLocalISO(date: Date): string {
@@ -65,6 +66,53 @@ const stationId = searchParams.get("station") ?? storedStationId;
       setNow(new Date());
       reload();
     }, 60_000);
+    useEffect(() => {
+  if (!stationId) return;
+
+  const channel = supabase
+    .channel(`monitor-sync-${stationId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "assignments",
+        filter: `station_id=eq.${stationId}`,
+      },
+      () => {
+        reload();
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "day_overrides",
+        filter: `station_id=eq.${stationId}`,
+      },
+      () => {
+        reload();
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "employee_absences",
+        filter: `station_id=eq.${stationId}`,
+      },
+      () => {
+        reload();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [stationId, reload]);
 
     return () => window.clearInterval(timer);
   }, [reload]);
