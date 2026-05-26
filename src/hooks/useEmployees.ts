@@ -14,6 +14,25 @@ export type Employee = {
   vacation_note: string | null;
 };
 
+const EMPLOYEE_SELECT =
+  "id, name, station_id, max_hours, remarks, auth_user_id, role, vacation_days_total, vacation_note";
+
+function sortEmployeesByName(employees: Employee[]) {
+  return employees.slice().sort((a, b) => {
+    return (a.name ?? "").localeCompare(b.name ?? "", "de");
+  });
+}
+
+function uniqueEmployees(employees: Employee[]) {
+  const map = new Map<string, Employee>();
+
+  for (const employee of employees) {
+    map.set(employee.id, employee);
+  }
+
+  return Array.from(map.values());
+}
+
 export function useEmployees(stationId: string | null) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,21 +46,62 @@ export function useEmployees(stationId: string | null) {
 
     setLoading(true);
 
-    const { data, error } = await supabase
+    const { data: stationEmployees, error: stationError } = await supabase
       .from("employees")
-      .select(
-        "id, name, station_id, max_hours, remarks, auth_user_id, role, vacation_days_total, vacation_note"
-      )
-      .eq("station_id", stationId)
-      .order("name", { ascending: true });
+      .select(EMPLOYEE_SELECT)
+      .eq("station_id", stationId);
 
-    if (error) {
-      console.error("Fehler beim Laden der Mitarbeiter:", error);
+    if (stationError) {
+      console.error("Fehler beim Laden der Mitarbeiter:", stationError);
       setEmployees([]);
-    } else {
-      setEmployees(data ?? []);
+      setLoading(false);
+      return;
     }
 
+    const { data: accessRows, error: accessError } = await supabase
+      .from("employee_station_access")
+      .select("employee_id")
+      .eq("station_id", stationId);
+
+    if (accessError) {
+      console.error("Fehler beim Laden der Zusatzstationen:", accessError);
+      setEmployees(sortEmployeesByName((stationEmployees ?? []) as Employee[]));
+      setLoading(false);
+      return;
+    }
+
+    const extraIds = (accessRows ?? [])
+      .map((row) => row.employee_id as string)
+      .filter(Boolean);
+
+    if (extraIds.length === 0) {
+      setEmployees(sortEmployeesByName((stationEmployees ?? []) as Employee[]));
+      setLoading(false);
+      return;
+    }
+
+    const { data: extraEmployees, error: extraError } = await supabase
+      .from("employees")
+      .select(EMPLOYEE_SELECT)
+      .in("id", extraIds);
+
+    if (extraError) {
+      console.error(
+        "Fehler beim Laden der freigegebenen Mitarbeiter:",
+        extraError
+      );
+
+      setEmployees(sortEmployeesByName((stationEmployees ?? []) as Employee[]));
+      setLoading(false);
+      return;
+    }
+
+    const merged = uniqueEmployees([
+      ...((stationEmployees ?? []) as Employee[]),
+      ...((extraEmployees ?? []) as Employee[]),
+    ]);
+
+    setEmployees(sortEmployeesByName(merged));
     setLoading(false);
   }, [stationId]);
 
@@ -57,23 +117,74 @@ export function useEmployees(stationId: string | null) {
 
       setLoading(true);
 
-      const { data, error } = await supabase
+      const { data: stationEmployees, error: stationError } = await supabase
         .from("employees")
-        .select(
-          "id, name, station_id, max_hours, remarks, auth_user_id, role, vacation_days_total, vacation_note"
-        )
-        .eq("station_id", stationId)
-        .order("name", { ascending: true });
+        .select(EMPLOYEE_SELECT)
+        .eq("station_id", stationId);
 
       if (cancelled) return;
 
-      if (error) {
-        console.error("Fehler beim Laden der Mitarbeiter:", error);
+      if (stationError) {
+        console.error("Fehler beim Laden der Mitarbeiter:", stationError);
         setEmployees([]);
-      } else {
-        setEmployees(data ?? []);
+        setLoading(false);
+        return;
       }
 
+      const { data: accessRows, error: accessError } = await supabase
+        .from("employee_station_access")
+        .select("employee_id")
+        .eq("station_id", stationId);
+
+      if (cancelled) return;
+
+      if (accessError) {
+        console.error("Fehler beim Laden der Zusatzstationen:", accessError);
+        setEmployees(
+          sortEmployeesByName((stationEmployees ?? []) as Employee[])
+        );
+        setLoading(false);
+        return;
+      }
+
+      const extraIds = (accessRows ?? [])
+        .map((row) => row.employee_id as string)
+        .filter(Boolean);
+
+      if (extraIds.length === 0) {
+        setEmployees(
+          sortEmployeesByName((stationEmployees ?? []) as Employee[])
+        );
+        setLoading(false);
+        return;
+      }
+
+      const { data: extraEmployees, error: extraError } = await supabase
+        .from("employees")
+        .select(EMPLOYEE_SELECT)
+        .in("id", extraIds);
+
+      if (cancelled) return;
+
+      if (extraError) {
+        console.error(
+          "Fehler beim Laden der freigegebenen Mitarbeiter:",
+          extraError
+        );
+
+        setEmployees(
+          sortEmployeesByName((stationEmployees ?? []) as Employee[])
+        );
+        setLoading(false);
+        return;
+      }
+
+      const merged = uniqueEmployees([
+        ...((stationEmployees ?? []) as Employee[]),
+        ...((extraEmployees ?? []) as Employee[]),
+      ]);
+
+      setEmployees(sortEmployeesByName(merged));
       setLoading(false);
     }
 
