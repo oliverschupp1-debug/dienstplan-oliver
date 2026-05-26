@@ -3,6 +3,7 @@ import { useAssignments } from "../useAssignments";
 import { useOverrides } from "../useOverrides";
 import { isHoliday } from "../calendar/holidays";
 import { getShiftModelForStation } from "../shiftModelsDefault";
+import { useEmployees } from "../hooks/useEmployees";
 import "./MobileMonthView.css";
 
 type Employee = {
@@ -94,6 +95,7 @@ function StationMonth({
   const shiftModel = getShiftModelForStation(stationId);
   const { assignments } = useAssignments(stationId);
   const { overrides } = useOverrides(stationId);
+  const { employees: stationEmployees } = useEmployees(stationId);
 
   const weeks = useMemo(() => buildWeeks(year, month), [year, month]);
 
@@ -129,11 +131,12 @@ function StationMonth({
   }
 
   function getEmployeeName(employeeId: string) {
-    return (
-      employees.find((employee) => employee.id === employeeId)?.name ??
-      "Unbekannt"
-    );
-  }
+  return (
+    stationEmployees.find((employee) => employee.id === employeeId)?.name ??
+    employees.find((employee) => employee.id === employeeId)?.name ??
+    "Unbekannt"
+  );
+}
 
   function getDayAssignments(day: SelectedDay) {
     const holiday = isHoliday(day.iso);

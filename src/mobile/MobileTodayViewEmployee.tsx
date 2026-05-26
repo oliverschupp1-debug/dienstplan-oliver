@@ -3,6 +3,7 @@ import { useAssignments } from "../useAssignments";
 import { useOverrides } from "../useOverrides";
 import { getShiftModelForStation } from "../shiftModelsDefault";
 import { isHoliday } from "../calendar/holidays";
+import { useEmployees } from "../hooks/useEmployees";
 import "./MobileTodayView.css";
 
 type Employee = {
@@ -59,6 +60,7 @@ function StationDay({
   stationId: string;
   employees: Employee[];
 }) {
+  const { employees: stationEmployees } = useEmployees(stationId);
   const today = new Date();
   const iso = getLocalISO(today);
 
@@ -100,11 +102,12 @@ function StationDay({
   }, [overrideShifts, holidayName, weekdayIndex, model]);
 
   function getEmployeeName(employeeId: string) {
-    return (
-      employees.find((employee) => employee.id === employeeId)?.name ??
-      "Unbekannt"
-    );
-  }
+  return (
+    stationEmployees.find((employee) => employee.id === employeeId)?.name ??
+    employees.find((employee) => employee.id === employeeId)?.name ??
+    "Unbekannt"
+  );
+}
 
   const stationAssignments = shiftList
     .map((shift) => {
