@@ -22,6 +22,7 @@ type Assignment = {
 type DayOverride = {
   id: number;
   date: string;
+  station_id: string;
 };
 
 type OverrideShift = {
@@ -79,15 +80,67 @@ export function useAllMonthlyHours(
       const firstDay = toLocalIso(new Date(year, month, 1));
       const lastDay = toLocalIso(new Date(year, month + 1, 0));
 
-      const { data: employees } = await supabase
+      const { data: stationEmployees } = await supabase
         .from("employees")
         .select("id, name")
         .eq("station_id", stationId);
 
+      const { data: accessRows } = await supabase
+        .from("employee_station_access")
+        .select("employee_id, station_id")
+        .eq("station_id", stationId);
+
+      const extraEmployeeIds = (accessRows ?? [])
+        .map((row) => row.employee_id as string)
+        .filter(Boolean);
+
+      let extraEmployees: Employee[] = [];
+
+      if (extraEmployeeIds.length > 0) {
+        const { data } = await supabase
+          .from("employees")
+          .select("id, name")
+          .in("id", extraEmployeeIds);
+
+        extraEmployees = (data ?? []) as Employee[];
+      }
+
+      const visibleEmployees = [
+        ...((stationEmployees ?? []) as Employee[]),
+        ...extraEmployees,
+      ];
+
+      const visibleEmployeeIds = Array.from(
+        new Set(visibleEmployees.map((employee) => employee.id))
+      );
+
+      if (visibleEmployeeIds.length === 0) {
+        if (!cancelled) {
+          setHoursMap({});
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: employeeAccessRows } = await supabase
+        .from("employee_station_access")
+        .select("employee_id, station_id")
+        .in("employee_id", visibleEmployeeIds);
+
+      const relevantStationIds = Array.from(
+        new Set([
+          stationId,
+          ...((employeeAccessRows ?? []).map(
+            (row) => row.station_id as string
+          ) ?? []),
+        ])
+      );
+
       const { data: assignments, error: assignmentsError } = await supabase
         .from("assignments")
         .select("*")
-        .eq("station_id", stationId)
+        .in("station_id", relevantStationIds)
+        .in("employee_id", visibleEmployeeIds)
         .gte("date", firstDay)
         .lte("date", lastDay);
 
@@ -102,8 +155,8 @@ export function useAllMonthlyHours(
 
       const { data: dayOverrides } = await supabase
         .from("day_overrides")
-        .select("id, date")
-        .eq("station_id", stationId)
+        .select("id, date, station_id")
+        .in("station_id", relevantStationIds)
         .gte("date", firstDay)
         .lte("date", lastDay);
 
@@ -120,66 +173,90 @@ export function useAllMonthlyHours(
         overrideShifts = (data ?? []) as OverrideShift[];
       }
 
-      const overrideDateById = new Map<number, string>();
+      const overrideInfoById = new Map<
+        number,
+        { date: string; stationId: string }
+      >();
 
       for (const row of (dayOverrides ?? []) as DayOverride[]) {
-        overrideDateById.set(row.id, row.date);
+        overrideInfoById.set(row.id, {
+          date: row.date,
+          stationId: row.station_id,
+        });
       }
 
-      const overrideTimeByDateAndShift = new Map<
+      const overrideTimeByStationDateAndShift = new Map<
         string,
         { start: string; end: string }
       >();
 
       for (const shift of overrideShifts) {
-        const date = overrideDateById.get(shift.override_id);
-        if (!date) continue;
+        const info = overrideInfoById.get(shift.override_id);
+        if (!info) continue;
 
-        const key = `${date}|${normalizeShiftName(shift.name)}`;
+        const key = `${info.stationId}|${info.date}|${normalizeShiftName(
+          shift.name
+        )}`;
 
-        overrideTimeByDateAndShift.set(key, {
+        overrideTimeByStationDateAndShift.set(key, {
           start: shift.start_time,
           end: shift.end_time,
         });
       }
 
-      const enhancedAssignments: Assignment[] = ((assignments ?? []) as Assignment[]).map(
-        (assignment) => {
-          const key = `${assignment.date}|${normalizeShiftName(
-            assignment.shift_name
-          )}`;
+      const enhancedAssignments: Assignment[] = (
+        (assignments ?? []) as Assignment[]
+      ).map((assignment) => {
+        const key = `${assignment.station_id}|${
+          assignment.date
+        }|${normalizeShiftName(assignment.shift_name)}`;
 
-          const overrideTime = overrideTimeByDateAndShift.get(key);
+        const overrideTime = overrideTimeByStationDateAndShift.get(key);
 
-          if (!overrideTime) return assignment;
+        if (!overrideTime) return assignment;
 
-          return {
-            ...assignment,
-            override_start_time: overrideTime.start,
-            override_end_time: overrideTime.end,
-          };
-        }
-      );
+        return {
+          ...assignment,
+          override_start_time: overrideTime.start,
+          override_end_time: overrideTime.end,
+        };
+      });
 
-      const byEmployee: Record<string, Assignment[]> = {};
+      const byEmployeeAndStation: Record<string, Record<string, Assignment[]>> =
+        {};
 
       for (const assignment of enhancedAssignments) {
-        if (!byEmployee[assignment.employee_id]) {
-          byEmployee[assignment.employee_id] = [];
+        if (!byEmployeeAndStation[assignment.employee_id]) {
+          byEmployeeAndStation[assignment.employee_id] = {};
         }
 
-        byEmployee[assignment.employee_id].push(assignment);
+        if (!byEmployeeAndStation[assignment.employee_id][assignment.station_id]) {
+          byEmployeeAndStation[assignment.employee_id][assignment.station_id] =
+            [];
+        }
+
+        byEmployeeAndStation[assignment.employee_id][assignment.station_id].push(
+          assignment
+        );
       }
 
       const result: Record<string, number> = {};
 
-      for (const [employeeId, list] of Object.entries(byEmployee)) {
-        result[employeeId] = calculateHoursForAssignments(stationId, list);
+      for (const [employeeId, byStation] of Object.entries(
+        byEmployeeAndStation
+      )) {
+        let total = 0;
+
+        for (const [assignmentStationId, list] of Object.entries(byStation)) {
+          total += calculateHoursForAssignments(assignmentStationId, list);
+        }
+
+        result[employeeId] = Number(total.toFixed(2));
       }
 
       const employeesByName = new Map<string, Employee>();
 
-      for (const employee of (employees ?? []) as Employee[]) {
+      for (const employee of visibleEmployees) {
         if (employee.name) {
           employeesByName.set(employee.name.trim().toLowerCase(), employee);
         }
@@ -188,23 +265,29 @@ export function useAllMonthlyHours(
       for (const shift of overrideShifts) {
         if (!shift.employee) continue;
 
-        const employee = employeesByName.get(shift.employee.trim().toLowerCase());
+        const employee = employeesByName.get(
+          shift.employee.trim().toLowerCase()
+        );
         if (!employee) continue;
 
-        const date = overrideDateById.get(shift.override_id);
-        if (!date) continue;
+        const info = overrideInfoById.get(shift.override_id);
+        if (!info) continue;
 
         const alreadyHasAssignment = enhancedAssignments.some(
           (assignment) =>
             assignment.employee_id === employee.id &&
-            assignment.date === date &&
-            normalizeShiftName(assignment.shift_name) === normalizeShiftName(shift.name)
+            assignment.station_id === info.stationId &&
+            assignment.date === info.date &&
+            normalizeShiftName(assignment.shift_name) ===
+              normalizeShiftName(shift.name)
         );
 
         if (alreadyHasAssignment) continue;
 
         const hours = duration(shift.start_time, shift.end_time);
-        result[employee.id] = Number(((result[employee.id] ?? 0) + hours).toFixed(2));
+        result[employee.id] = Number(
+          ((result[employee.id] ?? 0) + hours).toFixed(2)
+        );
       }
 
       if (!cancelled) {

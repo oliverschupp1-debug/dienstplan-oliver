@@ -169,11 +169,45 @@ export default function MonthCalendar({
         .gte("date", firstDay)
         .lte("date", lastDay);
 
-      const { data: eData } = await supabase
+      const { data: stationEmployees } = await supabase
         .from("employees")
         .select("id, name")
         .eq("station_id", stationId)
         .order("name", { ascending: true });
+
+      const { data: accessRows } = await supabase
+        .from("employee_station_access")
+        .select("employee_id")
+        .eq("station_id", stationId);
+
+      const extraEmployeeIds = (accessRows ?? [])
+        .map((row) => row.employee_id as string)
+        .filter(Boolean);
+
+      let extraEmployees: Employee[] = [];
+
+      if (extraEmployeeIds.length > 0) {
+        const { data } = await supabase
+          .from("employees")
+          .select("id, name")
+          .in("id", extraEmployeeIds);
+
+        extraEmployees = (data ?? []) as Employee[];
+      }
+
+      const employeeMap = new Map<string, Employee>();
+
+      for (const employee of (stationEmployees ?? []) as Employee[]) {
+        employeeMap.set(employee.id, employee);
+      }
+
+      for (const employee of extraEmployees) {
+        employeeMap.set(employee.id, employee);
+      }
+
+      const mergedEmployees = Array.from(employeeMap.values()).sort((a, b) =>
+        (a.name ?? "").localeCompare(b.name ?? "", "de")
+      );
 
       const { data: overrideData } = await supabase
         .from("day_overrides")
@@ -185,7 +219,7 @@ export default function MonthCalendar({
       if (cancelled) return;
 
       setAssignments((aData ?? []) as Assignment[]);
-      setEmployees((eData ?? []) as Employee[]);
+      setEmployees(mergedEmployees);
 
       const overrides = (overrideData ?? []) as DayOverride[];
       setDayOverrides(overrides);
