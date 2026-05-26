@@ -12,6 +12,7 @@ type Employee = {
 
 type Props = {
   stationName: string;
+  stationIds?: string[];
   employees: Employee[];
 };
 
@@ -46,71 +47,55 @@ function getStoredShiftName(date: Date, shiftName: string, holidayName?: string)
   return shiftName;
 }
 
-export default function MobileMonthViewEmployee({
-  stationName,
-  employees,
-}: Props) {
-  const today = new Date();
+function formatStationName(stationId: string) {
+  return stationId.charAt(0).toUpperCase() + stationId.slice(1);
+}
 
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
+function buildWeeks(year: number, month: number) {
+  const first = new Date(year, month, 1);
+  const start = new Date(first);
+  start.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+
+  const result: { days: SelectedDay[] }[] = [];
+  const current = new Date(start);
+
+  for (let week = 0; week < 6; week++) {
+    const days: SelectedDay[] = [];
+
+    for (let day = 0; day < 7; day++) {
+      days.push({
+        iso: getLocalISO(current),
+        date: new Date(current),
+        day: current.getDate(),
+      });
+
+      current.setDate(current.getDate() + 1);
+    }
+
+    result.push({ days });
+  }
+
+  return result;
+}
+
+function StationMonth({
+  stationId,
+  year,
+  month,
+  employees,
+}: {
+  stationId: string;
+  year: number;
+  month: number;
+  employees: Employee[];
+}) {
   const [selectedDay, setSelectedDay] = useState<SelectedDay | null>(null);
 
-  const stationId = stationName;
   const shiftModel = getShiftModelForStation(stationId);
   const { assignments } = useAssignments(stationId);
   const { overrides } = useOverrides(stationId);
 
-  const weeks = useMemo(() => {
-    const first = new Date(year, month, 1);
-    const start = new Date(first);
-    start.setDate(first.getDate() - ((first.getDay() + 6) % 7));
-
-    const result: { days: SelectedDay[] }[] = [];
-    const current = new Date(start);
-
-    for (let week = 0; week < 6; week++) {
-      const days: SelectedDay[] = [];
-
-      for (let day = 0; day < 7; day++) {
-        days.push({
-          iso: getLocalISO(current),
-          date: new Date(current),
-          day: current.getDate(),
-        });
-
-        current.setDate(current.getDate() + 1);
-      }
-
-      result.push({ days });
-    }
-
-    return result;
-  }, [year, month]);
-
-  function handlePreviousMonth() {
-    setSelectedDay(null);
-
-    if (month === 0) {
-      setYear((value) => value - 1);
-      setMonth(11);
-      return;
-    }
-
-    setMonth((value) => value - 1);
-  }
-
-  function handleNextMonth() {
-    setSelectedDay(null);
-
-    if (month === 11) {
-      setYear((value) => value + 1);
-      setMonth(0);
-      return;
-    }
-
-    setMonth((value) => value + 1);
-  }
+  const weeks = useMemo(() => buildWeeks(year, month), [year, month]);
 
   function getShiftsForDay(date: Date, iso: string, holidayName?: string) {
     const overrideShifts = overrides[iso];
@@ -177,7 +162,7 @@ export default function MobileMonthViewEmployee({
         shift.employee && shift.employee.trim() !== ""
           ? [
               {
-                id: `${day.iso}-${shift.name}-${shift.employee}`,
+                id: `${day.iso}-${stationId}-${shift.name}-${shift.employee}`,
                 employeeName: shift.employee,
               },
             ]
@@ -192,21 +177,6 @@ export default function MobileMonthViewEmployee({
     });
   }
 
-  const monthNames = [
-    "Januar",
-    "Februar",
-    "März",
-    "April",
-    "Mai",
-    "Juni",
-    "Juli",
-    "August",
-    "September",
-    "Oktober",
-    "November",
-    "Dezember",
-  ];
-
   const weekdayNames = [
     "Sonntag",
     "Montag",
@@ -218,38 +188,10 @@ export default function MobileMonthViewEmployee({
   ];
 
   return (
-    <div className="mobile-root">
-      <div className="mobile-month-topbar">
-        <button
-          type="button"
-          className="mobile-button small"
-          onClick={handlePreviousMonth}
-        >
-          ←
-        </button>
-
-        <h2 className="mobile-month-title">
-          {monthNames[month]} {year}
-        </h2>
-
-        <button
-          type="button"
-          className="mobile-button small"
-          onClick={handleNextMonth}
-        >
-          →
-        </button>
-      </div>
-
-      <div className="mobile-month-header-row">
-        <div>Mo</div>
-        <div>Di</div>
-        <div>Mi</div>
-        <div>Do</div>
-        <div>Fr</div>
-        <div>Sa</div>
-        <div>So</div>
-      </div>
+    <section className="mobile-employee-station-block">
+      <h3 className="mobile-employee-station-title">
+        {formatStationName(stationId)}
+      </h3>
 
       <div className="mobile-month-grid">
         {weeks.map((week) =>
@@ -259,15 +201,16 @@ export default function MobileMonthViewEmployee({
             const outside = day.date.getMonth() !== month;
 
             const compactAssignments = getDayAssignments(day).flatMap((shift) =>
-  shift.assignments.map((assignment) => ({
-    id: assignment.id,
-    shiftName: shift.shiftName,
-    employeeName: assignment.employeeName,
-  }))
-);
+              shift.assignments.map((assignment) => ({
+                id: assignment.id,
+                shiftName: shift.shiftName,
+                employeeName: assignment.employeeName,
+              }))
+            );
+
             return (
               <button
-                key={day.iso}
+                key={`${stationId}-${day.iso}`}
                 type="button"
                 onClick={() => setSelectedDay(day)}
                 className={`
@@ -314,6 +257,7 @@ export default function MobileMonthViewEmployee({
             <div className="mobile-day-detail-header">
               <div>
                 <h3>
+                  {formatStationName(stationId)} ·{" "}
                   {weekdayNames[selectedDay.date.getDay()]},{" "}
                   {selectedDay.day}.{selectedDay.date.getMonth() + 1}.
                   {selectedDay.date.getFullYear()}
@@ -338,7 +282,7 @@ export default function MobileMonthViewEmployee({
             <div className="mobile-day-detail-shifts">
               {getDayAssignments(selectedDay).map((shift) => (
                 <div
-                  key={`${selectedDay.iso}-${shift.shiftName}-${shift.start}-${shift.end}`}
+                  key={`${selectedDay.iso}-${stationId}-${shift.shiftName}-${shift.start}-${shift.end}`}
                   className="mobile-day-detail-shift"
                 >
                   <div className="mobile-day-detail-shift-head">
@@ -370,6 +314,102 @@ export default function MobileMonthViewEmployee({
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+export default function MobileMonthViewEmployee({
+  stationName,
+  stationIds,
+  employees,
+}: Props) {
+  const today = new Date();
+
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
+
+  const visibleStationIds = Array.from(
+    new Set((stationIds && stationIds.length > 0 ? stationIds : [stationName]).filter(Boolean))
+  );
+
+  function handlePreviousMonth() {
+    if (month === 0) {
+      setYear((value) => value - 1);
+      setMonth(11);
+      return;
+    }
+
+    setMonth((value) => value - 1);
+  }
+
+  function handleNextMonth() {
+    if (month === 11) {
+      setYear((value) => value + 1);
+      setMonth(0);
+      return;
+    }
+
+    setMonth((value) => value + 1);
+  }
+
+  const monthNames = [
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+  ];
+
+  return (
+    <div className="mobile-root">
+      <div className="mobile-month-topbar">
+        <button
+          type="button"
+          className="mobile-button small"
+          onClick={handlePreviousMonth}
+        >
+          ←
+        </button>
+
+        <h2 className="mobile-month-title">
+          {monthNames[month]} {year}
+        </h2>
+
+        <button
+          type="button"
+          className="mobile-button small"
+          onClick={handleNextMonth}
+        >
+          →
+        </button>
+      </div>
+
+      <div className="mobile-month-header-row">
+        <div>Mo</div>
+        <div>Di</div>
+        <div>Mi</div>
+        <div>Do</div>
+        <div>Fr</div>
+        <div>Sa</div>
+        <div>So</div>
+      </div>
+
+      {visibleStationIds.map((stationId) => (
+        <StationMonth
+          key={stationId}
+          stationId={stationId}
+          year={year}
+          month={month}
+          employees={employees}
+        />
+      ))}
     </div>
   );
 }

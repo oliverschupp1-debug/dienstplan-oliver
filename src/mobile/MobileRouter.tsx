@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { useAppStore } from "../store/useAppStore";
 import { useEmployees } from "../hooks/useEmployees";
 import { useAllMonthlyHours } from "../hooks/useAllMonthlyHours";
 import { useAbsences } from "../hooks/useAbsences";
@@ -44,7 +46,8 @@ function countVacationDaysInYear(start: string, end: string, year: number) {
   const yearStart = new Date(year, 0, 1);
   const yearEnd = new Date(year, 11, 31);
 
-  const current = startDate > yearStart ? new Date(startDate) : new Date(yearStart);
+  const current =
+    startDate > yearStart ? new Date(startDate) : new Date(yearStart);
   const last = endDate < yearEnd ? new Date(endDate) : new Date(yearEnd);
 
   let count = 0;
@@ -65,6 +68,7 @@ export default function MobileRouter({
   onStationChange,
 }: Props) {
   const today = new Date();
+  const employeeId = useAppStore((state) => state.employeeId);
 
   const [view, setView] = useState<"today" | "month">("today");
   const [showEmployees, setShowEmployees] = useState(false);
@@ -81,6 +85,10 @@ export default function MobileRouter({
     Record<string, AbsenceDraft>
   >({});
 
+  const [extraEmployeeStations, setExtraEmployeeStations] = useState<string[]>(
+    []
+  );
+
   const { employees: allPanelEmployees } = useEmployees(stationName);
   const { absences, createAbsence, deleteAbsence } = useAbsences(stationName);
 
@@ -89,12 +97,46 @@ export default function MobileRouter({
     [allPanelEmployees]
   );
 
+  const employeeStationIds = useMemo(() => {
+    return Array.from(
+      new Set([stationName, ...extraEmployeeStations].filter(Boolean))
+    );
+  }, [stationName, extraEmployeeStations]);
+
   const { hoursMap } = useAllMonthlyHours(
     stationName,
     mobileYear,
     mobileMonth,
     reloadFlag
   );
+
+  useEffect(() => {
+    async function loadEmployeeStationAccess() {
+      if (role !== "employee" || !employeeId) {
+        setExtraEmployeeStations([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("employee_station_access")
+        .select("station_id")
+        .eq("employee_id", employeeId);
+
+      if (error) {
+        console.error("Zusatzstationen konnten nicht geladen werden:", error);
+        setExtraEmployeeStations([]);
+        return;
+      }
+
+      setExtraEmployeeStations(
+        (data ?? [])
+          .map((row) => row.station_id as string)
+          .filter((stationId) => stationId && stationId !== stationName)
+      );
+    }
+
+    loadEmployeeStationAccess();
+  }, [role, employeeId, stationName]);
 
   useEffect(() => {
     const nextDrafts: Record<string, AbsenceDraft> = {};
@@ -126,20 +168,20 @@ export default function MobileRouter({
   const isEmployee = role === "employee";
 
   function updateAbsenceDraft(
-    employeeId: string,
+    employeeIdValue: string,
     patch: Partial<AbsenceDraft>
   ) {
     setAbsenceDrafts((current) => ({
       ...current,
-      [employeeId]: {
-        ...current[employeeId],
+      [employeeIdValue]: {
+        ...current[employeeIdValue],
         ...patch,
       },
     }));
   }
 
-  async function handleCreateAbsence(employeeId: string) {
-    const draft = absenceDrafts[employeeId];
+  async function handleCreateAbsence(employeeIdValue: string) {
+    const draft = absenceDrafts[employeeIdValue];
 
     if (!draft?.start_date || !draft?.end_date) {
       alert("Bitte Zeitraum auswählen.");
@@ -148,7 +190,7 @@ export default function MobileRouter({
 
     try {
       await createAbsence({
-        employee_id: employeeId,
+        employee_id: employeeIdValue,
         station_id: stationName,
         start_date: draft.start_date,
         end_date: draft.end_date,
@@ -158,7 +200,7 @@ export default function MobileRouter({
 
       setAbsenceDrafts((current) => ({
         ...current,
-        [employeeId]: {
+        [employeeIdValue]: {
           start_date: "",
           end_date: "",
           type: "vacation",
@@ -387,6 +429,7 @@ export default function MobileRouter({
       {view === "today" && isEmployee && (
         <MobileTodayViewEmployee
           stationName={stationName}
+          stationIds={employeeStationIds}
           employees={employees}
           onOpenMonth={() => setView("month")}
         />
@@ -407,6 +450,7 @@ export default function MobileRouter({
       {view === "month" && isEmployee && (
         <MobileMonthViewEmployee
           stationName={stationName}
+          stationIds={employeeStationIds}
           employees={employees}
         />
       )}
