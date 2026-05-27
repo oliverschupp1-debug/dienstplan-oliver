@@ -88,6 +88,14 @@ function localDateString(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
+function isErsatzShift(name: string) {
+  return name.startsWith("Ersatz");
+}
+
+function displayShiftName(name: string) {
+  return isErsatzShift(name) ? "Ersatz" : name;
+}
+
 export default function MonthCalendar({
   stationName,
   year,
@@ -524,8 +532,12 @@ export default function MonthCalendar({
                           onDragOver={handleDragOver}
                         >
                           <div className="shift-header">
-                            <span className="shift-name">{shift.name}</span>
-                            <span className="shift-time">{shift.start} - {shift.end}</span>
+                            <span className="shift-name">{displayShiftName(shift.name)}</span>
+                            {!isErsatzShift(shift.name) && (
+                              <span className="shift-time">
+                                {shift.start} - {shift.end}
+                              </span>
+                            )}
                           </div>
 
                           <div className="shift-employees-dark">
@@ -642,10 +654,13 @@ export default function MonthCalendar({
                         className="print-shift"
                       >
                         <div className="print-shift-head">
-                          <strong>{shift.name}</strong>
-                          <span>
-                            {shift.start} - {shift.end}
-                          </span>
+                          <strong>{displayShiftName(shift.name)}</strong>
+
+                          {!isErsatzShift(shift.name) && (
+                            <span>
+                              {shift.start} - {shift.end}
+                            </span>
+                          )}
                         </div>
 
                         <div className="print-people">

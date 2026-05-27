@@ -42,6 +42,13 @@ export function calculateHoursForAssignments(
     const weekdayIndex = getWeekdayIndex(date);
     const normalizedName = normalizeShiftName(a.shift_name);
 
+if (
+  safeStation === "seelbach" &&
+  (normalizedName === "Ersatz 1" || normalizedName === "Ersatz 2")
+) {
+  continue;
+}
+
     // passendes Schichtmodell wählen
     let shiftList = model.weekdays;
     if (holiday?.name) {

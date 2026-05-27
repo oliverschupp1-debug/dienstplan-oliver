@@ -62,6 +62,18 @@ function getWeekMonday(date: Date) {
   return monday;
 }
 
+function formatStationName(stationId: string) {
+  return stationId.charAt(0).toUpperCase() + stationId.slice(1);
+}
+
+function isReplacementShift(name: string) {
+  return normalizeShiftName(name).startsWith("Ersatz");
+}
+
+function displayShiftName(name: string) {
+  return isReplacementShift(name) ? "Ersatz" : name;
+}
+
 export default function StationMonitorView() {
   const storedStationId = useAppStore((s) => s.stationId);
   const userName = useAppStore((s) => s.userName);
@@ -257,12 +269,27 @@ export default function StationMonitorView() {
     );
   }
 
+  const todayMainShifts = todayShifts.filter(
+    (shift) => !isReplacementShift(shift.name)
+  );
+
+  const todayReplacementShifts = todayShifts.filter((shift) =>
+    isReplacementShift(shift.name)
+  );
+
+  const visibleReplacementShifts = todayReplacementShifts
+    .map((shift) => ({
+      shift,
+      people: getPeopleForShift(now, shift),
+    }))
+    .filter((entry) => entry.people.length > 0);
+
   return (
     <div className="monitor-root">
       <header className="monitor-header">
         <div>
           <div className="monitor-kicker">Stationsmonitor</div>
-          <h1>{stationId.charAt(0).toUpperCase() + stationId.slice(1)}</h1>
+          <h1>{formatStationName(stationId)}</h1>
         </div>
 
         <div className="monitor-date">
@@ -282,7 +309,7 @@ export default function StationMonitorView() {
       {holidayName && <div className="monitor-holiday">{holidayName}</div>}
 
       <main className="monitor-shifts">
-        {todayShifts.map((shift) => {
+        {todayMainShifts.map((shift) => {
           const people = getPeopleForShift(now, shift);
           const status = getShiftStatus(shift.start, shift.end, now);
 
@@ -294,7 +321,7 @@ export default function StationMonitorView() {
               className={`monitor-shift-card monitor-shift-${status}`}
             >
               <div className="monitor-shift-head">
-                <h2>{shift.name}</h2>
+                <h2>{displayShiftName(shift.name)}</h2>
                 <span>
                   {shift.start} – {shift.end}
                 </span>
@@ -311,6 +338,31 @@ export default function StationMonitorView() {
           );
         })}
       </main>
+
+      {visibleReplacementShifts.length > 0 && (
+        <section className="monitor-replacements">
+          <h2>Bereitschaft / Ersatz</h2>
+
+          <div className="monitor-replacement-grid">
+            {visibleReplacementShifts.map(({ shift, people }) => (
+              <div
+                key={`${iso}-${shift.name}-${shift.start}-${shift.end}`}
+                className="monitor-replacement-card"
+              >
+                <div className="monitor-replacement-title">
+                  {displayShiftName(shift.name)}
+                </div>
+
+                <div className="monitor-replacement-people">
+                  {people.map((name, index) => (
+                    <span key={`${name}-${index}`}>{name}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="monitor-week">
         <h2>Diese Woche</h2>
@@ -352,10 +404,15 @@ export default function StationMonitorView() {
                     dayShifts.map(({ shift, people }) => (
                       <div
                         key={`${day.iso}-${shift.name}-${shift.start}-${shift.end}`}
-                        className="monitor-week-shift"
+                        className={
+                          "monitor-week-shift" +
+                          (isReplacementShift(shift.name)
+                            ? " monitor-week-replacement"
+                            : "")
+                        }
                       >
                         <div className="monitor-week-shift-name">
-                          {shift.name}
+                          {displayShiftName(shift.name)}
                         </div>
 
                         <div className="monitor-week-people">

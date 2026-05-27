@@ -16,28 +16,34 @@ export function getShiftModelForStation(station: string): StationShiftModel {
 
   switch (s) {
     case "seelbach":
-      return {
-        weekdays: [
-          { name: "Früh",  start: "05:30", end: "12:00" },
-          { name: "Mittel", start: "12:00", end: "17:00" },
-          { name: "Spät",  start: "17:00", end: "21:30" }
-        ],
-        saturday: [
-          { name: "Früh",  start: "07:30", end: "12:00" },
-          { name: "Mittel", start: "12:00", end: "16:30" },
-          { name: "Spät",  start: "16:30", end: "21:30" }
-        ],
-        sunday: [
-          { name: "Früh",  start: "07:30", end: "12:00" },
-          { name: "Mittel", start: "12:00", end: "16:30" },
-          { name: "Spät",  start: "16:30", end: "21:30" }
-        ],
-        holiday: [
-          { name: "Früh",  start: "07:30", end: "12:00" },
-          { name: "Mittel", start: "12:00", end: "16:30" },
-          { name: "Spät",  start: "16:30", end: "21:30" }
-        ]
-      };
+  return {
+    weekdays: [
+      { name: "Früh", start: "05:30", end: "12:00" },
+      { name: "Mittel", start: "12:00", end: "17:00" },
+      { name: "Spät", start: "17:00", end: "21:30" },
+    ],
+    saturday: [
+      { name: "Früh", start: "07:30", end: "12:00" },
+      { name: "Mittel", start: "12:00", end: "16:30" },
+      { name: "Spät", start: "16:30", end: "21:30" },
+      { name: "Ersatz 1", start: "", end: "" },
+      { name: "Ersatz 2", start: "", end: "" },
+    ],
+    sunday: [
+      { name: "Früh", start: "07:30", end: "12:00" },
+      { name: "Mittel", start: "12:00", end: "16:30" },
+      { name: "Spät", start: "16:30", end: "21:30" },
+      { name: "Ersatz 1", start: "", end: "" },
+      { name: "Ersatz 2", start: "", end: "" },
+    ],
+    holiday: [
+      { name: "Früh", start: "07:30", end: "12:00" },
+      { name: "Mittel", start: "12:00", end: "16:30" },
+      { name: "Spät", start: "16:30", end: "21:30" },
+      { name: "Ersatz 1", start: "", end: "" },
+      { name: "Ersatz 2", start: "", end: "" },
+    ],
+  };
 
     case "wilnsdorf":
       return {
