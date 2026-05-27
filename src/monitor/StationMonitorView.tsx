@@ -73,7 +73,7 @@ export default function StationMonitorView() {
   const iso = getLocalISO(now);
 
   const { assignments, reload } = useAssignments(stationId ?? "");
-  const { employees } = useEmployees(stationId ?? null);
+  const { employees, reload: reloadEmployees } = useEmployees(stationId ?? null);
   const { overrides, reload: reloadOverrides } = useOverrides(stationId ?? "");
 
   useEffect(() => {
@@ -81,10 +81,11 @@ export default function StationMonitorView() {
       setNow(new Date());
       reload();
       reloadOverrides();
+      reloadEmployees();
     }, 60_000);
 
     return () => window.clearInterval(timer);
-  }, [reload, reloadOverrides]);
+  }, [reload, reloadOverrides, reloadEmployees]);
 
   useEffect(() => {
     if (!stationId) return;
@@ -101,6 +102,7 @@ export default function StationMonitorView() {
         },
         () => {
           reload();
+          reloadEmployees();
         }
       )
       .on(
@@ -126,12 +128,23 @@ export default function StationMonitorView() {
           reloadOverrides();
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "employee_station_access",
+        },
+        () => {
+          reloadEmployees();
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [stationId, reload, reloadOverrides]);
+  }, [stationId, reload, reloadOverrides, reloadEmployees]);
 
   const model = getShiftModelForStation(stationId ?? "");
 
