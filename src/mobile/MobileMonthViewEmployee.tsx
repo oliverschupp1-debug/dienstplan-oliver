@@ -165,7 +165,7 @@ function StationMonth({
         shift.employee && shift.employee.trim() !== ""
           ? [
               {
-                id: `${day.iso}-${stationId}-${shift.name}-${shift.employee}`,
+                id: `${day.iso}-${stationId}-${shift.name.startsWith("Ersatz") ? "Ersatz" : shift.name}-${shift.employee}`,
                 employeeName: shift.employee,
               },
             ]
@@ -285,11 +285,11 @@ function StationMonth({
             <div className="mobile-day-detail-shifts">
               {getDayAssignments(selectedDay).map((shift) => (
                 <div
-                  key={`${selectedDay.iso}-${stationId}-${shift.shiftName}-${shift.start}-${shift.end}`}
+                  key={`${selectedDay.iso}-${stationId}-${shift.shiftName.startsWith("Ersatz") ? "Ersatz" : shift.shiftName}-${shift.start}-${shift.end}`}
                   className="mobile-day-detail-shift"
                 >
                   <div className="mobile-day-detail-shift-head">
-                    <strong>{shift.shiftName}</strong>
+                    <strong>{shift.shiftName.startsWith("Ersatz") ? "Ersatz" : shift.shiftName}</strong>
                     <span>
                       {shift.start} – {shift.end}
                     </span>
